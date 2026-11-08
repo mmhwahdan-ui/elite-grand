@@ -1,0 +1,15 @@
+{
+  "name": "elite-grand",
+  "version": "1.0.0",
+  "description": "Elite Grand Home Nursing Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["nursing", "management", "flutter"],
+  "author": "Elite Grand",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

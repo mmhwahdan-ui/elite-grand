@@ -1,0 +1,730 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../models/client_model.dart';
+import '../providers/app_provider.dart';
+import '../theme/app_theme.dart';
+
+class AddServiceDayDialog extends StatefulWidget {
+  final ClientModel client;
+
+  const AddServiceDayDialog({
+    super.key,
+    required this.client,
+  });
+
+  @override
+  State<AddServiceDayDialog> createState() => _AddServiceDayDialogState();
+}
+
+class _AddServiceDayDialogState extends State<AddServiceDayDialog> {
+  final _formKey = GlobalKey<FormState>();
+
+  // Mode: 0 = Single Day, 1 = Batch Days (Variable Weekly)
+  int _selectedMode = 0;
+
+  // Single Day Fields
+  DateTime _singleDate = DateTime.now();
+  late TextEditingController _nurseNameController;
+  late TextEditingController _clientPriceController;
+  late TextEditingController _nursePriceController;
+  final TextEditingController _notesController = TextEditingController();
+  String _shiftType = 'hours12';
+
+  // Batch Days Fields
+  DateTime _batchStartDate = DateTime.now();
+  int _batchDaysCount = 4; // Default 4 days weekly
+  final List<DateTime> _customDates = [];
+  bool _useExplicitDates = false;
+
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nurseNameController = TextEditingController(text: widget.client.nurseAssigned ?? '');
+    _clientPriceController = TextEditingController(
+      text: widget.client.dailyPrice > 0 ? widget.client.dailyPrice.toStringAsFixed(0) : '',
+    );
+    _nursePriceController = TextEditingController(
+      text: widget.client.nurseDailyPrice > 0 ? widget.client.nurseDailyPrice.toStringAsFixed(0) : '',
+    );
+    _shiftType = widget.client.serviceType.isNotEmpty ? widget.client.serviceType : 'hours12';
+
+    _generateDefaultBatchDates();
+  }
+
+  void _generateDefaultBatchDates() {
+    _customDates.clear();
+    for (int i = 0; i < _batchDaysCount; i++) {
+      _customDates.add(_batchStartDate.add(Duration(days: i)));
+    }
+  }
+
+  @override
+  void dispose() {
+    _nurseNameController.dispose();
+    _clientPriceController.dispose();
+    _nursePriceController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  double get _currentClientPrice => double.tryParse(_clientPriceController.text.trim()) ?? 0.0;
+  double get _currentNursePrice => double.tryParse(_nursePriceController.text.trim()) ?? 0.0;
+  double get _currentProfitDifference => _currentClientPrice - _currentNursePrice;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('yyyy/MM/dd', 'ar');
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        width: 580,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.event_available,
+                      color: AppTheme.primaryColor,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'تسجيل أيام الخدمة والشفتات',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'الحالة: ${widget.client.name}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: AppTheme.textMuted),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+
+              // Mode Selector
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _selectedMode = 0),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _selectedMode == 0 ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: _selectedMode == 0
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.05),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ]
+                                : null,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'تسجيل يوم فردي',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: _selectedMode == 0 ? FontWeight.bold : FontWeight.normal,
+                              color: _selectedMode == 0 ? AppTheme.primaryColor : AppTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _selectedMode = 1),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _selectedMode == 1 ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: _selectedMode == 1
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.05),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ]
+                                : null,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'تسجيل باقة / عدة أيام (أسبوعي متغير)',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: _selectedMode == 1 ? FontWeight.bold : FontWeight.normal,
+                              color: _selectedMode == 1 ? AppTheme.primaryColor : AppTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Scrollable Form Content
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_selectedMode == 0) ...[
+                        // Single Day Date Picker
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _singleDate,
+                              firstDate: DateTime(2023),
+                              lastDate: DateTime.now().add(const Duration(days: 30)),
+                              locale: const Locale('ar'),
+                            );
+                            if (picked != null) {
+                              setState(() => _singleDate = picked);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.grey.shade50,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_month, color: AppTheme.primaryColor, size: 20),
+                                const SizedBox(width: 10),
+                                const Text('تاريخ اليوم / الوردية:', style: TextStyle(fontWeight: FontWeight.w600)),
+                                const Spacer(),
+                                Text(
+                                  dateFormat.format(_singleDate),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        // Batch Days Settings
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.tune, color: AppTheme.primaryColor, size: 18),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'تحديد الأيام لهذا الأسبوع أو الفترة:',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () async {
+                                        final picked = await showDatePicker(
+                                          context: context,
+                                          initialDate: _batchStartDate,
+                                          firstDate: DateTime(2023),
+                                          lastDate: DateTime.now().add(const Duration(days: 60)),
+                                          locale: const Locale('ar'),
+                                        );
+                                        if (picked != null) {
+                                          setState(() {
+                                            _batchStartDate = picked;
+                                            _generateDefaultBatchDates();
+                                          });
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.grey.shade300),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('تاريخ البداية', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                            Text(
+                                              dateFormat.format(_batchStartDate),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Days Count Counter
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.grey.shade300),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.remove, size: 18),
+                                          visualDensity: VisualDensity.compact,
+                                          onPressed: _batchDaysCount > 1
+                                              ? () {
+                                                  setState(() {
+                                                    _batchDaysCount--;
+                                                    _generateDefaultBatchDates();
+                                                  });
+                                                }
+                                              : null,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                                          child: Column(
+                                            children: [
+                                              const Text('عدد الأيام', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                              Text(
+                                                '$_batchDaysCount أيام',
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryColor),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.add, size: 18),
+                                          visualDensity: VisualDensity.compact,
+                                          onPressed: _batchDaysCount < 31
+                                              ? () {
+                                                  setState(() {
+                                                    _batchDaysCount++;
+                                                    _generateDefaultBatchDates();
+                                                  });
+                                                }
+                                              : null,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              // Quick presets
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  ActionChip(
+                                    label: const Text('3 أيام أسبوعياً', style: TextStyle(fontSize: 11)),
+                                    onPressed: () {
+                                      setState(() {
+                                        _batchDaysCount = 3;
+                                        _generateDefaultBatchDates();
+                                      });
+                                    },
+                                  ),
+                                  ActionChip(
+                                    label: const Text('4 أيام أسبوعياً', style: TextStyle(fontSize: 11)),
+                                    onPressed: () {
+                                      setState(() {
+                                        _batchDaysCount = 4;
+                                        _generateDefaultBatchDates();
+                                      });
+                                    },
+                                  ),
+                                  ActionChip(
+                                    label: const Text('5 أيام أسبوعياً', style: TextStyle(fontSize: 11)),
+                                    onPressed: () {
+                                      setState(() {
+                                        _batchDaysCount = 5;
+                                        _generateDefaultBatchDates();
+                                      });
+                                    },
+                                  ),
+                                  ActionChip(
+                                    label: const Text('أسبوع كامل (7 أيام)', style: TextStyle(fontSize: 11)),
+                                    onPressed: () {
+                                      setState(() {
+                                        _batchDaysCount = 7;
+                                        _generateDefaultBatchDates();
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+
+                      // Nurse Name with quick list
+                      TextFormField(
+                        controller: _nurseNameController,
+                        decoration: InputDecoration(
+                          labelText: 'اسم الممرض / الممرضة القائم بالخدمة *',
+                          prefixIcon: const Icon(Icons.medical_services_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          helperText: 'يمكن تغيير الممرض لكل يوم أو أسبوع بسهولة',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'يرجى كتابة اسم الممرض';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Shift Type Selector
+                      DropdownButtonFormField<String>(
+                        value: _shiftType,
+                        decoration: InputDecoration(
+                          labelText: 'نوع الوردية / الشفت',
+                          prefixIcon: const Icon(Icons.schedule),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'hours12',
+                            child: Text('وردية 12 ساعة'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'hours24',
+                            child: Text('إقامة 24 ساعة'),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setState(() => _shiftType = val);
+                        },
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Rates: Client Daily Rate & Nurse Daily Rate
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _clientPriceController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
+                                labelText: 'سعر اليوم للعميل (ج)*',
+                                prefixIcon: const Icon(Icons.person, color: Colors.blue),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                              ),
+                              onChanged: (_) => setState(() {}),
+                              validator: (val) {
+                                if (val == null || val.trim().isEmpty) return 'مطلوب';
+                                if (double.tryParse(val.trim()) == null) return 'رقم غير صحيح';
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _nursePriceController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
+                                labelText: 'يومية الممرض (ج)*',
+                                prefixIcon: const Icon(Icons.badge, color: Colors.orange),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                              ),
+                              onChanged: (_) => setState(() {}),
+                              validator: (val) {
+                                if (val == null || val.trim().isEmpty) return 'مطلوب';
+                                if (double.tryParse(val.trim()) == null) return 'رقم غير صحيح';
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Profit & Financial Preview Card
+                      Builder(builder: (context) {
+                        final daysCount = _selectedMode == 0 ? 1 : _batchDaysCount;
+                        final totalClient = _currentClientPrice * daysCount;
+                        final totalNurse = _currentNursePrice * daysCount;
+                        final totalProfit = totalClient - totalNurse;
+
+                        return Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: totalProfit >= 0
+                                ? const Color(0xFFECFDF5)
+                                : Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: totalProfit >= 0
+                                  ? const Color(0xFF6EE7B7)
+                                  : Colors.red.shade200,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    totalProfit >= 0 ? Icons.trending_up : Icons.trending_down,
+                                    color: totalProfit >= 0 ? const Color(0xFF047857) : Colors.red,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _selectedMode == 0
+                                        ? 'حسبة الوردية ومكسب الشركة اليومي:'
+                                        : 'إجمالي حسبة الباقة ($daysCount أيام):',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: totalProfit >= 0 ? const Color(0xFF047857) : Colors.red.shade900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'المحسوب على العميل: ${totalClient.toStringAsFixed(0)} ج',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(
+                                    'مستحق للممرض: ${totalNurse.toStringAsFixed(0)} ج',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.orange),
+                                  ),
+                                ],
+                              ),
+                              const Divider(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'صافي مكسب الشركة (فرق السعر):',
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    '${totalProfit.toStringAsFixed(0)} ج',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: totalProfit >= 0 ? const Color(0xFF047857) : Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 14),
+
+                      // Notes
+                      TextFormField(
+                        controller: _notesController,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          labelText: 'ملاحظات الوردية (اختياري)',
+                          hintText: 'مثال: تبديل شفت، أو ظرف طارئ، سلفية تمريض، إلخ.',
+                          prefixIcon: const Icon(Icons.notes),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('إلغاء'),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSubmitting ? null : _submit,
+                      icon: _isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.check_circle_outline),
+                      label: Text(
+                        _selectedMode == 0
+                            ? 'تسجيل اليومية'
+                            : 'تسجيل الـ ($_batchDaysCount) أيام',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final provider = Provider.of<AppProvider>(context, listen: false);
+      final nurseName = _nurseNameController.text.trim();
+      final clientPrice = _currentClientPrice;
+      final nursePrice = _currentNursePrice;
+      final notes = _notesController.text.trim();
+
+      if (_selectedMode == 0) {
+        // Single Day
+        await provider.recordServiceDay(
+          clientId: widget.client.id,
+          date: _singleDate,
+          nurseName: nurseName,
+          shiftType: _shiftType,
+          clientPrice: clientPrice,
+          nursePrice: nursePrice,
+          notes: notes,
+        );
+      } else {
+        // Batch Days
+        await provider.recordBatchServiceDays(
+          clientId: widget.client.id,
+          dates: _customDates,
+          nurseName: nurseName,
+          shiftType: _shiftType,
+          clientPrice: clientPrice,
+          nursePrice: nursePrice,
+          notes: notes,
+        );
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _selectedMode == 0
+                  ? 'تم تسجيل يومية الخدمة والممرض بنجاح'
+                  : 'تم تسجيل ($_batchDaysCount) أيام خدمة للممرض والعميل بنجاح',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: const Color(0xFF047857),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ أثناء التسجيل: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+}

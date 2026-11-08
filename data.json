@@ -1,0 +1,273 @@
+{
+  "lastUpdated": "2026-11-08T15:25:50.377Z",
+  "deletedIds": [
+    "client_101",
+    "client_102",
+    "client_103",
+    "client_104",
+    "pay_01",
+    "pay_02",
+    "pay_03",
+    "exp_01",
+    "exp_02",
+    "exp_03",
+    "cli_b0b892b1",
+    "pay_e1d89979",
+    "exp_9dadc9e9",
+    "exp_a15f6f45"
+  ],
+  "openingBalances": {
+    "bank": 68300,
+    "wallet": 30,
+    "cash": 0
+  },
+  "clients": [
+    {
+      "id": "cli_d986e3c5",
+      "name": "ياسر اسماعيل",
+      "phone": "01097933316",
+      "address": "اكتوبر",
+      "healthCondition": "زهايمر",
+      "serviceType": "hours24",
+      "dailyPrice": 500,
+      "nurseDailyPrice": 350,
+      "isExistingClient": true,
+      "openingBalance": 9000,
+      "startDate": "2026-11-08T16:48:32.957",
+      "endDate": null,
+      "status": "active",
+      "terminationReason": null,
+      "nurseAssigned": "صابرين",
+      "notes": "تم حساب الممرضه حتى 16 اكتوبر و عليها سلفه 500 جنيه",
+      "createdBy": "wahdan",
+      "createdAt": "2026-11-08T16:47:28.345",
+      "updatedAt": "2026-11-08T16:48:40.047"
+    },
+    {
+      "id": "cli_d3392619",
+      "name": "ابتسام مدينه مصر",
+      "phone": "01203225572",
+      "address": "مدينه نصر",
+      "healthCondition": "مسنه",
+      "serviceType": "hours24",
+      "dailyPrice": 400,
+      "nurseDailyPrice": 307.5,
+      "isExistingClient": true,
+      "openingBalance": -800,
+      "startDate": "2026-11-08T16:58:17.270",
+      "endDate": null,
+      "status": "active",
+      "terminationReason": null,
+      "nurseAssigned": "سها",
+      "notes": "",
+      "createdBy": "wahdan",
+      "createdAt": "2026-11-08T16:55:28.980",
+      "updatedAt": "2026-11-08T16:58:18.726"
+    },
+    {
+      "id": "cli_ce5ff4da",
+      "name": "كريم الحسيني",
+      "phone": "01000880131",
+      "address": "حدايق اكتوبر",
+      "healthCondition": "مسن",
+      "serviceType": "hours12",
+      "dailyPrice": 500,
+      "nurseDailyPrice": 400,
+      "isExistingClient": true,
+      "openingBalance": 0,
+      "startDate": "2026-11-08T17:25:25.218",
+      "endDate": null,
+      "status": "active",
+      "terminationReason": null,
+      "nurseAssigned": "محمود",
+      "notes": "",
+      "createdBy": "wahdan",
+      "createdAt": "2026-11-08T16:57:53.503",
+      "updatedAt": "2026-11-08T17:25:50.281"
+    }
+  ],
+  "payments": [
+    {
+      "id": "pay_ea4deaee",
+      "clientId": "cli_ce5ff4da",
+      "clientName": "كريم الحسيني",
+      "amount": 2000,
+      "paymentDate": "2026-11-08T17:24:54.071",
+      "paymentChannel": "bank",
+      "paymentMethod": "transfer",
+      "notes": "",
+      "receivedBy": "wahdan",
+      "createdAt": "2026-11-08T17:25:17.936"
+    }
+  ],
+  "expenses": [
+    {
+      "id": "exp_117ffdb3",
+      "title": "مصروفات تحويل",
+      "category": "other",
+      "amount": 10,
+      "expenseDate": "2026-11-08T16:40:04.386",
+      "paymentChannel": "wallet",
+      "notes": "",
+      "recordedBy": "wahdan",
+      "relatedClientId": null,
+      "createdAt": "2026-11-08T16:41:01.920"
+    }
+  ],
+  "serviceDays": [
+    {
+      "id": "day_9e9f1734",
+      "clientId": "cli_ce5ff4da",
+      "clientName": "كريم الحسيني",
+      "date": "2026-11-11T17:23:41.871",
+      "nurseName": "محمود",
+      "shiftType": "hours12",
+      "clientPrice": 500,
+      "nursePrice": 400,
+      "notes": "",
+      "recordedBy": "wahdan",
+      "createdAt": "2026-11-08T17:24:11.701"
+    },
+    {
+      "id": "day_1f58e354",
+      "clientId": "cli_ce5ff4da",
+      "clientName": "كريم الحسيني",
+      "date": "2026-11-10T17:23:41.871",
+      "nurseName": "محمود",
+      "shiftType": "hours12",
+      "clientPrice": 500,
+      "nursePrice": 400,
+      "notes": "",
+      "recordedBy": "wahdan",
+      "createdAt": "2026-11-08T17:24:11.701"
+    },
+    {
+      "id": "day_1f6ed606",
+      "clientId": "cli_ce5ff4da",
+      "clientName": "كريم الحسيني",
+      "date": "2026-11-09T17:23:41.871",
+      "nurseName": "محمود",
+      "shiftType": "hours12",
+      "clientPrice": 500,
+      "nursePrice": 400,
+      "notes": "",
+      "recordedBy": "wahdan",
+      "createdAt": "2026-11-08T17:24:11.701"
+    },
+    {
+      "id": "day_4a5ea689",
+      "clientId": "cli_ce5ff4da",
+      "clientName": "كريم الحسيني",
+      "date": "2026-11-08T17:23:41.871",
+      "nurseName": "محمود",
+      "shiftType": "hours12",
+      "clientPrice": 500,
+      "nursePrice": 400,
+      "notes": "",
+      "recordedBy": "wahdan",
+      "createdAt": "2026-11-08T17:24:11.701"
+    }
+  ],
+  "users": [
+    {
+      "id": "usr_wahdan",
+      "username": "wahdan",
+      "password": "123",
+      "displayName": "أ/ وهدان",
+      "roleTitle": "مدير الشركة (المدير العام)",
+      "roleType": "manager",
+      "permissions": {
+        "canAddClient": true,
+        "canEditClient": true,
+        "canSetPrice": true,
+        "canStartService": true,
+        "canEndService": true,
+        "canRecordPayment": true,
+        "canRecordExpense": true,
+        "canViewFinancialReports": true,
+        "canManagePermissions": true,
+        "canEditAnyData": true
+      }
+    },
+    {
+      "id": "usr_zezo",
+      "username": "zezo",
+      "password": "123",
+      "displayName": "أ/ زيزو",
+      "roleTitle": "مدير الحسابات والمالية",
+      "roleType": "accountant",
+      "permissions": {
+        "canAddClient": false,
+        "canEditClient": false,
+        "canSetPrice": true,
+        "canStartService": false,
+        "canEndService": true,
+        "canRecordPayment": true,
+        "canRecordExpense": true,
+        "canViewFinancialReports": true,
+        "canManagePermissions": false,
+        "canEditAnyData": false
+      }
+    },
+    {
+      "id": "usr_shimaa",
+      "username": "shimaa",
+      "password": "123",
+      "displayName": "أ/ شيماء",
+      "roleTitle": "مديرة المتابعة والتشغيل",
+      "roleType": "followup",
+      "permissions": {
+        "canAddClient": true,
+        "canEditClient": true,
+        "canSetPrice": false,
+        "canStartService": true,
+        "canEndService": false,
+        "canRecordPayment": false,
+        "canRecordExpense": false,
+        "canViewFinancialReports": false,
+        "canManagePermissions": false,
+        "canEditAnyData": false
+      }
+    },
+    {
+      "id": "usr_user4",
+      "username": "user4",
+      "password": "123",
+      "displayName": "حساب إضافي (1)",
+      "roleTitle": "مشرف تمريض / منسق ميداني",
+      "roleType": "custom",
+      "permissions": {
+        "canAddClient": false,
+        "canEditClient": false,
+        "canSetPrice": false,
+        "canStartService": true,
+        "canEndService": false,
+        "canRecordPayment": false,
+        "canRecordExpense": false,
+        "canViewFinancialReports": false,
+        "canManagePermissions": false,
+        "canEditAnyData": false
+      }
+    },
+    {
+      "id": "usr_user5",
+      "username": "user5",
+      "password": "123",
+      "displayName": "حساب إضافي (2)",
+      "roleTitle": "خدمة عملاء / متابعة",
+      "roleType": "custom",
+      "permissions": {
+        "canAddClient": true,
+        "canEditClient": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canEndService": false,
+        "canRecordPayment": false,
+        "canRecordExpense": false,
+        "canViewFinancialReports": false,
+        "canManagePermissions": false,
+        "canEditAnyData": false
+      }
+    }
+  ]
+}
