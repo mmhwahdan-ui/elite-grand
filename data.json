@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-09T11:33:29.898Z",
+  "lastUpdated": "2026-11-09T11:57:55.190Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -112,6 +112,18 @@
       "recordedBy": "wahdan",
       "relatedClientId": null,
       "createdAt": "2026-11-08T16:41:01.920"
+    },
+    {
+      "amount": 300,
+      "category": "advances",
+      "createdAt": "2026-11-09T13:43:20.452",
+      "expenseDate": "2026-11-09T13:42:02.054",
+      "id": "exp_01c3f368",
+      "notes": "",
+      "paymentChannel": "cash",
+      "recordedBy": "wahdan",
+      "relatedClientId": "cli_d986e3c5",
+      "title": "سلفه صابرين"
     }
   ],
   "serviceDays": [
@@ -168,6 +180,9 @@
       "createdAt": "2026-11-08T17:24:11.701"
     }
   ],
+  "nurseTransactions": [],
+  "partnerLoans": [],
+  "partnerSettlements": [],
   "users": [
     {
       "id": "usr_wahdan",

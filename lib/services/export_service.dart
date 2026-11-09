@@ -1,3 +1,4 @@
+import 'package:excel/excel.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import '../models/client_model.dart';
 import '../models/expense_model.dart';
@@ -10,17 +11,109 @@ import 'export_stub.dart'
 
 class ExportService {
   static final DateFormat _dateFormat = DateFormat('yyyy/MM/dd');
+  static const String _xlsxMimeType =
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-  // 1. Export Clients Ledger to Excel
+  // Styles
+  static final CellStyle _headerStyle = CellStyle(
+    bold: true,
+    fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+    backgroundColorHex: ExcelColor.fromHexString('#0A2540'),
+    horizontalAlign: HorizontalAlign.Center,
+    verticalAlign: VerticalAlign.Center,
+  );
+
+  static final CellStyle _subHeaderStyle = CellStyle(
+    bold: true,
+    fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+    backgroundColorHex: ExcelColor.fromHexString('#1E5180'),
+    horizontalAlign: HorizontalAlign.Center,
+    verticalAlign: VerticalAlign.Center,
+  );
+
+  static final CellStyle _titleStyle = CellStyle(
+    bold: true,
+    fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+    backgroundColorHex: ExcelColor.fromHexString('#0052CC'),
+    horizontalAlign: HorizontalAlign.Center,
+    verticalAlign: VerticalAlign.Center,
+  );
+
+  static final CellStyle _totalRowStyle = CellStyle(
+    bold: true,
+    backgroundColorHex: ExcelColor.fromHexString('#E3F2FD'),
+    horizontalAlign: HorizontalAlign.Center,
+    verticalAlign: VerticalAlign.Center,
+  );
+
+  static CellValue _cell(dynamic val) {
+    if (val == null) return TextCellValue('');
+    if (val is int) return IntCellValue(val);
+    if (val is double) {
+      if (val == val.roundToDouble()) {
+        return IntCellValue(val.toInt());
+      }
+      return DoubleCellValue(double.parse(val.toStringAsFixed(2)));
+    }
+    if (val is bool) return TextCellValue(val ? 'نعم' : 'لا');
+    return TextCellValue(val.toString());
+  }
+
+  static void _styleRow(Sheet sheet, int rowIndex, int colCount, CellStyle style) {
+    for (int col = 0; col < colCount; col++) {
+      final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: rowIndex));
+      cell.cellStyle = style;
+    }
+  }
+
+  static Sheet _createSheet(Excel excel, String sheetName) {
+    final defaultSheet = excel.getDefaultSheet();
+    if (defaultSheet != null && defaultSheet != sheetName) {
+      excel.rename(defaultSheet, sheetName);
+    }
+    final sheet = excel[sheetName];
+    sheet.isRTL = true;
+    return sheet;
+  }
+
+  static void _saveExcel(Excel excel, String fileName) {
+    final bytes = excel.save();
+    if (bytes != null) {
+      saveAndDownloadBytes(bytes, fileName, _xlsxMimeType);
+    }
+  }
+
+  // 1. Export Clients Ledger to Excel (.xlsx)
   static void exportClientsToExcel(AppProvider provider) {
-    final StringBuffer csv = StringBuffer();
-    // Tells Microsoft Excel to always use comma separation into multiple columns
-    csv.writeln('sep=,');
+    final excel = Excel.createExcel();
+    final sheet = _createSheet(excel, 'العملاء والحالات');
 
-    // Headers
-    csv.writeln(
-      'اسم العميل,نوع العميل,الرصيد الافتتاحي (ج.م),رقم الهاتف,العنوان,الحالة الصحية,نوع الشيفت,سعر العميل (ج.م),يومية الممرض (ج.م),مكسب الشركة اليومي (ج.م),تاريخ البدء,تاريخ الإنهاء,عدد الأيام,إجمالي تعاقد العميل (ج.م),إجمالي مستحق التمريض (ج.م),إجمالي مكسب الشركة من الحالة (ج.م),المدفوع نقداً (ج.م),الرصيد النهائي ومستحقات الشركة,حالة الخدمة,الممرض المسند,ملاحظات'
-    );
+    final headers = [
+      'اسم العميل',
+      'نوع العميل',
+      'الرصيد الافتتاحي (ج.م)',
+      'رقم الهاتف',
+      'العنوان',
+      'الحالة الصحية',
+      'نوع الشيفت',
+      'سعر العميل (ج.م)',
+      'يومية الممرض (ج.م)',
+      'مكسب الشركة اليومي (ج.م)',
+      'تاريخ البدء',
+      'تاريخ الإنهاء',
+      'عدد الأيام المنفذة',
+      'إجمالي تعاقد العميل (ج.م)',
+      'إجمالي مستحق التمريض (ج.م)',
+      'إجمالي مكسب الشركة (ج.م)',
+      'المدفوع نقداً (ج.م)',
+      'الرصيد ومستحقات الشركة',
+      'حالة الخدمة',
+      'الممرض المسند',
+      'ملاحظات',
+    ];
+
+    sheet.appendRow(headers.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _headerStyle);
 
     for (var c in provider.clients) {
       final paid = provider.getClientTotalPaid(c.id);
@@ -35,73 +128,98 @@ class ExportService {
           : (bal > 0 ? 'مستحق للعميل: ${bal.toStringAsFixed(0)} ج.م' : 'خالص');
 
       final row = [
-        _escape(c.name),
+        c.name,
         c.isExistingClient ? 'عميل حالي' : 'عميل جديد',
-        c.openingBalance.toStringAsFixed(0),
-        _escape(c.phone),
-        _escape(c.address),
-        _escape(c.healthCondition),
-        _escape(c.serviceTypeArabic),
-        c.dailyPrice.toStringAsFixed(0),
-        c.nurseDailyPrice.toStringAsFixed(0),
-        c.dailyCompanyProfit.toStringAsFixed(0),
+        c.openingBalance,
+        c.phone,
+        c.address,
+        c.healthCondition,
+        c.serviceTypeArabic,
+        c.dailyPrice,
+        c.nurseDailyPrice,
+        c.dailyCompanyProfit,
         c.startDate != null ? _dateFormat.format(c.startDate!) : 'لم تبدأ',
         c.endDate != null ? _dateFormat.format(c.endDate!) : (c.startDate != null ? 'مستمرة' : '-'),
-        servedDays.toString(),
-        clientCost.toStringAsFixed(0),
-        nurseCost.toStringAsFixed(0),
-        profit.toStringAsFixed(0),
-        paid.toStringAsFixed(0),
-        _escape(balanceText),
-        _escape(c.statusArabic),
-        _escape(c.nurseAssigned ?? '-'),
-        _escape(c.notes),
+        servedDays,
+        clientCost,
+        nurseCost,
+        profit,
+        paid,
+        balanceText,
+        c.statusArabic,
+        c.nurseAssigned ?? '-',
+        c.notes,
       ];
 
-      csv.writeln(row.join(','));
+      sheet.appendRow(row.map(_cell).toList());
     }
 
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    saveAndDownloadFile(
-      csv.toString(),
-      'تقرير_حالات_وعملاء_إيليت_جراند_$dateStr.csv',
-      'text/csv;charset=utf-8;',
-    );
+    _saveExcel(excel, 'تقرير_حالات_وعملاء_إيليت_جراند_$dateStr.xlsx');
   }
 
-  // 2. Export Payments Ledger to Excel
+  // 2. Export Payments Ledger to Excel (.xlsx)
   static void exportPaymentsToExcel(AppProvider provider) {
-    final StringBuffer csv = StringBuffer();
-    csv.writeln('sep=,');
-    csv.writeln('التاريخ,اسم العميل,المبلغ المحصل (ج.م),مكان التحصيل والإيداع,المستلم,ملاحظات');
+    final excel = Excel.createExcel();
+    final sheet = _createSheet(excel, 'المقبوضات والتحصيلات');
 
+    final headers = [
+      'التاريخ',
+      'اسم العميل',
+      'المبلغ المحصل (ج.م)',
+      'مكان التحصيل والإيداع',
+      'المستلم',
+      'ملاحظات',
+    ];
+
+    sheet.appendRow(headers.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _headerStyle);
+
+    double totalAmount = 0;
     for (var p in provider.payments) {
+      totalAmount += p.amount;
       final row = [
         _dateFormat.format(p.paymentDate),
-        _escape(p.clientName),
-        p.amount.toStringAsFixed(0),
-        _escape(p.channelArabic),
-        _escape(p.receivedBy),
-        _escape(p.notes),
+        p.clientName,
+        p.amount,
+        p.channelArabic,
+        p.receivedBy,
+        p.notes,
       ];
-      csv.writeln(row.join(','));
+      sheet.appendRow(row.map(_cell).toList());
     }
 
+    // Total Row
+    final totalRow = ['الإجمالي', '', totalAmount, '', '', ''];
+    sheet.appendRow(totalRow.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _totalRowStyle);
+
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    saveAndDownloadFile(
-      csv.toString(),
-      'سجل_مقبوضات_وتحصيلات_إيليت_جراند_$dateStr.csv',
-      'text/csv;charset=utf-8;',
-    );
+    _saveExcel(excel, 'سجل_مقبوضات_وتحصيلات_إيليت_جراند_$dateStr.xlsx');
   }
 
-  // 3. Export Expenses to Excel
+  // 3. Export Expenses to Excel (.xlsx)
   static void exportExpensesToExcel(AppProvider provider) {
-    final StringBuffer csv = StringBuffer();
-    csv.writeln('sep=,');
-    csv.writeln('التاريخ,بند المصروف,بيان وتفاصيل المصروف,المبلغ (ج.م),قناة الدفع والصرف,سُجل بواسطة,يخص مريض,ملاحظات');
+    final excel = Excel.createExcel();
+    final sheet = _createSheet(excel, 'المصروفات');
 
+    final headers = [
+      'التاريخ',
+      'بند المصروف',
+      'بيان وتفاصيل المصروف',
+      'المبلغ (ج.م)',
+      'قناة الدفع والصرف',
+      'سُجل بواسطة',
+      'يخص مريض',
+      'ملاحظات',
+    ];
+
+    sheet.appendRow(headers.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _headerStyle);
+
+    double totalAmount = 0;
     for (var exp in provider.expenses) {
+      totalAmount += exp.amount;
       String clientName = 'عام للشركة';
       if (exp.relatedClientId != null) {
         final matches = provider.clients.where((c) => c.id == exp.relatedClientId);
@@ -112,119 +230,217 @@ class ExportService {
 
       final row = [
         _dateFormat.format(exp.expenseDate),
-        _escape(exp.categoryArabic),
-        _escape(exp.title),
-        exp.amount.toStringAsFixed(0),
-        _escape(exp.channelArabic),
-        _escape(exp.recordedBy),
-        _escape(clientName),
-        _escape(exp.notes),
+        exp.categoryArabic,
+        exp.title,
+        exp.amount,
+        exp.channelArabic,
+        exp.recordedBy,
+        clientName,
+        exp.notes,
       ];
-
-      csv.writeln(row.join(','));
+      sheet.appendRow(row.map(_cell).toList());
     }
 
+    // Total Row
+    final totalRow = ['الإجمالي', '', '', totalAmount, '', '', '', ''];
+    sheet.appendRow(totalRow.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _totalRowStyle);
+
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    saveAndDownloadFile(
-      csv.toString(),
-      'تقرير_مصروفات_إيليت_جراند_$dateStr.csv',
-      'text/csv;charset=utf-8;',
-    );
+    _saveExcel(excel, 'تقرير_مصروفات_إيليت_جراند_$dateStr.xlsx');
   }
 
-  // 4. Export Comprehensive Financial Statement to Excel
+  // 4. Export Comprehensive Financial Statement to Excel (.xlsx)
   static void exportFinancialReportToExcel(AppProvider provider) {
-    final StringBuffer csv = StringBuffer();
-    csv.writeln('sep=,');
+    final excel = Excel.createExcel();
+    final sheet = _createSheet(excel, 'التقرير المالي الشامل');
 
-    final dateStr = DateFormat('yyyy/MM/dd HH:mm').format(DateTime.now());
-    csv.writeln('تقرير المركز المالي والأرباح التشغيلية وحسابات البنوك - شركة إيليت جراند');
-    csv.writeln('تاريخ استخراج التقرير: $dateStr');
-    csv.writeln('');
+    final nowStr = DateFormat('yyyy/MM/dd HH:mm').format(DateTime.now());
 
-    // Treasury & Accounts breakdown
-    csv.writeln('--- أرصدة الحسابات ومصادر السيولة النقدية والبنكية ---,,,');
-    csv.writeln('الحساب / القناة,رصيد أول المدة (ج.م),إجمالي التحصيلات (الوارد),إجمالي المصروفات (المنصرف),الرصيد الفعلي الحالي (ج.م)');
-    csv.writeln('📱 المحفظة الإلكترونية (فودافون كاش / إنستاباي),${provider.walletOpeningBalance.toStringAsFixed(0)},${provider.walletCollections.toStringAsFixed(0)},${provider.walletExpenses.toStringAsFixed(0)},${provider.currentWalletBalance.toStringAsFixed(0)}');
-    csv.writeln('🏦 الحساب البنكي (تحويلات وإيداعات),${provider.bankOpeningBalance.toStringAsFixed(0)},${provider.bankCollections.toStringAsFixed(0)},${provider.bankExpenses.toStringAsFixed(0)},${provider.currentBankBalance.toStringAsFixed(0)}');
-    csv.writeln('💵 الخزينة النقدية (كاش المقر والمندوبين),${provider.cashOpeningBalance.toStringAsFixed(0)},${provider.cashCollections.toStringAsFixed(0)},${provider.cashExpenses.toStringAsFixed(0)},${provider.currentCashBalance.toStringAsFixed(0)}');
-    csv.writeln('💰 إجمالي السيولة المتاحة للشركة,,, ,${provider.totalTreasuryBalance.toStringAsFixed(0)}');
-    csv.writeln('');
+    // Title
+    sheet.appendRow([_cell('تقرير المركز المالي والأرباح التشغيلية وحسابات البنوك - شركة إيليت جراند')]);
+    _styleRow(sheet, sheet.maxRows - 1, 5, _titleStyle);
+    sheet.appendRow([_cell('تاريخ استخراج التقرير: $nowStr')]);
+    sheet.appendRow([_cell('')]);
 
-    // Case profitability & price difference
-    csv.writeln('--- تصفية أرباح الحالات وفروق الأسعار (العميل vs التمريض) ---,,,');
-    csv.writeln('إجمالي تعاقدات العملاء (إيرادات الخدمة المحققة),${provider.totalAccruedRevenues.toStringAsFixed(0)},(مجموع الأيام × سعر العميل)');
-    csv.writeln('إجمالي مستحقات ويوميات التمريض المنقضية,${provider.totalNurseAccruedCosts.toStringAsFixed(0)},(مجموع الأيام × يومية الممرض)');
-    csv.writeln('💎 صافي مكسب الشركة من فروق الأسعار,${provider.totalCompanyGrossProfit.toStringAsFixed(0)},(إيرادات العملاء - مستحقات التمريض)');
-    csv.writeln('');
+    // Section 1: Treasury & Liquidity
+    sheet.appendRow([_cell('أرصدة الحسابات ومصادر السيولة النقدية والبنكية')]);
+    _styleRow(sheet, sheet.maxRows - 1, 5, _subHeaderStyle);
 
-    // Summary financials
-    csv.writeln('--- المؤشرات المالية الإجمالية ---,,,');
-    csv.writeln('البند المالي,القيمة بالجنيه المصري (ج.م),التفاصيل والملاحظات');
-    csv.writeln('إجمالي المقبوضات النقدية والبنكية المحصلة,${provider.totalPaymentsCollected.toStringAsFixed(0)},المبالغ المستلمة فعلياً من العملاء');
-    csv.writeln('إجمالي المصروفات التشغيلية والرواتب,${provider.totalExpenses.toStringAsFixed(0)},كافة المصروفات المسجلة');
-    csv.writeln('صافي الأرباح التشغيلية المحققة,${provider.netAccruedProfit.toStringAsFixed(0)},(إيرادات الخدمة - المصروفات)');
-    csv.writeln('صافي التدفق النقدي الفعلي,${provider.netCashFlow.toStringAsFixed(0)},(المقبوضات - المصروفات)');
-    csv.writeln('مستحقات الشركة طرف العملاء (مديونيات),${provider.totalClientDebtsOwedToCompany.toStringAsFixed(0)},ديون سابقة ومستحقات خدمة جاري تحصيلها');
-    csv.writeln('مستحقات العملاء مقدماً لدى الشركة (أرصدة دائنة),${provider.totalClientAdvancesHeldByCompany.toStringAsFixed(0)},أرصدة افتتاحية ودفعات مقدمة تغطي أيام قادمة');
-    csv.writeln('');
+    final treasuryHeaders = [
+      'الحساب / القناة',
+      'رصيد أول المدة (ج.م)',
+      'إجمالي التحصيلات (الوارد)',
+      'إجمالي المصروفات (المنصرف)',
+      'الرصيد الفعلي الحالي (ج.م)',
+    ];
+    sheet.appendRow(treasuryHeaders.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 5, _headerStyle);
 
-    // Expenses breakdown
-    csv.writeln('--- تفصيل المصروفات حسب البند ---,,,');
+    sheet.appendRow([
+      '📱 المحفظة الإلكترونية (فودافون كاش / إنستاباي)',
+      provider.walletOpeningBalance,
+      provider.walletCollections,
+      provider.walletExpenses,
+      provider.currentWalletBalance,
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      '🏦 الحساب البنكي (تحويلات وإيداعات)',
+      provider.bankOpeningBalance,
+      provider.bankCollections,
+      provider.bankExpenses,
+      provider.currentBankBalance,
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      '💵 الخزينة النقدية (كاش المقر والمندوبين)',
+      provider.cashOpeningBalance,
+      provider.cashCollections,
+      provider.cashExpenses,
+      provider.currentCashBalance,
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      '💰 إجمالي السيولة المتاحة للشركة',
+      '',
+      '',
+      '',
+      provider.totalTreasuryBalance,
+    ].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 5, _totalRowStyle);
+
+    sheet.appendRow([_cell('')]);
+
+    // Section 2: Case Profitability
+    sheet.appendRow([_cell('تصفية أرباح الحالات وفروق الأسعار (العميل vs التمريض)')]);
+    _styleRow(sheet, sheet.maxRows - 1, 3, _subHeaderStyle);
+
+    sheet.appendRow(['البيان المالي', 'المبلغ (ج.م)', 'ملاحظات'].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 3, _headerStyle);
+
+    sheet.appendRow([
+      'إجمالي تعاقدات العملاء (إيرادات الخدمة المحققة)',
+      provider.totalAccruedRevenues,
+      'مجموع الأيام × سعر العميل',
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      'إجمالي مستحقات ويوميات التمريض المنقضية',
+      provider.totalNurseAccruedCosts,
+      'مجموع الأيام × يومية الممرض',
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      '💎 صافي مكسب الشركة من فروق الأسعار',
+      provider.totalCompanyGrossProfit,
+      'إيرادات العملاء - مستحقات التمريض',
+    ].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 3, _totalRowStyle);
+
+    sheet.appendRow([_cell('')]);
+
+    // Section 3: Summary Indicators
+    sheet.appendRow([_cell('المؤشرات المالية الإجمالية')]);
+    _styleRow(sheet, sheet.maxRows - 1, 3, _subHeaderStyle);
+
+    sheet.appendRow(['البند المالي', 'القيمة بالجنيه المصري (ج.م)', 'التفاصيل والملاحظات'].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 3, _headerStyle);
+
+    sheet.appendRow(['إجمالي المقبوضات النقدية والبنكية المحصلة', provider.totalPaymentsCollected, 'المبالغ المستلمة فعلياً من العملاء'].map(_cell).toList());
+    sheet.appendRow(['إجمالي المصروفات التشغيلية والرواتب', provider.totalExpenses, 'كافة المصروفات المسجلة'].map(_cell).toList());
+    sheet.appendRow(['صافي الأرباح التشغيلية المحققة', provider.netAccruedProfit, 'إيرادات الخدمة - المصروفات'].map(_cell).toList());
+    sheet.appendRow(['صافي التدفق النقدي الفعلي', provider.netCashFlow, 'المقبوضات - المصروفات'].map(_cell).toList());
+    sheet.appendRow(['مستحقات الشركة طرف العملاء (مديونيات)', provider.totalClientDebtsOwedToCompany, 'ديون سابقة ومستحقات خدمة جاري تحصيلها'].map(_cell).toList());
+    sheet.appendRow(['مستحقات العملاء مقدماً لدى الشركة (أرصدة دائنة)', provider.totalClientAdvancesHeldByCompany, 'أرصدة افتتاحية ودفعات مقدمة تغطي أيام قادمة'].map(_cell).toList());
+
+    sheet.appendRow([_cell('')]);
+
+    // Section 4: Expenses by Category
+    sheet.appendRow([_cell('تفصيل المصروفات حسب البند')]);
+    _styleRow(sheet, sheet.maxRows - 1, 3, _subHeaderStyle);
+
+    sheet.appendRow(['بند المصروف', 'المبلغ (ج.م)', 'النوع'].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 3, _headerStyle);
+
     final Map<String, double> expensesByCategory = {};
     for (var exp in provider.expenses) {
       expensesByCategory[exp.categoryArabic] = (expensesByCategory[exp.categoryArabic] ?? 0) + exp.amount;
     }
-
     for (var entry in expensesByCategory.entries) {
-      csv.writeln('${entry.key},${entry.value.toStringAsFixed(0)},مصروفات');
+      sheet.appendRow([entry.key, entry.value, 'مصروفات تشغيلية'].map(_cell).toList());
     }
 
     final fileDateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    saveAndDownloadFile(
-      csv.toString(),
-      'التقرير_المالي_الشامل_والأرصدة_إيليت_جراند_$fileDateStr.csv',
-      'text/csv;charset=utf-8;',
-    );
+    _saveExcel(excel, 'التقرير_المالي_الشامل_والأرصدة_إيليت_جراند_$fileDateStr.xlsx');
   }
 
-  // 5. Export Detailed Service Days / Shifts Log to Excel
+  // 5. Export Detailed Service Days / Shifts Log to Excel (.xlsx)
   static void exportServiceDaysToExcel(AppProvider provider) {
-    final StringBuffer csv = StringBuffer();
-    csv.writeln('sep=,');
-    csv.writeln('التاريخ,اسم العميل / الحالة,اسم الممرض,نوع الوردية,سعر اليوم للعميل (ج.م),يومية الممرض (ج.م),مكسب الشركة من اليومية (ج.م),سُجل بواسطة,ملاحظات');
+    final excel = Excel.createExcel();
+    final sheet = _createSheet(excel, 'سجل الورديات');
+
+    final headers = [
+      'التاريخ',
+      'اسم العميل / الحالة',
+      'اسم الممرض',
+      'نوع الوردية',
+      'سعر اليوم للعميل (ج.م)',
+      'يومية الممرض (ج.م)',
+      'مكسب الشركة من اليومية (ج.م)',
+      'سُجل بواسطة',
+      'ملاحظات',
+    ];
+
+    sheet.appendRow(headers.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _headerStyle);
 
     for (var day in provider.serviceDays) {
       final row = [
         _dateFormat.format(day.date),
-        _escape(day.clientName),
-        _escape(day.nurseName),
-        _escape(day.shiftTypeArabic),
-        day.clientPrice.toStringAsFixed(0),
-        day.nursePrice.toStringAsFixed(0),
-        day.companyDayProfit.toStringAsFixed(0),
-        _escape(day.recordedBy),
-        _escape(day.notes),
+        day.clientName,
+        day.nurseName,
+        day.shiftTypeArabic,
+        day.clientPrice,
+        day.nursePrice,
+        day.companyDayProfit,
+        day.recordedBy,
+        day.notes,
       ];
-      csv.writeln(row.join(','));
+      sheet.appendRow(row.map(_cell).toList());
     }
 
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    saveAndDownloadFile(
-      csv.toString(),
-      'سجل_أيام_الخدمة_والشفتات_إيليت_جراند_$dateStr.csv',
-      'text/csv;charset=utf-8;',
-    );
+    _saveExcel(excel, 'سجل_أيام_الخدمة_والشفتات_إيليت_جراند_$dateStr.xlsx');
   }
 
-  // 6. Export All Nurses Comprehensive Ledger to Excel
+  // 6. Export All Nurses Comprehensive Ledger to Excel (.xlsx)
   static void exportNursesReportToExcel(AppProvider provider) {
-    final StringBuffer csv = StringBuffer();
-    csv.writeln('sep=,');
-    csv.writeln('اسم الممرض,إجمالي عدد أيام العمل,إجمالي الأجر المستحق (ج.م),إجمالي السلف المنصرفة (ج.م),إجمالي دفعات المستحقات (ج.م),إجمالي ما استلمه (ج.م),صافي باقي المستحق للممرض (ج.م),الحالات التي عمل معها');
+    final excel = Excel.createExcel();
+    final sheet = _createSheet(excel, 'حسابات أطقم التمريض');
+
+    final headers = [
+      'اسم الممرض',
+      'إجمالي عدد أيام العمل',
+      'إجمالي الأجر المستحق (ج.م)',
+      'إجمالي السلف المنصرفة (ج.م)',
+      'إجمالي دفعات المستحقات (ج.م)',
+      'إجمالي ما استلمه (ج.م)',
+      'صافي باقي المستحق للممرض (ج.م)',
+      'الحالات التي عمل معها',
+    ];
+
+    sheet.appendRow(headers.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _headerStyle);
+
+    double totalDays = 0;
+    double totalEarned = 0;
+    double totalAdvances = 0;
+    double totalPayouts = 0;
+    double totalReceivedAll = 0;
+    double totalRemaining = 0;
 
     final nurseNames = provider.allNurseNames;
-
     for (var nurseName in nurseNames) {
       final days = provider.getNurseDaysCount(nurseName);
       final earned = provider.getNurseTotalEarned(nurseName);
@@ -235,31 +451,48 @@ class ExportService {
       final shifts = provider.getNurseShifts(nurseName);
       final clientsSet = shifts.map((s) => s.clientName).toSet().join(' - ');
 
+      totalDays += days;
+      totalEarned += earned;
+      totalAdvances += advances;
+      totalPayouts += payouts;
+      totalReceivedAll += totalReceived;
+      totalRemaining += remaining;
+
       final row = [
-        _escape(nurseName),
-        days.toString(),
-        earned.toStringAsFixed(0),
-        advances.toStringAsFixed(0),
-        payouts.toStringAsFixed(0),
-        totalReceived.toStringAsFixed(0),
-        remaining.toStringAsFixed(0),
-        _escape(clientsSet),
+        nurseName,
+        days,
+        earned,
+        advances,
+        payouts,
+        totalReceived,
+        remaining,
+        clientsSet,
       ];
-      csv.writeln(row.join(','));
+      sheet.appendRow(row.map(_cell).toList());
     }
 
+    // Total Row
+    final totalRow = [
+      'الإجمالي',
+      totalDays,
+      totalEarned,
+      totalAdvances,
+      totalPayouts,
+      totalReceivedAll,
+      totalRemaining,
+      '',
+    ];
+    sheet.appendRow(totalRow.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _totalRowStyle);
+
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    saveAndDownloadFile(
-      csv.toString(),
-      'كشف_حسابات_ومستحقات_وسلف_التمريض_إيليت_جراند_$dateStr.csv',
-      'text/csv;charset=utf-8;',
-    );
+    _saveExcel(excel, 'كشف_حسابات_ومستحقات_وسلف_التمريض_إيليت_جراند_$dateStr.xlsx');
   }
 
-  // 7. Export Single Nurse Detailed Statement to Excel
+  // 7. Export Single Nurse Detailed Statement to Excel (.xlsx)
   static void exportSingleNurseStatementToExcel(AppProvider provider, String nurseName) {
-    final StringBuffer csv = StringBuffer();
-    csv.writeln('sep=,');
+    final excel = Excel.createExcel();
+    final sheet = _createSheet(excel, 'كشف حساب $nurseName');
 
     final days = provider.getNurseDaysCount(nurseName);
     final earned = provider.getNurseTotalEarned(nurseName);
@@ -268,168 +501,257 @@ class ExportService {
     final totalReceived = provider.getNurseTotalReceived(nurseName);
     final remaining = provider.getNurseRemainingBalance(nurseName);
 
-    csv.writeln('كشف حساب تفصيلي للممرض: $nurseName - شركة إيليت جراند');
-    csv.writeln('تاريخ التقرير: ${_dateFormat.format(DateTime.now())}');
-    csv.writeln('');
-    csv.writeln('--- الملخص المالي للممرض ---,,,');
-    csv.writeln('إجمالي أيام العمل المنفذة,$days,يوم');
-    csv.writeln('إجمالي المستحقات والأجر عن الورديات,${earned.toStringAsFixed(0)},ج.م');
-    csv.writeln('إجمالي السلف المأخوذة,${advances.toStringAsFixed(0)},ج.م');
-    csv.writeln('إجمالي الدفعات المنصرفة,${payouts.toStringAsFixed(0)},ج.م');
-    csv.writeln('إجمالي ما تم استلامه (سلف + دفعات),${totalReceived.toStringAsFixed(0)},ج.م');
-    csv.writeln('صافي باقي المستحق للممرض طرف الشركة,${remaining.toStringAsFixed(0)},ج.م');
-    csv.writeln('');
+    // Title
+    sheet.appendRow([_cell('كشف حساب تفصيلي للممرض: $nurseName - شركة إيليت جراند')]);
+    _styleRow(sheet, sheet.maxRows - 1, 6, _titleStyle);
+    sheet.appendRow([_cell('تاريخ التقرير: ${_dateFormat.format(DateTime.now())}')]);
+    sheet.appendRow([_cell('')]);
+
+    // Summary Block
+    sheet.appendRow([_cell('الملخص المالي للممرض')]);
+    _styleRow(sheet, sheet.maxRows - 1, 3, _subHeaderStyle);
+
+    sheet.appendRow(['البيان', 'القيمة', 'الوحدة'].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 3, _headerStyle);
+
+    sheet.appendRow(['إجمالي أيام العمل المنفذة', days, 'يوم'].map(_cell).toList());
+    sheet.appendRow(['إجمالي المستحقات والأجر عن الورديات', earned, 'ج.م'].map(_cell).toList());
+    sheet.appendRow(['إجمالي السلف المأخوذة', advances, 'ج.م'].map(_cell).toList());
+    sheet.appendRow(['إجمالي الدفعات المنصرفة', payouts, 'ج.م'].map(_cell).toList());
+    sheet.appendRow(['إجمالي ما تم استلامه (سلف + دفعات)', totalReceived, 'ج.م'].map(_cell).toList());
+    sheet.appendRow(['صافي باقي المستحق للممرض طرف الشركة', remaining, 'ج.م'].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 3, _totalRowStyle);
+
+    sheet.appendRow([_cell('')]);
 
     // Table 1: Shifts worked
-    csv.writeln('--- جدول الورديات وأيام العمل المنفذة ---,,,,');
-    csv.writeln('التاريخ,اسم العميل / الحالة,نوع الشيفت,سعر اليوم للممرض (ج.م),سُجل بواسطة,ملاحظات');
+    sheet.appendRow([_cell('جدول الورديات وأيام العمل المنفذة')]);
+    _styleRow(sheet, sheet.maxRows - 1, 6, _subHeaderStyle);
+
+    final shiftHeaders = [
+      'التاريخ',
+      'اسم العميل / الحالة',
+      'نوع الشيفت',
+      'سعر اليوم للممرض (ج.م)',
+      'سُجل بواسطة',
+      'ملاحظات',
+    ];
+    sheet.appendRow(shiftHeaders.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 6, _headerStyle);
+
     final shifts = provider.getNurseShifts(nurseName);
     for (var s in shifts) {
       final row = [
         _dateFormat.format(s.date),
-        _escape(s.clientName),
-        _escape(s.shiftTypeArabic),
-        s.nursePrice.toStringAsFixed(0),
-        _escape(s.recordedBy),
-        _escape(s.notes),
+        s.clientName,
+        s.shiftTypeArabic,
+        s.nursePrice,
+        s.recordedBy,
+        s.notes,
       ];
-      csv.writeln(row.join(','));
+      sheet.appendRow(row.map(_cell).toList());
     }
-    csv.writeln('');
+
+    sheet.appendRow([_cell('')]);
 
     // Table 2: Advances and payouts
-    csv.writeln('--- جدول السلف والدفعات المالية المنصرفة للممرض ---,,,,');
-    csv.writeln('التاريخ,نوع العملية,المبلغ (ج.م),طريقة الصرف,سُجل بواسطة,ملاحظات');
+    sheet.appendRow([_cell('جدول السلف والدفعات المالية المنصرفة للممرض')]);
+    _styleRow(sheet, sheet.maxRows - 1, 6, _subHeaderStyle);
+
+    final transHeaders = [
+      'التاريخ',
+      'نوع العملية',
+      'المبلغ (ج.م)',
+      'طريقة الصرف',
+      'سُجل بواسطة',
+      'ملاحظات',
+    ];
+    sheet.appendRow(transHeaders.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 6, _headerStyle);
+
     final trans = provider.getNurseTransactions(nurseName);
     for (var t in trans) {
       final row = [
         _dateFormat.format(t.date),
-        _escape(t.typeArabic),
-        t.amount.toStringAsFixed(0),
-        _escape(t.channelArabic),
-        _escape(t.recordedBy),
-        _escape(t.notes),
+        t.typeArabic,
+        t.amount,
+        t.channelArabic,
+        t.recordedBy,
+        t.notes,
       ];
-      csv.writeln(row.join(','));
+      sheet.appendRow(row.map(_cell).toList());
     }
 
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    saveAndDownloadFile(
-      csv.toString(),
-      'كشف_حساب_الممرض_${nurseName}_$dateStr.csv',
-      'text/csv;charset=utf-8;',
-    );
+    _saveExcel(excel, 'كشف_حساب_الممرض_${nurseName}_$dateStr.xlsx');
   }
 
-  // 8. Export Partner Settlements (Day 23 Cycle) to Excel
+  // 8. Export Partner Settlements (Day 23 Cycle) to Excel (.xlsx)
   static void exportPartnerSettlementToExcel(
     AppProvider provider,
     Map<String, dynamic> calc,
     DateTime settlementDate,
   ) {
-    final StringBuffer csv = StringBuffer();
-    csv.writeln('sep=,');
+    final excel = Excel.createExcel();
+    final sheet = _createSheet(excel, 'تصفية دورة 23');
 
     final cycleTitle = 'تصفية أرباح دورة 23 ${_dateFormat.format(settlementDate)}';
-    csv.writeln('تقرير $cycleTitle - شركة إيليت جراند للتمريض المنزلي');
-    csv.writeln('تاريخ التصفية: ${_dateFormat.format(settlementDate)}');
-    csv.writeln('الفترة المحاسبية: من ${_dateFormat.format(calc['startDate'] as DateTime)} إلى ${_dateFormat.format(calc['endDate'] as DateTime)}');
-    csv.writeln('');
 
-    csv.writeln('--- ملخص أرباح الشركة والسيولة بالخزينة ---,,');
-    csv.writeln('صافي أرباح الشركة في هذه الدورة,${(calc['profit'] as double).toStringAsFixed(0)},ج.م');
-    csv.writeln('إجمالي السيولة المتاحة بالخزائن قبل الصرف,${(calc['treasuryBefore'] as double).toStringAsFixed(0)},ج.م');
-    csv.writeln('إجمالي المبالغ المنصرفة للشركاء,${(calc['totalDisbursed'] as double).toStringAsFixed(0)},ج.م');
-    csv.writeln('باقي النقدية والسيولة بالخزينة بعد الصرف,${(calc['remainingTreasury'] as double).toStringAsFixed(0)},ج.م');
-    csv.writeln('');
+    // Title
+    sheet.appendRow([_cell('تقرير $cycleTitle - شركة إيليت جراند للتمريض المنزلي')]);
+    _styleRow(sheet, sheet.maxRows - 1, 7, _titleStyle);
+    sheet.appendRow([_cell('تاريخ التصفية: ${_dateFormat.format(settlementDate)}')]);
+    sheet.appendRow([_cell('الفترة المحاسبية: من ${_dateFormat.format(calc['startDate'] as DateTime)} إلى ${_dateFormat.format(calc['endDate'] as DateTime)}')]);
+    sheet.appendRow([_cell('')]);
 
-    csv.writeln('--- جدول تصفية أرباح الشركاء وتوزيع الأرباح وخصم السلف ---,,,,,,');
-    csv.writeln('الشريك,النسبة المئوية,الربح الأساسي (ج.م),تعديل ضمان شيماء (6000 ج.م),الربح بعد الضمان (ج.م),استقطاع سلف الشريك (ج.م),صافي المستحق للصرف للشريك (ج.م)');
+    // Treasury & Profit Summary
+    sheet.appendRow([_cell('ملخص أرباح الشركة والسيولة بالخزينة')]);
+    _styleRow(sheet, sheet.maxRows - 1, 3, _subHeaderStyle);
+
+    sheet.appendRow(['البيان', 'المبلغ (ج.م)', 'ملاحظات'].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 3, _headerStyle);
+
+    sheet.appendRow(['صافي أرباح الشركة في هذه الدورة', calc['profit'], 'صافي الدورة المنتهية'].map(_cell).toList());
+    sheet.appendRow(['إجمالي السيولة المتاحة بالخزائن قبل الصرف', calc['treasuryBefore'], 'كاش + بنك + محافظ'].map(_cell).toList());
+    sheet.appendRow(['إجمالي المبالغ المنصرفة للشركاء', calc['totalDisbursed'], 'المبالغ المعتمدة'].map(_cell).toList());
+    sheet.appendRow(['باقي النقدية والسيولة بالخزينة بعد الصرف', calc['remainingTreasury'], 'الرصيد المتبقي بالخزينة'].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 3, _totalRowStyle);
+
+    sheet.appendRow([_cell('')]);
+
+    // Partners Share Table
+    sheet.appendRow([_cell('جدول تصفية أرباح الشركاء وتوزيع الأرباح وخصم السلف')]);
+    _styleRow(sheet, sheet.maxRows - 1, 7, _subHeaderStyle);
+
+    final partnerHeaders = [
+      'الشريك',
+      'النسبة المئوية',
+      'الربح الأساسي (ج.م)',
+      'تعديل ضمان شيماء (6000 ج.م)',
+      'الربح بعد الضمان (ج.م)',
+      'استقطاع سلف الشريك (ج.م)',
+      'صافي المستحق للصرف للشريك (ج.م)',
+    ];
+    sheet.appendRow(partnerHeaders.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 7, _headerStyle);
 
     // Wahdan (40%)
-    csv.writeln([
+    sheet.appendRow([
       'أ/ وهدان (المدير العام)',
       '40%',
-      (calc['wahdanBase'] as double).toStringAsFixed(0),
+      calc['wahdanBase'],
       calc['wahdanAdminDeduction'] > 0
           ? 'خصم إداري: -${(calc['wahdanAdminDeduction'] as double).toStringAsFixed(0)} ج.م'
           : 'لا يوجد خصم',
-      (calc['wahdanFinal'] as double).toStringAsFixed(0),
-      (calc['wahdanLoan'] as double).toStringAsFixed(0),
-      (calc['wahdanNet'] as double).toStringAsFixed(0),
-    ].join(','));
+      calc['wahdanFinal'],
+      calc['wahdanLoan'],
+      calc['wahdanNet'],
+    ].map(_cell).toList());
 
     // Shimaa (40% with minimum guarantee)
-    csv.writeln([
+    sheet.appendRow([
       'أ/ شيماء (المتابعة والتشغيل)',
       '40% (ضمان 6000)',
-      (calc['shimaaBase'] as double).toStringAsFixed(0),
+      calc['shimaaBase'],
       calc['shimaaSubsidy'] > 0
           ? 'دعم ضمان: +${(calc['shimaaSubsidy'] as double).toStringAsFixed(0)} ج.م'
           : 'حصة أصلية كاملة',
-      (calc['shimaaFinal'] as double).toStringAsFixed(0),
-      (calc['shimaaLoan'] as double).toStringAsFixed(0),
-      (calc['shimaaNet'] as double).toStringAsFixed(0),
-    ].join(','));
+      calc['shimaaFinal'],
+      calc['shimaaLoan'],
+      calc['shimaaNet'],
+    ].map(_cell).toList());
 
     // Zezo (20%)
-    csv.writeln([
+    sheet.appendRow([
       'أ/ زيزو (الحسابات والمالية)',
       '20%',
-      (calc['zezoBase'] as double).toStringAsFixed(0),
+      calc['zezoBase'],
       calc['zezoAdminDeduction'] > 0
           ? 'خصم إداري: -${(calc['zezoAdminDeduction'] as double).toStringAsFixed(0)} ج.م'
           : 'لا يوجد خصم',
-      (calc['zezoFinal'] as double).toStringAsFixed(0),
-      (calc['zezoLoan'] as double).toStringAsFixed(0),
-      (calc['zezoNet'] as double).toStringAsFixed(0),
-    ].join(','));
+      calc['zezoFinal'],
+      calc['zezoLoan'],
+      calc['zezoNet'],
+    ].map(_cell).toList());
 
-    csv.writeln('');
-    csv.writeln('الإجمالي,,,,${(calc['totalDisbursed'] as double).toStringAsFixed(0)} ج.م');
+    // Total Row
+    sheet.appendRow([
+      'الإجمالي المنصرف',
+      '100%',
+      '',
+      '',
+      '',
+      '',
+      calc['totalDisbursed'],
+    ].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, 7, _totalRowStyle);
 
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    saveAndDownloadFile(
-      csv.toString(),
-      'تصفية_أرباح_الشركاء_دورة_23_$dateStr.csv',
-      'text/csv;charset=utf-8;',
-    );
+    _saveExcel(excel, 'تصفية_أرباح_الشركاء_دورة_23_$dateStr.xlsx');
   }
 
-  // 9. Export Partner Loans Ledger to Excel
+  // 9. Export Partner Loans Ledger to Excel (.xlsx)
   static void exportPartnerLoansToExcel(AppProvider provider) {
-    final StringBuffer csv = StringBuffer();
-    csv.writeln('sep=,');
-    csv.writeln('اسم الشريك,تاريخ السلفة,إجمالي مبلغ السلفة (ج.م),نظام السداد,القسط الشهري (ج.م),المبلغ المسدد (ج.م),المتبقي طرف الشريك (ج.م),حالة السلفة,وسيلة الصرف,ملاحظات');
+    final excel = Excel.createExcel();
+    final sheet = _createSheet(excel, 'سجل سلف الشركاء');
+
+    final headers = [
+      'اسم الشريك',
+      'تاريخ السلفة',
+      'إجمالي مبلغ السلفة (ج.م)',
+      'نظام السداد',
+      'القسط الشهري (ج.م)',
+      'المبلغ المسدد (ج.م)',
+      'المتبقي طرف الشريك (ج.م)',
+      'حالة السلفة',
+      'وسيلة الصرف',
+      'ملاحظات',
+    ];
+
+    sheet.appendRow(headers.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _headerStyle);
+
+    double totalLoans = 0;
+    double totalPaid = 0;
+    double totalRemaining = 0;
 
     for (var loan in provider.partnerLoans) {
+      totalLoans += loan.totalAmount;
+      totalPaid += loan.paidAmount;
+      totalRemaining += loan.remainingAmount;
+
       final row = [
-        _escape(loan.partnerName),
+        loan.partnerName,
         _dateFormat.format(loan.date),
-        loan.totalAmount.toStringAsFixed(0),
-        _escape(loan.repaymentTypeArabic),
-        loan.monthlyDeduction.toStringAsFixed(0),
-        loan.paidAmount.toStringAsFixed(0),
-        loan.remainingAmount.toStringAsFixed(0),
+        loan.totalAmount,
+        loan.repaymentTypeArabic,
+        loan.monthlyDeduction,
+        loan.paidAmount,
+        loan.remainingAmount,
         loan.isFullyPaid ? 'تم السداد بالكامل' : 'جاري السداد',
-        _escape(loan.channelArabic),
-        _escape(loan.notes),
+        loan.channelArabic,
+        loan.notes,
       ];
-      csv.writeln(row.join(','));
+      sheet.appendRow(row.map(_cell).toList());
     }
+
+    // Total Row
+    final totalRow = [
+      'الإجمالي',
+      '',
+      totalLoans,
+      '',
+      '',
+      totalPaid,
+      totalRemaining,
+      '',
+      '',
+      '',
+    ];
+    sheet.appendRow(totalRow.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, headers.length, _totalRowStyle);
 
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    saveAndDownloadFile(
-      csv.toString(),
-      'سجل_سلف_الشركاء_إيليت_جراند_$dateStr.csv',
-      'text/csv;charset=utf-8;',
-    );
-  }
-
-  static String _escape(String field) {
-    if (field.contains(',') || field.contains('"') || field.contains('\n')) {
-      return '"${field.replaceAll('"', '""')}"';
-    }
-    return field;
+    _saveExcel(excel, 'سجل_سلف_الشركاء_إيليت_جراند_$dateStr.xlsx');
   }
 }
