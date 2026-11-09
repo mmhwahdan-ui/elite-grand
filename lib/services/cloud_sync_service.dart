@@ -7,6 +7,9 @@ import '../models/client_model.dart';
 import '../models/payment_model.dart';
 import '../models/expense_model.dart';
 import '../models/service_day_model.dart';
+import '../models/nurse_transaction_model.dart';
+import '../models/partner_loan_model.dart';
+import '../models/partner_settlement_model.dart';
 
 enum SyncStatus {
   idle,
@@ -23,6 +26,9 @@ class SyncResult {
   final List<PaymentModel>? payments;
   final List<ExpenseModel>? expenses;
   final List<ServiceDayModel>? serviceDays;
+  final List<NurseTransactionModel>? nurseTransactions;
+  final List<PartnerLoanModel>? partnerLoans;
+  final List<PartnerSettlementModel>? partnerSettlements;
   final List<UserModel>? users;
   final List<String>? deletedIds;
   final Map<String, double>? openingBalances;
@@ -34,6 +40,9 @@ class SyncResult {
     this.payments,
     this.expenses,
     this.serviceDays,
+    this.nurseTransactions,
+    this.partnerLoans,
+    this.partnerSettlements,
     this.users,
     this.deletedIds,
     this.openingBalances,
@@ -88,6 +97,9 @@ class CloudSyncService {
     required List<PaymentModel> payments,
     required List<ExpenseModel> expenses,
     List<ServiceDayModel> serviceDays = const [],
+    List<NurseTransactionModel> nurseTransactions = const [],
+    List<PartnerLoanModel> partnerLoans = const [],
+    List<PartnerSettlementModel> partnerSettlements = const [],
     required List<UserModel> users,
     List<String> deletedIds = const [],
     Map<String, double>? openingBalances,
@@ -105,6 +117,9 @@ class CloudSyncService {
         'payments': payments.map((p) => p.toMap()).toList(),
         'expenses': expenses.map((e) => e.toMap()).toList(),
         'serviceDays': serviceDays.map((d) => d.toMap()).toList(),
+        'nurseTransactions': nurseTransactions.map((t) => t.toMap()).toList(),
+        'partnerLoans': partnerLoans.map((l) => l.toMap()).toList(),
+        'partnerSettlements': partnerSettlements.map((s) => s.toMap()).toList(),
         'users': users.map((u) => u.toMap()).toList(),
       };
 
@@ -199,6 +214,27 @@ class CloudSyncService {
               .toList();
         }
 
+        List<NurseTransactionModel>? remoteNurseTransactions;
+        if (data['nurseTransactions'] is List) {
+          remoteNurseTransactions = (data['nurseTransactions'] as List)
+              .map((e) => NurseTransactionModel.fromMap(Map<String, dynamic>.from(e)))
+              .toList();
+        }
+
+        List<PartnerLoanModel>? remotePartnerLoans;
+        if (data['partnerLoans'] is List) {
+          remotePartnerLoans = (data['partnerLoans'] as List)
+              .map((e) => PartnerLoanModel.fromMap(Map<String, dynamic>.from(e)))
+              .toList();
+        }
+
+        List<PartnerSettlementModel>? remotePartnerSettlements;
+        if (data['partnerSettlements'] is List) {
+          remotePartnerSettlements = (data['partnerSettlements'] as List)
+              .map((e) => PartnerSettlementModel.fromMap(Map<String, dynamic>.from(e)))
+              .toList();
+        }
+
         List<UserModel>? remoteUsers;
         if (data['users'] is List) {
           remoteUsers = (data['users'] as List)
@@ -216,6 +252,9 @@ class CloudSyncService {
           payments: remotePayments,
           expenses: remoteExpenses,
           serviceDays: remoteServiceDays,
+          nurseTransactions: remoteNurseTransactions,
+          partnerLoans: remotePartnerLoans,
+          partnerSettlements: remotePartnerSettlements,
           users: remoteUsers,
           deletedIds: remoteDeletedIds,
           openingBalances: remoteOpeningBalances,

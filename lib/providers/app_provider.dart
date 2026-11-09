@@ -6,6 +6,9 @@ import '../models/client_model.dart';
 import '../models/payment_model.dart';
 import '../models/expense_model.dart';
 import '../models/service_day_model.dart';
+import '../models/nurse_transaction_model.dart';
+import '../models/partner_loan_model.dart';
+import '../models/partner_settlement_model.dart';
 import '../services/storage_service.dart';
 import '../services/cloud_sync_service.dart';
 
@@ -20,6 +23,9 @@ class AppProvider extends ChangeNotifier {
   List<PaymentModel> _payments = [];
   List<ExpenseModel> _expenses = [];
   List<ServiceDayModel> _serviceDays = [];
+  List<NurseTransactionModel> _nurseTransactions = [];
+  List<PartnerLoanModel> _partnerLoans = [];
+  List<PartnerSettlementModel> _partnerSettlements = [];
   List<String> _deletedIds = [];
   Map<String, double> _openingBalances = {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0};
 
@@ -40,6 +46,9 @@ class AppProvider extends ChangeNotifier {
   List<PaymentModel> get payments => List.unmodifiable(_payments);
   List<ExpenseModel> get expenses => List.unmodifiable(_expenses);
   List<ServiceDayModel> get serviceDays => List.unmodifiable(_serviceDays);
+  List<NurseTransactionModel> get nurseTransactions => List.unmodifiable(_nurseTransactions);
+  List<PartnerLoanModel> get partnerLoans => List.unmodifiable(_partnerLoans);
+  List<PartnerSettlementModel> get partnerSettlements => List.unmodifiable(_partnerSettlements);
   List<String> get deletedIds => List.unmodifiable(_deletedIds);
   Map<String, double> get openingBalances => Map.unmodifiable(_openingBalances);
   bool get isLoading => _isLoading;
@@ -286,6 +295,9 @@ class AppProvider extends ChangeNotifier {
     _payments = storageService.loadPayments().where((p) => !deletedSet.contains(p.id) && !deletedSet.contains(p.clientId)).toList();
     _expenses = storageService.loadExpenses().where((e) => !deletedSet.contains(e.id)).toList();
     _serviceDays = storageService.loadServiceDays().where((d) => !deletedSet.contains(d.id) && !deletedSet.contains(d.clientId)).toList();
+    _nurseTransactions = storageService.loadNurseTransactions().where((t) => !deletedSet.contains(t.id)).toList();
+    _partnerLoans = storageService.loadPartnerLoans().where((l) => !deletedSet.contains(l.id)).toList();
+    _partnerSettlements = storageService.loadPartnerSettlements().where((s) => !deletedSet.contains(s.id)).toList();
 
     // Ensure all default users have 123 as password
     for (var u in _users) {
@@ -855,6 +867,18 @@ class AppProvider extends ChangeNotifier {
           _serviceDays = result.serviceDays!.where((d) => !deletedSet.contains(d.id) && !deletedSet.contains(d.clientId)).toList();
           await storageService.saveServiceDays(_serviceDays);
         }
+        if (result.nurseTransactions != null) {
+          _nurseTransactions = result.nurseTransactions!.where((t) => !deletedSet.contains(t.id)).toList();
+          await storageService.saveNurseTransactions(_nurseTransactions);
+        }
+        if (result.partnerLoans != null) {
+          _partnerLoans = result.partnerLoans!.where((l) => !deletedSet.contains(l.id)).toList();
+          await storageService.savePartnerLoans(_partnerLoans);
+        }
+        if (result.partnerSettlements != null) {
+          _partnerSettlements = result.partnerSettlements!.where((s) => !deletedSet.contains(s.id)).toList();
+          await storageService.savePartnerSettlements(_partnerSettlements);
+        }
         if (result.users != null && result.users!.isNotEmpty) {
           _users = result.users!;
           await storageService.saveUsers(_users);
@@ -872,6 +896,10 @@ class AppProvider extends ChangeNotifier {
           clients: _clients,
           payments: _payments,
           expenses: _expenses,
+          serviceDays: _serviceDays,
+          nurseTransactions: _nurseTransactions,
+          partnerLoans: _partnerLoans,
+          partnerSettlements: _partnerSettlements,
           users: _users,
           deletedIds: _deletedIds,
           openingBalances: _openingBalances,
@@ -891,6 +919,9 @@ class AppProvider extends ChangeNotifier {
     await storageService.savePayments(_payments);
     await storageService.saveExpenses(_expenses);
     await storageService.saveServiceDays(_serviceDays);
+    await storageService.saveNurseTransactions(_nurseTransactions);
+    await storageService.savePartnerLoans(_partnerLoans);
+    await storageService.savePartnerSettlements(_partnerSettlements);
     await storageService.saveOpeningBalances(_openingBalances);
     notifyListeners();
 
@@ -900,9 +931,462 @@ class AppProvider extends ChangeNotifier {
       payments: _payments,
       expenses: _expenses,
       serviceDays: _serviceDays,
+      nurseTransactions: _nurseTransactions,
+      partnerLoans: _partnerLoans,
+      partnerSettlements: _partnerSettlements,
       users: _users,
       deletedIds: _deletedIds,
       openingBalances: _openingBalances,
     );
+  }
+
+  // ==========================================
+  // --- Nurse Accounts & Advances (حسابات وسلف التمريض) ---
+  // ==========================================
+
+  /// قائمة بأسماء كافة الممرضين والممرضات المسجلين في النظام
+  List<String> get allNurseNames {
+    final set = <String>{};
+    for (var d in _serviceDays) {
+      final n = d.nurseName.trim();
+      if (n.isNotEmpty && n != 'ممرض غير محدد') set.add(n);
+    }
+    for (var c in _clients) {
+      final n = (c.nurseAssigned ?? '').trim();
+      if (n.isNotEmpty && n != 'غير محدد') set.add(n);
+    }
+    for (var t in _nurseTransactions) {
+      final n = t.nurseName.trim();
+      if (n.isNotEmpty) set.add(n);
+    }
+    final list = set.toList();
+    list.sort((a, b) => a.compareTo(b));
+    return list;
+  }
+
+  /// كشف ورديات ممرض معين مرتبة من الأحدث للأقدم
+  List<ServiceDayModel> getNurseShifts(String nurseName) {
+    final list = _serviceDays.where((d) => d.nurseName.trim() == nurseName.trim()).toList();
+    list.sort((a, b) => b.date.compareTo(a.date));
+    return list;
+  }
+
+  /// عدد أيام العمل المنفذة لهذا الممرض
+  int getNurseDaysCount(String nurseName) {
+    return _serviceDays.where((d) => d.nurseName.trim() == nurseName.trim()).length;
+  }
+
+  /// إجمالي مستحقات الممرض من واقع أسعار الأيام والورديات
+  double getNurseTotalEarned(String nurseName) {
+    return _serviceDays
+        .where((d) => d.nurseName.trim() == nurseName.trim())
+        .fold(0.0, (sum, d) => sum + d.nursePrice);
+  }
+
+  /// كشف المعاملات المالية والسلف والمدفوعات الخاصة بالممرض
+  List<NurseTransactionModel> getNurseTransactions(String nurseName) {
+    final list = _nurseTransactions.where((t) => t.nurseName.trim() == nurseName.trim()).toList();
+    list.sort((a, b) => b.date.compareTo(a.date));
+    return list;
+  }
+
+  /// إجمالي السلف التي أخذها الممرض
+  double getNurseTotalAdvances(String nurseName) {
+    return _nurseTransactions
+        .where((t) => t.nurseName.trim() == nurseName.trim() && t.type == 'advance')
+        .fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  /// إجمالي صرف المستحقات / الأجور التي استلمها الممرض
+  double getNurseTotalPayouts(String nurseName) {
+    return _nurseTransactions
+        .where((t) => t.nurseName.trim() == nurseName.trim() && t.type == 'payout')
+        .fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  /// إجمالي ما استلمه الممرض (سلف + مستحقات منصرفة)
+  double getNurseTotalReceived(String nurseName) {
+    return getNurseTotalAdvances(nurseName) + getNurseTotalPayouts(nurseName);
+  }
+
+  /// باقي المستحق للممرض (المتبقي له طرف الشركة)
+  /// إذا كان موجباً: مستحق للممرض طرف الشركة.
+  /// إذا كان سالباً: الممرض أخذ سلف أكثر من مستحقاته وعليه للشركة!
+  double getNurseRemainingBalance(String nurseName) {
+    return getNurseTotalEarned(nurseName) - getNurseTotalReceived(nurseName);
+  }
+
+  /// تسجيل سلفة أو دفعة مستحقات للممرض
+  Future<void> recordNurseTransaction({
+    required String nurseName,
+    required double amount,
+    required DateTime date,
+    required String type, // 'advance' (سلفة) | 'payout' (صرف مستحقات)
+    String paymentChannel = 'cash',
+    String notes = '',
+  }) async {
+    final transId = 'ntr_${_uuid.v4().substring(0, 8)}';
+    final newTrans = NurseTransactionModel(
+      id: transId,
+      nurseName: nurseName.trim(),
+      amount: amount,
+      date: date,
+      type: type,
+      paymentChannel: paymentChannel,
+      notes: notes.trim(),
+      recordedBy: _currentUser?.username ?? 'wahdan',
+      createdAt: DateTime.now(),
+    );
+
+    _nurseTransactions.insert(0, newTrans);
+
+    // Record as company expense to maintain accurate treasury cash flow
+    final expenseTitle = type == 'advance'
+        ? 'سلفة تمريض: ${nurseName.trim()}'
+        : 'صرف مستحقات تمريض: ${nurseName.trim()}';
+
+    final newExpense = ExpenseModel(
+      id: 'exp_${transId.substring(4)}',
+      title: expenseTitle,
+      category: type == 'advance' ? 'nurse_advance' : 'nurse_dues',
+      amount: amount,
+      expenseDate: date,
+      paymentChannel: paymentChannel,
+      notes: notes.trim(),
+      recordedBy: _currentUser?.username ?? 'wahdan',
+      createdAt: DateTime.now(),
+    );
+
+    _expenses.insert(0, newExpense);
+    await _persistAndSync();
+  }
+
+  Future<void> deleteNurseTransaction(String id) async {
+    if (!canEditAnyData) return;
+    if (!_deletedIds.contains(id)) {
+      _deletedIds.add(id);
+    }
+    final expId = 'exp_${id.substring(4)}';
+    if (!_deletedIds.contains(expId)) {
+      _deletedIds.add(expId);
+    }
+    _nurseTransactions.removeWhere((t) => t.id == id);
+    _expenses.removeWhere((e) => e.id == expId);
+    await storageService.saveDeletedIds(_deletedIds);
+    await _persistAndSync();
+  }
+
+  // ==========================================
+  // --- Partner Profit Settlements & Loans (تصفية أرباح الشركاء وسلف الشركاء) ---
+  // ==========================================
+
+  /// الشركاء ونسبهم الرسمية المتفق عليها
+  static const List<Map<String, dynamic>> partnerConfigs = [
+    {
+      'username': 'wahdan',
+      'displayName': 'أ/ وهدان (المدير العام)',
+      'percentage': 0.40,
+    },
+    {
+      'username': 'shimaa',
+      'displayName': 'أ/ شيماء (المتابعة والتشغيل)',
+      'percentage': 0.40,
+    },
+    {
+      'username': 'zezo',
+      'displayName': 'أ/ زيزو (الحسابات والمالية)',
+      'percentage': 0.20,
+    },
+  ];
+
+  /// إجمالي سلف شريك محدد المتبقية
+  double getPartnerActiveLoansTotal(String username) {
+    return _partnerLoans
+        .where((l) => l.partnerUsername == username && !l.isFullyPaid)
+        .fold(0.0, (sum, l) => sum + l.remainingAmount);
+  }
+
+  /// قائمة سلف شريك محدد مرتبة من الأحدث للأقدم
+  List<PartnerLoanModel> getPartnerLoansList(String username) {
+    final list = _partnerLoans.where((l) => l.partnerUsername == username).toList();
+    list.sort((a, b) => b.date.compareTo(a.date));
+    return list;
+  }
+
+  /// القسط الشهري المستحق استقطاعه من أرباح الشريك في التصفية الحالية
+  double getPartnerMonthlyLoanDeduction(String username) {
+    double totalDeduction = 0.0;
+    final activeLoans = _partnerLoans.where((l) => l.partnerUsername == username && !l.isFullyPaid);
+    for (var loan in activeLoans) {
+      if (loan.repaymentType == 'single') {
+        totalDeduction += loan.remainingAmount;
+      } else {
+        totalDeduction += loan.monthlyDeduction.clamp(0.0, loan.remainingAmount);
+      }
+    }
+    return totalDeduction;
+  }
+
+  /// تسجيل سلفة جديدة لأحد الشركاء
+  Future<void> recordPartnerLoan({
+    required String partnerUsername,
+    required String partnerName,
+    required double totalAmount,
+    required DateTime date,
+    String repaymentType = 'single', // 'single' or 'installments'
+    int installmentMonths = 1,
+    String paymentChannel = 'cash',
+    String notes = '',
+  }) async {
+    final loanId = 'loan_${_uuid.v4().substring(0, 8)}';
+    final months = repaymentType == 'single' ? 1 : (installmentMonths > 0 ? installmentMonths : 1);
+    final monthlyDeduction = totalAmount / months;
+
+    final newLoan = PartnerLoanModel(
+      id: loanId,
+      partnerUsername: partnerUsername,
+      partnerName: partnerName,
+      totalAmount: totalAmount,
+      date: date,
+      repaymentType: repaymentType,
+      installmentMonths: months,
+      monthlyDeduction: monthlyDeduction,
+      paidAmount: 0.0,
+      paymentChannel: paymentChannel,
+      notes: notes.trim(),
+      recordedBy: _currentUser?.username ?? 'wahdan',
+      createdAt: DateTime.now(),
+    );
+
+    _partnerLoans.insert(0, newLoan);
+
+    // Outflow from treasury
+    final newExpense = ExpenseModel(
+      id: 'exp_${loanId.substring(5)}',
+      title: 'سلفة شريك: $partnerName',
+      category: 'partner_loan',
+      amount: totalAmount,
+      expenseDate: date,
+      paymentChannel: paymentChannel,
+      notes: notes.trim(),
+      recordedBy: _currentUser?.username ?? 'wahdan',
+      createdAt: DateTime.now(),
+    );
+
+    _expenses.insert(0, newExpense);
+    await _persistAndSync();
+  }
+
+  /// حذف سلفة شريك
+  Future<void> deletePartnerLoan(String loanId) async {
+    if (!canEditAnyData) return;
+    if (!_deletedIds.contains(loanId)) {
+      _deletedIds.add(loanId);
+    }
+    final expId = 'exp_${loanId.substring(5)}';
+    if (!_deletedIds.contains(expId)) {
+      _deletedIds.add(expId);
+    }
+    _partnerLoans.removeWhere((l) => l.id == loanId);
+    _expenses.removeWhere((e) => e.id == expId);
+    await storageService.saveDeletedIds(_deletedIds);
+    await _persistAndSync();
+  }
+
+  /// حساب أرباح دورة 23 الشهرية وقواعد التوزيع
+  Map<String, dynamic> calculateCycle23Settlement({
+    required DateTime settlementDate,
+    double? customNetProfit,
+  }) {
+    // Start date is 23rd of previous month
+    final previousMonth = settlementDate.month == 1 ? 12 : settlementDate.month - 1;
+    final previousYear = settlementDate.month == 1 ? settlementDate.year - 1 : settlementDate.year;
+    final startDate = DateTime(previousYear, previousMonth, 23);
+    final endDate = DateTime(settlementDate.year, settlementDate.month, 22, 23, 59, 59);
+
+    double profit;
+    if (customNetProfit != null) {
+      profit = customNetProfit;
+    } else {
+      // Calculate profit from service days during period
+      final periodDays = _serviceDays.where((d) =>
+          d.date.isAfter(startDate.subtract(const Duration(seconds: 1))) &&
+          d.date.isBefore(endDate.add(const Duration(seconds: 1))));
+
+      double grossProfit = periodDays.fold(0.0, (s, d) => s + d.companyDayProfit);
+
+      // Period expenses (excluding partner payouts/loans to avoid recursion)
+      final periodExpenses = _expenses.where((e) =>
+          e.category != 'partner_loan' &&
+          e.category != 'partner_settlement' &&
+          e.expenseDate.isAfter(startDate.subtract(const Duration(seconds: 1))) &&
+          e.expenseDate.isBefore(endDate.add(const Duration(seconds: 1))));
+
+      double totalExpenses = periodExpenses.fold(0.0, (s, e) => s + e.amount);
+
+      profit = (grossProfit - totalExpenses);
+      if (profit <= 0) {
+        // Fallback to overall net accrued profit if period days not separately logged
+        profit = netAccruedProfit > 0 ? netAccruedProfit : 0.0;
+      }
+    }
+
+    // 1. Base percentages: Wahdan 40%, Shimaa 40%, Zezo 20%
+    final wahdanBase = profit * 0.40;
+    final shimaaBase = profit * 0.40;
+    final zezoBase = profit * 0.20;
+
+    // 2. Minimum guarantee for Shimaa: 6,000 EGP
+    // إذا كان أرباح shimaa أقل من 6000 جنيه تحصل على 6000 جنيه
+    // ويخصم الفرق مصاريف إدارية من أرباح باقي الشركاء كلاً حسب نسبته
+    // (نسبة وهدان 40% ونسبة زيزو 20%، أي نسبة 2 إلى 1: وهدان يتحمل ثلثي الفرق وزيزو يتحمل الثلث)
+    double shimaaSubsidy = 0.0;
+    double wahdanAdminDeduction = 0.0;
+    double zezoAdminDeduction = 0.0;
+    double shimaaFinal = shimaaBase;
+    double wahdanFinal = wahdanBase;
+    double zezoFinal = zezoBase;
+
+    if (profit > 0 && shimaaBase < 6000.0) {
+      shimaaSubsidy = 6000.0 - shimaaBase;
+      shimaaFinal = 6000.0;
+      // Deducted from Wahdan (40/60) and Zezo (20/60)
+      wahdanAdminDeduction = shimaaSubsidy * (40.0 / 60.0);
+      zezoAdminDeduction = shimaaSubsidy * (20.0 / 60.0);
+      wahdanFinal = (wahdanBase - wahdanAdminDeduction).clamp(0.0, double.infinity);
+      zezoFinal = (zezoBase - zezoAdminDeduction).clamp(0.0, double.infinity);
+    }
+
+    // 3. Partner Loans deduction
+    final wahdanLoan = getPartnerMonthlyLoanDeduction('wahdan').clamp(0.0, wahdanFinal);
+    final shimaaLoan = getPartnerMonthlyLoanDeduction('shimaa').clamp(0.0, shimaaFinal);
+    final zezoLoan = getPartnerMonthlyLoanDeduction('zezo').clamp(0.0, zezoFinal);
+
+    final wahdanNet = (wahdanFinal - wahdanLoan).clamp(0.0, double.infinity);
+    final shimaaNet = (shimaaFinal - shimaaLoan).clamp(0.0, double.infinity);
+    final zezoNet = (zezoFinal - zezoLoan).clamp(0.0, double.infinity);
+
+    final totalDisbursed = wahdanNet + shimaaNet + zezoNet;
+    final treasuryBefore = totalTreasuryBalance;
+    final remainingTreasury = treasuryBefore - totalDisbursed;
+
+    return {
+      'startDate': startDate,
+      'endDate': endDate,
+      'profit': profit,
+      'wahdanBase': wahdanBase,
+      'wahdanAdminDeduction': wahdanAdminDeduction,
+      'wahdanFinal': wahdanFinal,
+      'wahdanLoan': wahdanLoan,
+      'wahdanNet': wahdanNet,
+      'shimaaBase': shimaaBase,
+      'shimaaSubsidy': shimaaSubsidy,
+      'shimaaFinal': shimaaFinal,
+      'shimaaLoan': shimaaLoan,
+      'shimaaNet': shimaaNet,
+      'zezoBase': zezoBase,
+      'zezoAdminDeduction': zezoAdminDeduction,
+      'zezoFinal': zezoFinal,
+      'zezoLoan': zezoLoan,
+      'zezoNet': zezoNet,
+      'totalDisbursed': totalDisbursed,
+      'treasuryBefore': treasuryBefore,
+      'remainingTreasury': remainingTreasury,
+    };
+  }
+
+  /// تنفيذ وصرف تصفية أرباح دورة 23 وتحديث الخزينة وسداد أقساط السلف
+  Future<void> executePartnerSettlement({
+    required DateTime settlementDate,
+    required double customNetProfit,
+    String paymentChannel = 'cash',
+    String notes = '',
+  }) async {
+    final calc = calculateCycle23Settlement(
+      settlementDate: settlementDate,
+      customNetProfit: customNetProfit,
+    );
+
+    final settlementId = 'settle_${_uuid.v4().substring(0, 8)}';
+    final cycleTitle = 'تصفية دورة 23 ${_getMonthName(settlementDate.month)} ${settlementDate.year}';
+
+    final settlement = PartnerSettlementModel(
+      id: settlementId,
+      cycleTitle: cycleTitle,
+      settlementDate: settlementDate,
+      startDate: calc['startDate'] as DateTime,
+      endDate: calc['endDate'] as DateTime,
+      companyNetProfit: calc['profit'] as double,
+      wahdanBaseProfit: calc['wahdanBase'] as double,
+      wahdanAdminDeduction: calc['wahdanAdminDeduction'] as double,
+      wahdanLoanDeduction: calc['wahdanLoan'] as double,
+      wahdanNetPayout: calc['wahdanNet'] as double,
+      shimaaBaseProfit: calc['shimaaBase'] as double,
+      shimaaAdminSubsidy: calc['shimaaSubsidy'] as double,
+      shimaaLoanDeduction: calc['shimaaLoan'] as double,
+      shimaaNetPayout: calc['shimaaNet'] as double,
+      zezoBaseProfit: calc['zezoBase'] as double,
+      zezoAdminDeduction: calc['zezoAdminDeduction'] as double,
+      zezoLoanDeduction: calc['zezoLoan'] as double,
+      zezoNetPayout: calc['zezoNet'] as double,
+      totalDisbursed: calc['totalDisbursed'] as double,
+      treasuryBeforePayout: calc['treasuryBefore'] as double,
+      remainingTreasuryCash: calc['remainingTreasury'] as double,
+      isDisbursed: true,
+      notes: notes.trim(),
+      recordedBy: _currentUser?.username ?? 'wahdan',
+      createdAt: DateTime.now(),
+    );
+
+    _partnerSettlements.insert(0, settlement);
+
+    // Apply loan repayments to active loans
+    _applyLoanRepayment('wahdan', calc['wahdanLoan'] as double);
+    _applyLoanRepayment('shimaa', calc['shimaaLoan'] as double);
+    _applyLoanRepayment('zezo', calc['zezoLoan'] as double);
+
+    // Record expense for disbursed profits
+    if (settlement.totalDisbursed > 0) {
+      final newExpense = ExpenseModel(
+        id: 'exp_${settlementId.substring(7)}',
+        title: 'صرف أرباح الشركاء ($cycleTitle)',
+        category: 'partner_settlement',
+        amount: settlement.totalDisbursed,
+        expenseDate: settlementDate,
+        paymentChannel: paymentChannel,
+        notes: 'وهدان: ${settlement.wahdanNetPayout.toStringAsFixed(0)} ج.م | شيماء: ${settlement.shimaaNetPayout.toStringAsFixed(0)} ج.م | زيزو: ${settlement.zezoNetPayout.toStringAsFixed(0)} ج.م',
+        recordedBy: _currentUser?.username ?? 'wahdan',
+        createdAt: DateTime.now(),
+      );
+      _expenses.insert(0, newExpense);
+    }
+
+    await _persistAndSync();
+  }
+
+  void _applyLoanRepayment(String username, double amountToDeduct) {
+    if (amountToDeduct <= 0) return;
+    double remainingToDeduct = amountToDeduct;
+    for (int i = 0; i < _partnerLoans.length; i++) {
+      if (_partnerLoans[i].partnerUsername == username && !_partnerLoans[i].isFullyPaid) {
+        final currentLoan = _partnerLoans[i];
+        final canDeduct = currentLoan.remainingAmount;
+        final deduction = remainingToDeduct > canDeduct ? canDeduct : remainingToDeduct;
+        _partnerLoans[i] = currentLoan.copyWith(
+          paidAmount: currentLoan.paidAmount + deduction,
+        );
+        remainingToDeduct -= deduction;
+        if (remainingToDeduct <= 0) break;
+      }
+    }
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+    if (month >= 1 && month <= 12) return months[month - 1];
+    return '';
   }
 }

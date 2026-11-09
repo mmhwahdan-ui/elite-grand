@@ -4,6 +4,8 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_card.dart';
 import '../services/export_service.dart';
+import 'nurse_accounts_screen.dart';
+import 'partner_settlement_screen.dart';
 
 class FinancialReportsScreen extends StatelessWidget {
   const FinancialReportsScreen({super.key});
@@ -152,6 +154,56 @@ class FinancialReportsScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
                     ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Quick Actions: Nurse Accounts & Partner Settlements (Day 23)
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const NurseAccountsScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.badge_outlined, color: Colors.white, size: 20),
+                      label: const Text(
+                        'حسابات وسلف التمريض',
+                        style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0D9488), // Teal
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PartnerSettlementScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.pie_chart_outline, color: Colors.white, size: 20),
+                      label: const Text(
+                        'تصفية أرباح الشركاء (يوم 23)',
+                        style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E3A8A), // Indigo / Blue
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 1,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -618,9 +670,20 @@ class FinancialReportsScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          Text(
-                            'إجمالي التمريض: ${provider.allNursesDaysCount.length} ممرض/ـة',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const NurseAccountsScreen()),
+                              );
+                            },
+                            icon: const Icon(Icons.manage_accounts, size: 16),
+                            label: const Text('كشف الحسابات والسلف', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal.shade700,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            ),
                           ),
                         ],
                       ),

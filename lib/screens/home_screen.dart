@@ -10,6 +10,8 @@ import 'expenses_screen.dart';
 import 'financial_reports_screen.dart';
 import 'users_permissions_screen.dart';
 import 'login_screen.dart';
+import 'nurse_accounts_screen.dart';
+import 'partner_settlement_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -190,6 +192,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     context: context,
                     builder: (_) => const CloudSettingsDialog(),
                   );
+                } else if (val == 'nurses') {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NurseAccountsScreen()));
+                } else if (val == 'settlement') {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnerSettlementScreen()));
                 }
               },
               tooltip: 'الحساب والإعدادات',
@@ -246,6 +252,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icon(Icons.cloud_sync, color: AppTheme.accent, size: 20),
                       SizedBox(width: 8),
                       Text('إعدادات السحابة والمزامنة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'nurses',
+                  child: Row(
+                    children: [
+                      Icon(Icons.badge_outlined, color: Colors.teal, size: 20),
+                      SizedBox(width: 8),
+                      Text('حسابات وسلف أطقم التمريض', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'settlement',
+                  child: Row(
+                    children: [
+                      Icon(Icons.pie_chart_outline, color: Colors.indigo, size: 20),
+                      SizedBox(width: 8),
+                      Text('تصفية أرباح الشركاء (يوم 23)', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
                     ],
                   ),
                 ),

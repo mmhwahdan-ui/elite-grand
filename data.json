@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-09T07:57:14.196Z",
+  "lastUpdated": "2026-11-09T11:33:29.898Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -18,8 +18,8 @@
   ],
   "openingBalances": {
     "bank": 68300,
-    "wallet": 30,
-    "cash": 0
+    "cash": 0,
+    "wallet": 30
   },
   "clients": [
     {

@@ -2,6 +2,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../models/client_model.dart';
 import '../models/expense_model.dart';
 import '../models/payment_model.dart';
+import '../models/partner_settlement_model.dart';
 import '../providers/app_provider.dart';
 
 import 'export_stub.dart'
@@ -13,6 +14,8 @@ class ExportService {
   // 1. Export Clients Ledger to Excel
   static void exportClientsToExcel(AppProvider provider) {
     final StringBuffer csv = StringBuffer();
+    // Tells Microsoft Excel to always use comma separation into multiple columns
+    csv.writeln('sep=,');
 
     // Headers
     csv.writeln(
@@ -69,7 +72,7 @@ class ExportService {
   // 2. Export Payments Ledger to Excel
   static void exportPaymentsToExcel(AppProvider provider) {
     final StringBuffer csv = StringBuffer();
-
+    csv.writeln('sep=,');
     csv.writeln('التاريخ,اسم العميل,المبلغ المحصل (ج.م),مكان التحصيل والإيداع,المستلم,ملاحظات');
 
     for (var p in provider.payments) {
@@ -95,7 +98,7 @@ class ExportService {
   // 3. Export Expenses to Excel
   static void exportExpensesToExcel(AppProvider provider) {
     final StringBuffer csv = StringBuffer();
-
+    csv.writeln('sep=,');
     csv.writeln('التاريخ,بند المصروف,بيان وتفاصيل المصروف,المبلغ (ج.م),قناة الدفع والصرف,سُجل بواسطة,يخص مريض,ملاحظات');
 
     for (var exp in provider.expenses) {
@@ -132,6 +135,7 @@ class ExportService {
   // 4. Export Comprehensive Financial Statement to Excel
   static void exportFinancialReportToExcel(AppProvider provider) {
     final StringBuffer csv = StringBuffer();
+    csv.writeln('sep=,');
 
     final dateStr = DateFormat('yyyy/MM/dd HH:mm').format(DateTime.now());
     csv.writeln('تقرير المركز المالي والأرباح التشغيلية وحسابات البنوك - شركة إيليت جراند');
@@ -139,7 +143,7 @@ class ExportService {
     csv.writeln('');
 
     // Treasury & Accounts breakdown
-    csv.writeln('--- أرصدة الحسابات ومصادر السيولة النقدية والبنكية ---,,');
+    csv.writeln('--- أرصدة الحسابات ومصادر السيولة النقدية والبنكية ---,,,');
     csv.writeln('الحساب / القناة,رصيد أول المدة (ج.م),إجمالي التحصيلات (الوارد),إجمالي المصروفات (المنصرف),الرصيد الفعلي الحالي (ج.م)');
     csv.writeln('📱 المحفظة الإلكترونية (فودافون كاش / إنستاباي),${provider.walletOpeningBalance.toStringAsFixed(0)},${provider.walletCollections.toStringAsFixed(0)},${provider.walletExpenses.toStringAsFixed(0)},${provider.currentWalletBalance.toStringAsFixed(0)}');
     csv.writeln('🏦 الحساب البنكي (تحويلات وإيداعات),${provider.bankOpeningBalance.toStringAsFixed(0)},${provider.bankCollections.toStringAsFixed(0)},${provider.bankExpenses.toStringAsFixed(0)},${provider.currentBankBalance.toStringAsFixed(0)}');
@@ -148,14 +152,14 @@ class ExportService {
     csv.writeln('');
 
     // Case profitability & price difference
-    csv.writeln('--- تصفية أرباح الحالات وفروق الأسعار (العميل vs التمريض) ---,,');
+    csv.writeln('--- تصفية أرباح الحالات وفروق الأسعار (العميل vs التمريض) ---,,,');
     csv.writeln('إجمالي تعاقدات العملاء (إيرادات الخدمة المحققة),${provider.totalAccruedRevenues.toStringAsFixed(0)},(مجموع الأيام × سعر العميل)');
     csv.writeln('إجمالي مستحقات ويوميات التمريض المنقضية,${provider.totalNurseAccruedCosts.toStringAsFixed(0)},(مجموع الأيام × يومية الممرض)');
     csv.writeln('💎 صافي مكسب الشركة من فروق الأسعار,${provider.totalCompanyGrossProfit.toStringAsFixed(0)},(إيرادات العملاء - مستحقات التمريض)');
     csv.writeln('');
 
     // Summary financials
-    csv.writeln('--- المؤشرات المالية الإجمالية ---,,');
+    csv.writeln('--- المؤشرات المالية الإجمالية ---,,,');
     csv.writeln('البند المالي,القيمة بالجنيه المصري (ج.م),التفاصيل والملاحظات');
     csv.writeln('إجمالي المقبوضات النقدية والبنكية المحصلة,${provider.totalPaymentsCollected.toStringAsFixed(0)},المبالغ المستلمة فعلياً من العملاء');
     csv.writeln('إجمالي المصروفات التشغيلية والرواتب,${provider.totalExpenses.toStringAsFixed(0)},كافة المصروفات المسجلة');
@@ -166,7 +170,7 @@ class ExportService {
     csv.writeln('');
 
     // Expenses breakdown
-    csv.writeln('--- تفصيل المصروفات حسب البند ---,,');
+    csv.writeln('--- تفصيل المصروفات حسب البند ---,,,');
     final Map<String, double> expensesByCategory = {};
     for (var exp in provider.expenses) {
       expensesByCategory[exp.categoryArabic] = (expensesByCategory[exp.categoryArabic] ?? 0) + exp.amount;
@@ -187,7 +191,7 @@ class ExportService {
   // 5. Export Detailed Service Days / Shifts Log to Excel
   static void exportServiceDaysToExcel(AppProvider provider) {
     final StringBuffer csv = StringBuffer();
-
+    csv.writeln('sep=,');
     csv.writeln('التاريخ,اسم العميل / الحالة,اسم الممرض,نوع الوردية,سعر اليوم للعميل (ج.م),يومية الممرض (ج.م),مكسب الشركة من اليومية (ج.م),سُجل بواسطة,ملاحظات');
 
     for (var day in provider.serviceDays) {
@@ -213,27 +217,32 @@ class ExportService {
     );
   }
 
-  // 6. Export Nurses Payroll & Days Breakdown to Excel
+  // 6. Export All Nurses Comprehensive Ledger to Excel
   static void exportNursesReportToExcel(AppProvider provider) {
     final StringBuffer csv = StringBuffer();
+    csv.writeln('sep=,');
+    csv.writeln('اسم الممرض,إجمالي عدد أيام العمل,إجمالي الأجر المستحق (ج.م),إجمالي السلف المنصرفة (ج.م),إجمالي دفعات المستحقات (ج.م),إجمالي ما استلمه (ج.م),صافي باقي المستحق للممرض (ج.م),الحالات التي عمل معها');
 
-    csv.writeln('اسم الممرض,إجمالي عدد الأيام المنفذة,إجمالي المستحقات المالية (ج.م),الحالات التي عمل معها');
+    final nurseNames = provider.allNurseNames;
 
-    final nurseDays = provider.allNursesDaysCount;
-    final nurseDues = provider.allNursesAccruedDues;
-    final nurseServiceDays = provider.allNursesServiceDays;
-
-    for (var entry in nurseDays.entries) {
-      final nurseName = entry.key;
-      final daysCount = entry.value;
-      final dues = nurseDues[nurseName] ?? 0.0;
-      final shifts = nurseServiceDays[nurseName] ?? [];
+    for (var nurseName in nurseNames) {
+      final days = provider.getNurseDaysCount(nurseName);
+      final earned = provider.getNurseTotalEarned(nurseName);
+      final advances = provider.getNurseTotalAdvances(nurseName);
+      final payouts = provider.getNurseTotalPayouts(nurseName);
+      final totalReceived = provider.getNurseTotalReceived(nurseName);
+      final remaining = provider.getNurseRemainingBalance(nurseName);
+      final shifts = provider.getNurseShifts(nurseName);
       final clientsSet = shifts.map((s) => s.clientName).toSet().join(' - ');
 
       final row = [
         _escape(nurseName),
-        daysCount.toString(),
-        dues.toStringAsFixed(0),
+        days.toString(),
+        earned.toStringAsFixed(0),
+        advances.toStringAsFixed(0),
+        payouts.toStringAsFixed(0),
+        totalReceived.toStringAsFixed(0),
+        remaining.toStringAsFixed(0),
         _escape(clientsSet),
       ];
       csv.writeln(row.join(','));
@@ -242,7 +251,177 @@ class ExportService {
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
     saveAndDownloadFile(
       csv.toString(),
-      'كشف_أيام_ومستحقات_التمريض_إيليت_جراند_$dateStr.csv',
+      'كشف_حسابات_ومستحقات_وسلف_التمريض_إيليت_جراند_$dateStr.csv',
+      'text/csv;charset=utf-8;',
+    );
+  }
+
+  // 7. Export Single Nurse Detailed Statement to Excel
+  static void exportSingleNurseStatementToExcel(AppProvider provider, String nurseName) {
+    final StringBuffer csv = StringBuffer();
+    csv.writeln('sep=,');
+
+    final days = provider.getNurseDaysCount(nurseName);
+    final earned = provider.getNurseTotalEarned(nurseName);
+    final advances = provider.getNurseTotalAdvances(nurseName);
+    final payouts = provider.getNurseTotalPayouts(nurseName);
+    final totalReceived = provider.getNurseTotalReceived(nurseName);
+    final remaining = provider.getNurseRemainingBalance(nurseName);
+
+    csv.writeln('كشف حساب تفصيلي للممرض: $nurseName - شركة إيليت جراند');
+    csv.writeln('تاريخ التقرير: ${_dateFormat.format(DateTime.now())}');
+    csv.writeln('');
+    csv.writeln('--- الملخص المالي للممرض ---,,,');
+    csv.writeln('إجمالي أيام العمل المنفذة,$days,يوم');
+    csv.writeln('إجمالي المستحقات والأجر عن الورديات,${earned.toStringAsFixed(0)},ج.م');
+    csv.writeln('إجمالي السلف المأخوذة,${advances.toStringAsFixed(0)},ج.م');
+    csv.writeln('إجمالي الدفعات المنصرفة,${payouts.toStringAsFixed(0)},ج.م');
+    csv.writeln('إجمالي ما تم استلامه (سلف + دفعات),${totalReceived.toStringAsFixed(0)},ج.م');
+    csv.writeln('صافي باقي المستحق للممرض طرف الشركة,${remaining.toStringAsFixed(0)},ج.م');
+    csv.writeln('');
+
+    // Table 1: Shifts worked
+    csv.writeln('--- جدول الورديات وأيام العمل المنفذة ---,,,,');
+    csv.writeln('التاريخ,اسم العميل / الحالة,نوع الشيفت,سعر اليوم للممرض (ج.م),سُجل بواسطة,ملاحظات');
+    final shifts = provider.getNurseShifts(nurseName);
+    for (var s in shifts) {
+      final row = [
+        _dateFormat.format(s.date),
+        _escape(s.clientName),
+        _escape(s.shiftTypeArabic),
+        s.nursePrice.toStringAsFixed(0),
+        _escape(s.recordedBy),
+        _escape(s.notes),
+      ];
+      csv.writeln(row.join(','));
+    }
+    csv.writeln('');
+
+    // Table 2: Advances and payouts
+    csv.writeln('--- جدول السلف والدفعات المالية المنصرفة للممرض ---,,,,');
+    csv.writeln('التاريخ,نوع العملية,المبلغ (ج.م),طريقة الصرف,سُجل بواسطة,ملاحظات');
+    final trans = provider.getNurseTransactions(nurseName);
+    for (var t in trans) {
+      final row = [
+        _dateFormat.format(t.date),
+        _escape(t.typeArabic),
+        t.amount.toStringAsFixed(0),
+        _escape(t.channelArabic),
+        _escape(t.recordedBy),
+        _escape(t.notes),
+      ];
+      csv.writeln(row.join(','));
+    }
+
+    final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+    saveAndDownloadFile(
+      csv.toString(),
+      'كشف_حساب_الممرض_${nurseName}_$dateStr.csv',
+      'text/csv;charset=utf-8;',
+    );
+  }
+
+  // 8. Export Partner Settlements (Day 23 Cycle) to Excel
+  static void exportPartnerSettlementToExcel(
+    AppProvider provider,
+    Map<String, dynamic> calc,
+    DateTime settlementDate,
+  ) {
+    final StringBuffer csv = StringBuffer();
+    csv.writeln('sep=,');
+
+    final cycleTitle = 'تصفية أرباح دورة 23 ${_dateFormat.format(settlementDate)}';
+    csv.writeln('تقرير $cycleTitle - شركة إيليت جراند للتمريض المنزلي');
+    csv.writeln('تاريخ التصفية: ${_dateFormat.format(settlementDate)}');
+    csv.writeln('الفترة المحاسبية: من ${_dateFormat.format(calc['startDate'] as DateTime)} إلى ${_dateFormat.format(calc['endDate'] as DateTime)}');
+    csv.writeln('');
+
+    csv.writeln('--- ملخص أرباح الشركة والسيولة بالخزينة ---,,');
+    csv.writeln('صافي أرباح الشركة في هذه الدورة,${(calc['profit'] as double).toStringAsFixed(0)},ج.م');
+    csv.writeln('إجمالي السيولة المتاحة بالخزائن قبل الصرف,${(calc['treasuryBefore'] as double).toStringAsFixed(0)},ج.م');
+    csv.writeln('إجمالي المبالغ المنصرفة للشركاء,${(calc['totalDisbursed'] as double).toStringAsFixed(0)},ج.م');
+    csv.writeln('باقي النقدية والسيولة بالخزينة بعد الصرف,${(calc['remainingTreasury'] as double).toStringAsFixed(0)},ج.م');
+    csv.writeln('');
+
+    csv.writeln('--- جدول تصفية أرباح الشركاء وتوزيع الأرباح وخصم السلف ---,,,,,,');
+    csv.writeln('الشريك,النسبة المئوية,الربح الأساسي (ج.م),تعديل ضمان شيماء (6000 ج.م),الربح بعد الضمان (ج.م),استقطاع سلف الشريك (ج.م),صافي المستحق للصرف للشريك (ج.م)');
+
+    // Wahdan (40%)
+    csv.writeln([
+      'أ/ وهدان (المدير العام)',
+      '40%',
+      (calc['wahdanBase'] as double).toStringAsFixed(0),
+      calc['wahdanAdminDeduction'] > 0
+          ? 'خصم إداري: -${(calc['wahdanAdminDeduction'] as double).toStringAsFixed(0)} ج.م'
+          : 'لا يوجد خصم',
+      (calc['wahdanFinal'] as double).toStringAsFixed(0),
+      (calc['wahdanLoan'] as double).toStringAsFixed(0),
+      (calc['wahdanNet'] as double).toStringAsFixed(0),
+    ].join(','));
+
+    // Shimaa (40% with minimum guarantee)
+    csv.writeln([
+      'أ/ شيماء (المتابعة والتشغيل)',
+      '40% (ضمان 6000)',
+      (calc['shimaaBase'] as double).toStringAsFixed(0),
+      calc['shimaaSubsidy'] > 0
+          ? 'دعم ضمان: +${(calc['shimaaSubsidy'] as double).toStringAsFixed(0)} ج.م'
+          : 'حصة أصلية كاملة',
+      (calc['shimaaFinal'] as double).toStringAsFixed(0),
+      (calc['shimaaLoan'] as double).toStringAsFixed(0),
+      (calc['shimaaNet'] as double).toStringAsFixed(0),
+    ].join(','));
+
+    // Zezo (20%)
+    csv.writeln([
+      'أ/ زيزو (الحسابات والمالية)',
+      '20%',
+      (calc['zezoBase'] as double).toStringAsFixed(0),
+      calc['zezoAdminDeduction'] > 0
+          ? 'خصم إداري: -${(calc['zezoAdminDeduction'] as double).toStringAsFixed(0)} ج.م'
+          : 'لا يوجد خصم',
+      (calc['zezoFinal'] as double).toStringAsFixed(0),
+      (calc['zezoLoan'] as double).toStringAsFixed(0),
+      (calc['zezoNet'] as double).toStringAsFixed(0),
+    ].join(','));
+
+    csv.writeln('');
+    csv.writeln('الإجمالي,,,,${(calc['totalDisbursed'] as double).toStringAsFixed(0)} ج.م');
+
+    final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+    saveAndDownloadFile(
+      csv.toString(),
+      'تصفية_أرباح_الشركاء_دورة_23_$dateStr.csv',
+      'text/csv;charset=utf-8;',
+    );
+  }
+
+  // 9. Export Partner Loans Ledger to Excel
+  static void exportPartnerLoansToExcel(AppProvider provider) {
+    final StringBuffer csv = StringBuffer();
+    csv.writeln('sep=,');
+    csv.writeln('اسم الشريك,تاريخ السلفة,إجمالي مبلغ السلفة (ج.م),نظام السداد,القسط الشهري (ج.م),المبلغ المسدد (ج.م),المتبقي طرف الشريك (ج.م),حالة السلفة,وسيلة الصرف,ملاحظات');
+
+    for (var loan in provider.partnerLoans) {
+      final row = [
+        _escape(loan.partnerName),
+        _dateFormat.format(loan.date),
+        loan.totalAmount.toStringAsFixed(0),
+        _escape(loan.repaymentTypeArabic),
+        loan.monthlyDeduction.toStringAsFixed(0),
+        loan.paidAmount.toStringAsFixed(0),
+        loan.remainingAmount.toStringAsFixed(0),
+        loan.isFullyPaid ? 'تم السداد بالكامل' : 'جاري السداد',
+        _escape(loan.channelArabic),
+        _escape(loan.notes),
+      ];
+      csv.writeln(row.join(','));
+    }
+
+    final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+    saveAndDownloadFile(
+      csv.toString(),
+      'سجل_سلف_الشركاء_إيليت_جراند_$dateStr.csv',
       'text/csv;charset=utf-8;',
     );
   }

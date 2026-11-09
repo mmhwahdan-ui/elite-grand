@@ -5,6 +5,9 @@ import '../models/client_model.dart';
 import '../models/payment_model.dart';
 import '../models/expense_model.dart';
 import '../models/service_day_model.dart';
+import '../models/nurse_transaction_model.dart';
+import '../models/partner_loan_model.dart';
+import '../models/partner_settlement_model.dart';
 
 class StorageService {
   static const String _keyUsers = 'eg_users_data';
@@ -17,6 +20,9 @@ class StorageService {
   static const String _keyDeletedIds = 'eg_deleted_ids';
   static const String _keyOpeningBalances = 'eg_opening_balances';
   static const String _keyServiceDays = 'eg_service_days_data';
+  static const String _keyNurseTransactions = 'eg_nurse_transactions_data';
+  static const String _keyPartnerLoans = 'eg_partner_loans_data';
+  static const String _keyPartnerSettlements = 'eg_partner_settlements_data';
 
   final SharedPreferences prefs;
 
@@ -185,5 +191,62 @@ class StorageService {
   Future<void> saveServiceDays(List<ServiceDayModel> serviceDays) async {
     final list = serviceDays.map((d) => d.toMap()).toList();
     await prefs.setString(_keyServiceDays, jsonEncode(list));
+  }
+
+  // Nurse Transactions (سلف ومدفوعات التمريض)
+  List<NurseTransactionModel> loadNurseTransactions() {
+    final jsonStr = prefs.getString(_keyNurseTransactions);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      return [];
+    }
+    try {
+      final List decoded = jsonDecode(jsonStr);
+      return decoded.map((e) => NurseTransactionModel.fromMap(Map<String, dynamic>.from(e))).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveNurseTransactions(List<NurseTransactionModel> list) async {
+    final data = list.map((t) => t.toMap()).toList();
+    await prefs.setString(_keyNurseTransactions, jsonEncode(data));
+  }
+
+  // Partner Loans (سلف الشركاء)
+  List<PartnerLoanModel> loadPartnerLoans() {
+    final jsonStr = prefs.getString(_keyPartnerLoans);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      return [];
+    }
+    try {
+      final List decoded = jsonDecode(jsonStr);
+      return decoded.map((e) => PartnerLoanModel.fromMap(Map<String, dynamic>.from(e))).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> savePartnerLoans(List<PartnerLoanModel> list) async {
+    final data = list.map((l) => l.toMap()).toList();
+    await prefs.setString(_keyPartnerLoans, jsonEncode(data));
+  }
+
+  // Partner Settlements (تصفية حساب الشركاء يوم 23)
+  List<PartnerSettlementModel> loadPartnerSettlements() {
+    final jsonStr = prefs.getString(_keyPartnerSettlements);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      return [];
+    }
+    try {
+      final List decoded = jsonDecode(jsonStr);
+      return decoded.map((e) => PartnerSettlementModel.fromMap(Map<String, dynamic>.from(e))).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> savePartnerSettlements(List<PartnerSettlementModel> list) async {
+    final data = list.map((s) => s.toMap()).toList();
+    await prefs.setString(_keyPartnerSettlements, jsonEncode(data));
   }
 }
