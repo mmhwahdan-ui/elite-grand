@@ -47,3 +47,12 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Local launcher & secret files
+update_tunnel.js
+launcher.js
+run_auto.vbs
+build_and_deploy.bat
+current_url.txt
+github_token.txt
+.env
