@@ -41,78 +41,39 @@ class SyncResult {
 }
 
 class CloudSyncService {
-  static const String tunnelDiscoveryUrl =
-      'https://raw.githubusercontent.com/mmhwahdan-ui/elite-grand/main/tunnel.json';
+  /// Primary 24/7 Cloud Database on Google Firebase (works even if PC is off)
+  static const String defaultFirebaseEndpoint =
+      'https://elite-grand-8a6c3-default-rtdb.firebaseio.com/elite_grand.json';
 
   String? cloudEndpoint;
   SyncStatus status = SyncStatus.idle;
   DateTime? lastSyncTime;
   Timer? _periodicTimer;
-  bool _isResolving = false;
 
-  CloudSyncService({this.cloudEndpoint}) {
-    resolveDynamicEndpoint();
-  }
-
-  /// Automatically discovers the active tunnel URL published by the Windows launcher
-  Future<void> resolveDynamicEndpoint() async {
-    if (_isResolving) return;
-    _isResolving = true;
-    try {
-      if (kIsWeb) {
-        try {
-          final origin = Uri.base.origin;
-          if (origin.contains('localhost') || origin.contains('127.0.0.1')) {
-            cloudEndpoint = 'http://localhost:8080/api/data';
-            return;
-          }
-        } catch (_) {}
-      }
-
-      final uri = Uri.parse(
-          '$tunnelDiscoveryUrl?t=${DateTime.now().millisecondsSinceEpoch}');
-      final response = await http.get(uri).timeout(const Duration(seconds: 4));
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final data = jsonDecode(response.body);
-        if (data is Map && data['url'] != null) {
-          final rawUrl =
-              data['url'].toString().trim().replaceAll(RegExp(r'/+$'), '');
-          if (rawUrl.startsWith('http')) {
-            cloudEndpoint = '$rawUrl/api/data';
-          }
-        }
-      }
-    } catch (_) {
-      // Keep existing endpoint on error
-    } finally {
-      _isResolving = false;
-    }
-  }
+  CloudSyncService({this.cloudEndpoint});
 
   String get effectiveEndpoint {
     if (cloudEndpoint != null && cloudEndpoint!.trim().isNotEmpty) {
       return cloudEndpoint!.trim();
     }
+    // If running on local developer/office machine, can connect to localhost
     if (kIsWeb) {
       try {
         final origin = Uri.base.origin;
-        if (origin.isNotEmpty &&
-            origin != 'null' &&
-            !origin.contains('github.io')) {
-          return '$origin/api/data';
+        if (origin.contains('localhost') || origin.contains('127.0.0.1')) {
+          return 'http://localhost:8080/api/data';
         }
       } catch (_) {}
     }
-    return 'https://relax-deck-speed-temporary.trycloudflare.com/api/data';
+    // Default to the 24/7 Firebase Cloud Database
+    return defaultFirebaseEndpoint;
   }
 
-  // Start background auto sync every 4 seconds
+  // Start background auto sync every 3 seconds for real-time multi-device sync
   void startAutoSync(Future<void> Function() onSyncTriggered) {
     _periodicTimer?.cancel();
-    resolveDynamicEndpoint().then((_) {
-      onSyncTriggered();
-    });
-    _periodicTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+    onSyncTriggered();
+    _periodicTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
       await onSyncTriggered();
     });
   }
@@ -165,12 +126,10 @@ class CloudSyncService {
         return true;
       } else {
         status = SyncStatus.error;
-        resolveDynamicEndpoint();
         return false;
       }
     } catch (e) {
       status = SyncStatus.offline;
-      resolveDynamicEndpoint();
       return false;
     }
   }
@@ -252,7 +211,7 @@ class CloudSyncService {
 
         return SyncResult(
           success: true,
-          message: 'تمت المزامنة اللحظية بنجاح',
+          message: 'تمت المزامنة اللحظية بنجاح 24/7',
           clients: remoteClients,
           payments: remotePayments,
           expenses: remoteExpenses,
@@ -263,7 +222,6 @@ class CloudSyncService {
         );
       } else {
         status = SyncStatus.error;
-        resolveDynamicEndpoint();
         return SyncResult(
           success: false,
           message: 'فشل الاتصال: رمز ${response.statusCode}',
@@ -271,7 +229,6 @@ class CloudSyncService {
       }
     } catch (e) {
       status = SyncStatus.offline;
-      resolveDynamicEndpoint();
       return SyncResult(
         success: false,
         message: 'وضع عدم الاتصال: $e',
