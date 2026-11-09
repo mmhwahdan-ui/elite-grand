@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
@@ -7,6 +8,7 @@ const WEB_DIR = fs.existsSync(path.join(__dirname, 'public'))
   ? path.join(__dirname, 'public')
   : path.join(__dirname, 'build', 'web');
 const DATA_FILE = path.join(__dirname, 'data.json');
+const FIREBASE_URL = 'https://elite-grand-8a6c3-default-rtdb.firebaseio.com/elite_grand.json';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -25,22 +27,18 @@ const MIME_TYPES = {
 function smartMerge(serverList, incomingList, deletedSet, dateField = 'updatedAt') {
   const map = new Map();
 
-  // 1. Populate map with existing server items (if not deleted)
   for (const item of (serverList || [])) {
     if (item && item.id && (!deletedSet || !deletedSet.has(item.id))) {
       map.set(item.id, item);
     }
   }
 
-  // 2. Merge incoming items (if not deleted)
   for (const item of (incomingList || [])) {
     if (!item || !item.id || (deletedSet && deletedSet.has(item.id))) continue;
 
     if (!map.has(item.id)) {
-      // New item created on a phone -> insert it!
       map.set(item.id, item);
     } else {
-      // Existing item -> keep the newer one based on timestamp
       const existing = map.get(item.id);
       const incomingTime = new Date(item[dateField] || item.createdAt || 0).getTime();
       const existingTime = new Date(existing[dateField] || existing.createdAt || 0).getTime();
@@ -53,6 +51,79 @@ function smartMerge(serverList, incomingList, deletedSet, dateField = 'updatedAt
 
   return Array.from(map.values());
 }
+
+// Push local state to Firebase Cloud 24/7
+function pushToFirebase(jsonStr) {
+  try {
+    const req = https.request(FIREBASE_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(jsonStr)
+      }
+    });
+    req.on('error', () => {});
+    req.write(jsonStr);
+    req.end();
+  } catch (_) {}
+}
+
+// Pull latest changes from Firebase Cloud
+function syncWithFirebase() {
+  https.get(FIREBASE_URL, (res) => {
+    let body = '';
+    res.on('data', chunk => body += chunk);
+    res.on('end', () => {
+      if (res.statusCode >= 200 && res.statusCode < 300 && body && body !== 'null') {
+        try {
+          const remote = JSON.parse(body);
+          fs.readFile(DATA_FILE, 'utf8', (err, localRaw) => {
+            let local = {
+              clients: [],
+              payments: [],
+              expenses: [],
+              serviceDays: [],
+              nurseTransactions: [],
+              partnerLoans: [],
+              partnerSettlements: [],
+              users: [],
+              deletedIds: [],
+              openingBalances: { bank: 0, wallet: 0, cash: 0 }
+            };
+            if (!err && localRaw) {
+              try { local = JSON.parse(localRaw); } catch (_) {}
+            }
+            const allDeleted = Array.from(new Set([
+              ...(Array.isArray(local.deletedIds) ? local.deletedIds : []),
+              ...(Array.isArray(remote.deletedIds) ? remote.deletedIds : [])
+            ]));
+            const deletedSet = new Set(allDeleted);
+
+            const merged = {
+              lastUpdated: new Date().toISOString(),
+              deletedIds: allDeleted,
+              openingBalances: remote.openingBalances || local.openingBalances || { bank: 0, wallet: 0, cash: 0 },
+              clients: smartMerge(local.clients, remote.clients, deletedSet, 'updatedAt'),
+              payments: smartMerge(local.payments, remote.payments, deletedSet, 'createdAt'),
+              expenses: smartMerge(local.expenses, remote.expenses, deletedSet, 'createdAt'),
+              serviceDays: smartMerge(local.serviceDays, remote.serviceDays, deletedSet, 'createdAt'),
+              nurseTransactions: smartMerge(local.nurseTransactions, remote.nurseTransactions, deletedSet, 'createdAt'),
+              partnerLoans: smartMerge(local.partnerLoans, remote.partnerLoans, deletedSet, 'createdAt'),
+              partnerSettlements: smartMerge(local.partnerSettlements, remote.partnerSettlements, deletedSet, 'createdAt'),
+              users: smartMerge(local.users, remote.users, new Set(), 'id')
+            };
+            const mergedStr = JSON.stringify(merged, null, 2);
+            fs.writeFile(DATA_FILE, mergedStr, 'utf8', () => {});
+          });
+        } catch (_) {}
+      }
+    });
+  }).on('error', () => {});
+}
+
+// Background poll from Firebase every 8 seconds
+setInterval(syncWithFirebase, 8000);
+syncWithFirebase();
 
 const server = http.createServer((req, res) => {
   // CORS Headers
@@ -84,6 +155,9 @@ const server = http.createServer((req, res) => {
           parsed.payments = (parsed.payments || []).filter(p => p && !deletedSet.has(p.id) && !deletedSet.has(p.clientId));
           parsed.expenses = (parsed.expenses || []).filter(e => e && !deletedSet.has(e.id));
           parsed.serviceDays = (parsed.serviceDays || []).filter(d => d && !deletedSet.has(d.id) && !deletedSet.has(d.clientId));
+          parsed.nurseTransactions = (parsed.nurseTransactions || []).filter(t => t && !deletedSet.has(t.id));
+          parsed.partnerLoans = (parsed.partnerLoans || []).filter(l => l && !deletedSet.has(l.id));
+          parsed.partnerSettlements = (parsed.partnerSettlements || []).filter(s => s && !deletedSet.has(s.id));
           if (!parsed.openingBalances) {
             parsed.openingBalances = { bank: 0, wallet: 0, cash: 0 };
           }
@@ -107,27 +181,38 @@ const server = http.createServer((req, res) => {
         try {
           const incoming = JSON.parse(body);
 
-          // Read current server data first to perform non-destructive merge
           fs.readFile(DATA_FILE, 'utf8', (readErr, currentRaw) => {
-            let current = { clients: [], payments: [], expenses: [], serviceDays: [], users: [], deletedIds: [], openingBalances: { bank: 0, wallet: 0, cash: 0 } };
+            let current = {
+              clients: [],
+              payments: [],
+              expenses: [],
+              serviceDays: [],
+              nurseTransactions: [],
+              partnerLoans: [],
+              partnerSettlements: [],
+              users: [],
+              deletedIds: [],
+              openingBalances: { bank: 0, wallet: 0, cash: 0 }
+            };
             if (!readErr && currentRaw) {
               try {
                 current = JSON.parse(currentRaw);
               } catch (_) {}
             }
 
-            // Union of deletedIds
             const allDeletedIds = Array.from(new Set([
               ...(Array.isArray(current.deletedIds) ? current.deletedIds : []),
               ...(Array.isArray(incoming.deletedIds) ? incoming.deletedIds : []),
             ]));
             const deletedSet = new Set(allDeletedIds);
 
-            // Perform bidirectional smart merge, filtering out deleted items
             const mergedClients = smartMerge(current.clients, incoming.clients, deletedSet, 'updatedAt');
             const mergedPayments = smartMerge(current.payments, incoming.payments, deletedSet, 'createdAt');
             const mergedExpenses = smartMerge(current.expenses, incoming.expenses, deletedSet, 'createdAt');
             const mergedServiceDays = smartMerge(current.serviceDays, incoming.serviceDays, deletedSet, 'createdAt');
+            const mergedNurseTransactions = smartMerge(current.nurseTransactions, incoming.nurseTransactions, deletedSet, 'createdAt');
+            const mergedPartnerLoans = smartMerge(current.partnerLoans, incoming.partnerLoans, deletedSet, 'createdAt');
+            const mergedPartnerSettlements = smartMerge(current.partnerSettlements, incoming.partnerSettlements, deletedSet, 'createdAt');
             const mergedUsers = smartMerge(current.users, incoming.users, new Set(), 'id');
             const mergedOpeningBalances = incoming.openingBalances || current.openingBalances || { bank: 0, wallet: 0, cash: 0 };
 
@@ -139,6 +224,9 @@ const server = http.createServer((req, res) => {
               payments: mergedPayments,
               expenses: mergedExpenses,
               serviceDays: mergedServiceDays,
+              nurseTransactions: mergedNurseTransactions,
+              partnerLoans: mergedPartnerLoans,
+              partnerSettlements: mergedPartnerSettlements,
               users: mergedUsers,
             };
 
@@ -150,8 +238,8 @@ const server = http.createServer((req, res) => {
                 res.end(JSON.stringify({ error: 'Database write error' }));
                 return;
               }
+              pushToFirebase(jsonString);
               res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-              // Return the full merged state so caller updates immediately
               res.end(jsonString);
             });
           });
@@ -195,5 +283,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Elite Grand Server & Smart Cloud Sync running at http://localhost:${PORT}`);
+  console.log(`Elite Grand Server & Firebase Cloud Sync running at http://localhost:${PORT}`);
 });
