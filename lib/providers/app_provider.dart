@@ -775,6 +775,22 @@ class AppProvider extends ChangeNotifier {
 
   // --- Service Days Actions (أيام الخدمة والشفتات للعميل والممرض) ---
 
+  /// تعديل وردية مسجلة / تبديل ممرض أو تعديل أوقات وساعات العمل
+  Future<void> updateServiceDay(ServiceDayModel updatedDay) async {
+    final index = _serviceDays.indexWhere((d) => d.id == updatedDay.id);
+    if (index != -1) {
+      _serviceDays[index] = updatedDay;
+      final timeStr = updatedDay.timeRangeDisplay.isNotEmpty ? ' (${updatedDay.timeRangeDisplay})' : '';
+      await _logAction(
+        title: 'تعديل وردية / تبديل ممرض',
+        description: 'تم تعديل وردية العميل: ${updatedDay.clientName} - الممرض: ${updatedDay.nurseName} - ${updatedDay.shiftTypeArabic}$timeStr',
+        actionType: 'service_days',
+        metadata: {'clientId': updatedDay.clientId, 'nurseName': updatedDay.nurseName},
+      );
+      await _persistAndSync();
+    }
+  }
+
   /// تسجيل يوم خدمة فردي
   Future<void> recordServiceDay({
     required String clientId,
@@ -784,6 +800,9 @@ class AppProvider extends ChangeNotifier {
     required double clientPrice,
     required double nursePrice,
     String notes = '',
+    String? startTime,
+    String? endTime,
+    double? hoursCount,
   }) async {
     final client = _clients.firstWhere((c) => c.id == clientId);
     final day = ServiceDayModel(
@@ -798,12 +817,16 @@ class AppProvider extends ChangeNotifier {
       notes: notes.trim(),
       recordedBy: _currentUser?.username ?? 'wahdan',
       createdAt: DateTime.now(),
+      startTime: startTime,
+      endTime: endTime,
+      hoursCount: hoursCount,
     );
 
     _serviceDays.insert(0, day);
+    final timeStr = day.timeRangeDisplay.isNotEmpty ? ' (${day.timeRangeDisplay})' : '';
     await _logAction(
       title: 'تسجيل يوم خدمة',
-      description: 'تم تسجيل يوم خدمة (${DateFormat('yyyy/MM/dd').format(date)}) للعميل: ${client.name} - التمريض: ${day.nurseName}',
+      description: 'تم تسجيل يوم خدمة (${DateFormat('yyyy/MM/dd').format(date)}) للعميل: ${client.name} - التمريض: ${day.nurseName} - ${day.shiftTypeArabic}$timeStr',
       actionType: 'service_days',
       metadata: {'clientId': clientId, 'clientName': client.name, 'nurseName': day.nurseName},
     );
@@ -819,6 +842,9 @@ class AppProvider extends ChangeNotifier {
     required double clientPrice,
     required double nursePrice,
     String notes = '',
+    String? startTime,
+    String? endTime,
+    double? hoursCount,
   }) async {
     final client = _clients.firstWhere((c) => c.id == clientId);
     for (final date in dates) {
@@ -826,7 +852,8 @@ class AppProvider extends ChangeNotifier {
         (d) => d.clientId == clientId &&
                d.date.year == date.year &&
                d.date.month == date.month &&
-               d.date.day == date.day
+               d.date.day == date.day &&
+               (d.nurseName.trim() == nurseName.trim() || d.shiftType == shiftType)
       );
 
       final day = ServiceDayModel(
@@ -841,6 +868,9 @@ class AppProvider extends ChangeNotifier {
         notes: notes.trim(),
         recordedBy: _currentUser?.username ?? 'wahdan',
         createdAt: DateTime.now(),
+        startTime: startTime,
+        endTime: endTime,
+        hoursCount: hoursCount,
       );
 
       if (existingIndex != -1) {
@@ -849,9 +879,10 @@ class AppProvider extends ChangeNotifier {
         _serviceDays.insert(0, day);
       }
     }
+    final timeStr = (startTime != null && endTime != null) ? ' (من $startTime إلى $endTime)' : '';
     await _logAction(
       title: 'تسجيل أيام الخدمة',
-      description: 'تم تسجيل ${dates.length} يوم خدمة للعميل: ${client.name} - التمريض: ${nurseName.trim()}',
+      description: 'تم تسجيل ${dates.length} يوم خدمة للعميل: ${client.name} - التمريض: ${nurseName.trim()} ($shiftType)$timeStr',
       actionType: 'service_days',
       metadata: {'clientId': clientId, 'clientName': client.name, 'daysCount': dates.length},
     );

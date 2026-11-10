@@ -504,8 +504,11 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                               prefixIcon: Icon(Icons.schedule),
                             ),
                             items: const [
+                              DropdownMenuItem(value: 'hours8', child: Text('وردية 8 ساعات', style: TextStyle(fontFamily: 'Cairo'))),
+                              DropdownMenuItem(value: 'hours10', child: Text('وردية 10 ساعات', style: TextStyle(fontFamily: 'Cairo'))),
                               DropdownMenuItem(value: 'hours12', child: Text('وردية يومية (12 ساعة)', style: TextStyle(fontFamily: 'Cairo'))),
                               DropdownMenuItem(value: 'hours24', child: Text('إقامة كاملة (24 ساعة)', style: TextStyle(fontFamily: 'Cairo'))),
+                              DropdownMenuItem(value: 'custom', child: Text('ساعات عمل مخصصة', style: TextStyle(fontFamily: 'Cairo'))),
                             ],
                             onChanged: (val) {
                               if (val != null) setState(() => _serviceType = val);

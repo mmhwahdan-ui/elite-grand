@@ -4,7 +4,7 @@ class ClientModel {
   String phone;
   String address;
   String healthCondition;
-  String serviceType; // 'hours12' (12 ساعة يومياً) or 'hours24' (إقامة 24 ساعة)
+  String serviceType; // 'hours8', 'hours10', 'hours12', 'hours24', 'custom'
   double dailyPrice; // سعر اليوم المتفق عليه مع العميل
   double nurseDailyPrice; // يومية الممرض المتفق عليها
   bool isExistingClient; // هل عميل جديد (false) أم عميل حالي (true)
@@ -108,6 +108,13 @@ class ClientModel {
       case 'hours24':
         return 'إقامة كاملة (24 ساعة)';
       case 'hours12':
+        return 'وردية يومية (12 ساعة)';
+      case 'hours10':
+        return 'وردية (10 ساعات)';
+      case 'hours8':
+        return 'وردية (8 ساعات)';
+      case 'custom':
+        return 'ساعات مخصصة';
       default:
         return 'وردية يومية (12 ساعة)';
     }
@@ -209,15 +216,18 @@ class ClientModel {
       serviceType: map['serviceType'] ?? 'hours12',
       dailyPrice: (map['dailyPrice'] as num?)?.toDouble() ?? 0.0,
       nurseDailyPrice: (map['nurseDailyPrice'] as num?)?.toDouble() ?? 0.0,
-      isExistingClient: map['isExistingClient'] == true,
+      isExistingClient: map['isExistingClient'] ?? false,
       openingBalance: (map['openingBalance'] as num?)?.toDouble() ?? 0.0,
-      startDate: map['startDate'] != null ? DateTime.tryParse(map['startDate']) : null,
-      endDate: map['endDate'] != null ? DateTime.tryParse(map['endDate']) : null,
+      startDate: map['startDate'] != null
+          ? DateTime.tryParse(map['startDate'])
+          : null,
+      endDate:
+          map['endDate'] != null ? DateTime.tryParse(map['endDate']) : null,
       status: map['status'] ?? 'pending_pricing',
       terminationReason: map['terminationReason'],
       nurseAssigned: map['nurseAssigned'],
       notes: map['notes'] ?? '',
-      createdBy: map['createdBy'] ?? '',
+      createdBy: map['createdBy'] ?? 'shimaa',
       createdAt: map['createdAt'] != null
           ? DateTime.tryParse(map['createdAt']) ?? DateTime.now()
           : DateTime.now(),

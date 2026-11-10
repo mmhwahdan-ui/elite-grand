@@ -411,7 +411,7 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                                   child: const Icon(Icons.calendar_month, color: Colors.teal, size: 20),
                                                 ),
                                                 title: Text('${s.clientName} (${s.shiftTypeArabic})', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', fontSize: 13)),
-                                                subtitle: Text('التاريخ: ${dateFormat.format(s.date)} ${s.notes.isNotEmpty ? " • " + s.notes : ""}', style: const TextStyle(fontSize: 11, fontFamily: 'Cairo')),
+                                                subtitle: Text('التاريخ: ${dateFormat.format(s.date)}${s.timeRangeDisplay.isNotEmpty ? " • " + s.timeRangeDisplay : ""}${s.notes.isNotEmpty ? " • " + s.notes : ""}', style: const TextStyle(fontSize: 11, fontFamily: 'Cairo')),
                                                 trailing: Text('${s.nursePrice.toStringAsFixed(0)} ج.م', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.teal, fontFamily: 'Cairo')),
                                               ),
                                             );

@@ -30,6 +30,29 @@ class _AddServiceDayDialogState extends State<AddServiceDayDialog> {
   late TextEditingController _nursePriceController;
   final TextEditingController _notesController = TextEditingController();
   String _shiftType = 'hours12';
+  String? _startTime;
+  String? _endTime;
+  double? _hoursCount;
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'ص' : 'م';
+    return '${hour.toString().padLeft(2, '0')}:$minute $period';
+  }
+
+  void _autoSuggestEndTime(TimeOfDay start) {
+    int addHours = 12;
+    if (_shiftType == 'hours24') addHours = 24;
+    if (_shiftType == 'hours8') addHours = 8;
+    if (_shiftType == 'hours10') addHours = 10;
+
+    final newHour = (start.hour + addHours) % 24;
+    final end = TimeOfDay(hour: newHour, minute: start.minute);
+    setState(() {
+      _endTime = _formatTimeOfDay(end);
+    });
+  }
 
   // Batch Days Fields
   DateTime _batchStartDate = DateTime.now();
@@ -537,25 +560,157 @@ class _AddServiceDayDialogState extends State<AddServiceDayDialog> {
                       DropdownButtonFormField<String>(
                         value: _shiftType,
                         decoration: InputDecoration(
-                          labelText: 'نوع الوردية / الشفت',
-                          prefixIcon: const Icon(Icons.schedule),
+                          labelText: 'نوع الوردية / الشفت وساعات العمل',
+                          prefixIcon: const Icon(Icons.schedule, color: Colors.indigo),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           filled: true,
                           fillColor: Colors.grey.shade50,
                         ),
                         items: const [
-                          DropdownMenuItem(
-                            value: 'hours12',
-                            child: Text('وردية 12 ساعة'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'hours24',
-                            child: Text('إقامة 24 ساعة'),
-                          ),
+                          DropdownMenuItem(value: 'hours8', child: Text('وردية 8 ساعات')),
+                          DropdownMenuItem(value: 'hours10', child: Text('وردية 10 ساعات')),
+                          DropdownMenuItem(value: 'hours12', child: Text('وردية 12 ساعة (يومية)')),
+                          DropdownMenuItem(value: 'hours24', child: Text('إقامة كاملة 24 ساعة')),
+                          DropdownMenuItem(value: 'custom', child: Text('ساعات عمل مخصصة')),
                         ],
                         onChanged: (val) {
                           if (val != null) setState(() => _shiftType = val);
                         },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Shift Handover Timing (استلام وتسليم الخدمة)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blueGrey.shade100),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.timer_outlined, size: 16, color: AppTheme.primaryColor),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'وقت استلام الخدمة ووقت إنهائها (اختياري):',
+                                  style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                                const Spacer(),
+                                if (_startTime != null || _endTime != null)
+                                  TextButton(
+                                    style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                                    onPressed: () {
+                                      setState(() {
+                                        _startTime = null;
+                                        _endTime = null;
+                                      });
+                                    },
+                                    child: const Text('مسح الأوقات', style: TextStyle(fontSize: 11, color: Colors.red)),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () async {
+                                      final picked = await showTimePicker(
+                                        context: context,
+                                        initialTime: const TimeOfDay(hour: 8, minute: 0),
+                                      );
+                                      if (picked != null) {
+                                        setState(() {
+                                          _startTime = _formatTimeOfDay(picked);
+                                          _autoSuggestEndTime(picked);
+                                        });
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.grey.shade300),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Row(
+                                            children: [
+                                              Icon(Icons.login, size: 14, color: Colors.teal),
+                                              SizedBox(width: 4),
+                                              Text('وقت الاستلام', style: TextStyle(fontSize: 10, color: Colors.grey, fontFamily: 'Cairo')),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            _startTime ?? 'انقر للتحديد',
+                                            style: TextStyle(
+                                              fontFamily: 'Cairo',
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: _startTime != null ? AppTheme.primaryColor : Colors.grey.shade500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () async {
+                                      final picked = await showTimePicker(
+                                        context: context,
+                                        initialTime: const TimeOfDay(hour: 20, minute: 0),
+                                      );
+                                      if (picked != null) {
+                                        setState(() {
+                                          _endTime = _formatTimeOfDay(picked);
+                                        });
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.grey.shade300),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Row(
+                                            children: [
+                                              Icon(Icons.logout, size: 14, color: Colors.deepOrange),
+                                              SizedBox(width: 4),
+                                              Text('وقت الإنهاء', style: TextStyle(fontSize: 10, color: Colors.grey, fontFamily: 'Cairo')),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            _endTime ?? 'انقر للتحديد',
+                                            style: TextStyle(
+                                              fontFamily: 'Cairo',
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: _endTime != null ? AppTheme.primaryColor : Colors.grey.shade500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 14),
 
@@ -776,6 +931,9 @@ class _AddServiceDayDialogState extends State<AddServiceDayDialog> {
           clientPrice: clientPrice,
           nursePrice: nursePrice,
           notes: notes,
+          startTime: _startTime,
+          endTime: _endTime,
+          hoursCount: _hoursCount,
         );
       } else {
         // Batch Days
@@ -787,6 +945,9 @@ class _AddServiceDayDialogState extends State<AddServiceDayDialog> {
           clientPrice: clientPrice,
           nursePrice: nursePrice,
           notes: notes,
+          startTime: _startTime,
+          endTime: _endTime,
+          hoursCount: _hoursCount,
         );
       }
 

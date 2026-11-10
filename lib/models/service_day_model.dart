@@ -4,12 +4,15 @@ class ServiceDayModel {
   final String clientName;
   final DateTime date;
   final String nurseName; // الممرض الذي نفذ الخدمة في هذا اليوم
-  final String shiftType; // 'hours12' (12 ساعة) or 'hours24' (24 ساعة)
+  final String shiftType; // 'hours8', 'hours10', 'hours12', 'hours24', 'custom'
   final double clientPrice; // سعر هذا اليوم المحسوب على العميل
   final double nursePrice; // يومية الممرض المستحقة في هذا اليوم
   final String notes;
   final String recordedBy;
   final DateTime createdAt;
+  final String? startTime; // وقت استلام الخدمة (مثلاً 08:00 ص)
+  final String? endTime; // وقت إنهاء الخدمة والتسليم (مثلاً 08:00 م)
+  final double? hoursCount; // عدد ساعات العمل الفعلي (مثلاً 12 أو 24 أو 8)
 
   ServiceDayModel({
     required this.id,
@@ -23,6 +26,9 @@ class ServiceDayModel {
     this.notes = '',
     required this.recordedBy,
     required this.createdAt,
+    this.startTime,
+    this.endTime,
+    this.hoursCount,
   });
 
   // Gross profit for this specific day
@@ -33,9 +39,29 @@ class ServiceDayModel {
       case 'hours24':
         return 'إقامة 24 ساعة';
       case 'hours12':
+        return 'وردية 12 ساعة';
+      case 'hours10':
+        return 'وردية 10 ساعات';
+      case 'hours8':
+        return 'وردية 8 ساعات';
+      case 'custom':
+        return hoursCount != null ? 'وردية ${hoursCount!.toStringAsFixed(0)} ساعة' : 'ساعات مخصصة';
       default:
         return 'وردية 12 ساعة';
     }
+  }
+
+  String get timeRangeDisplay {
+    final hasStart = startTime != null && startTime!.trim().isNotEmpty;
+    final hasEnd = endTime != null && endTime!.trim().isNotEmpty;
+    if (hasStart && hasEnd) {
+      return 'من $startTime إلى $endTime';
+    } else if (hasStart) {
+      return 'استلام: $startTime';
+    } else if (hasEnd) {
+      return 'إنهاء: $endTime';
+    }
+    return '';
   }
 
   ServiceDayModel copyWith({
@@ -50,6 +76,9 @@ class ServiceDayModel {
     String? notes,
     String? recordedBy,
     DateTime? createdAt,
+    String? startTime,
+    String? endTime,
+    double? hoursCount,
   }) {
     return ServiceDayModel(
       id: id ?? this.id,
@@ -63,6 +92,9 @@ class ServiceDayModel {
       notes: notes ?? this.notes,
       recordedBy: recordedBy ?? this.recordedBy,
       createdAt: createdAt ?? this.createdAt,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      hoursCount: hoursCount ?? this.hoursCount,
     );
   }
 
@@ -79,6 +111,9 @@ class ServiceDayModel {
       'notes': notes,
       'recordedBy': recordedBy,
       'createdAt': createdAt.toIso8601String(),
+      if (startTime != null) 'startTime': startTime,
+      if (endTime != null) 'endTime': endTime,
+      if (hoursCount != null) 'hoursCount': hoursCount,
     };
   }
 
@@ -99,6 +134,9 @@ class ServiceDayModel {
       createdAt: map['createdAt'] != null
           ? DateTime.tryParse(map['createdAt']) ?? DateTime.now()
           : DateTime.now(),
+      startTime: map['startTime'],
+      endTime: map['endTime'],
+      hoursCount: (map['hoursCount'] as num?)?.toDouble(),
     );
   }
 }

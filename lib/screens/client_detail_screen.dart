@@ -10,6 +10,7 @@ import '../widgets/extend_service_dialog.dart';
 import '../widgets/stop_service_dialog.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/add_service_day_dialog.dart';
+import '../widgets/edit_service_day_dialog.dart';
 
 class ClientDetailScreen extends StatelessWidget {
   final String clientId;
@@ -704,6 +705,28 @@ class ClientDetailScreen extends StatelessWidget {
                                               ],
                                             ),
                                           ),
+                                          if (day.timeRangeDisplay.isNotEmpty) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: Colors.purple.shade50,
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: Colors.purple.shade200),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(Icons.access_time_rounded, size: 10, color: Colors.purple),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    day.timeRangeDisplay,
+                                                    style: const TextStyle(fontSize: 10, color: Colors.purple, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         ],
                                       ),
                                       const SizedBox(height: 4),
@@ -740,7 +763,20 @@ class ClientDetailScreen extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                if (provider.canEditAnyData || provider.isManager || provider.isAccountant || provider.isFollowup)
+                                if (provider.canEditAnyData || provider.isManager || provider.isAccountant || provider.isFollowup) ...[
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                                    tooltip: 'تعديل الوردية أو تبديل الممرض',
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => EditServiceDayDialog(
+                                          serviceDay: day,
+                                          client: client,
+                                        ),
+                                      );
+                                    },
+                                  ),
                                   IconButton(
                                     icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
                                     tooltip: 'حذف هذا اليوم',
@@ -768,6 +804,7 @@ class ClientDetailScreen extends StatelessWidget {
                                       }
                                     },
                                   ),
+                                ],
                               ],
                             ),
                           );
