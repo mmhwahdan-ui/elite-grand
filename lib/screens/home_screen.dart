@@ -13,6 +13,7 @@ import 'users_permissions_screen.dart';
 import 'login_screen.dart';
 import 'nurse_accounts_screen.dart';
 import 'partner_settlement_screen.dart';
+import 'caregivers_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -180,6 +181,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 4),
 
+            // Caregivers Database button
+            IconButton(
+              icon: const Icon(Icons.badge_outlined, color: Colors.white),
+              tooltip: 'قاعدة بيانات وسجل مقدمي الخدمة',
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
+              },
+            ),
+            const SizedBox(width: 4),
+
             // User Profile / Switch Account
             PopupMenuButton<String>(
               onSelected: (val) async {
@@ -201,6 +212,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     context: context,
                     builder: (_) => const NotificationsDialog(),
                   );
+                } else if (val == 'caregivers') {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
                 } else if (val == 'settlement') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnerSettlementScreen()));
                 }
@@ -269,6 +282,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icon(Icons.badge_outlined, color: Colors.teal, size: 20),
                       SizedBox(width: 8),
                       Text('حسابات وسلف أطقم التمريض', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'caregivers',
+                  child: Row(
+                    children: [
+                      Icon(Icons.badge, color: AppTheme.primary, size: 20),
+                      SizedBox(width: 8),
+                      Text('قاعدة بيانات وسجل مقدمي الخدمة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
                     ],
                   ),
                 ),

@@ -9,6 +9,7 @@ import '../models/nurse_transaction_model.dart';
 import '../models/partner_loan_model.dart';
 import '../models/partner_settlement_model.dart';
 import '../models/app_notification_model.dart';
+import '../models/caregiver_model.dart';
 
 class StorageService {
   static const String _keyUsers = 'eg_users_data';
@@ -25,6 +26,7 @@ class StorageService {
   static const String _keyPartnerLoans = 'eg_partner_loans_data';
   static const String _keyPartnerSettlements = 'eg_partner_settlements_data';
   static const String _keyNotifications = 'eg_notifications_data';
+  static const String _keyCaregivers = 'eg_caregivers_data';
 
   final SharedPreferences prefs;
 
@@ -267,5 +269,24 @@ class StorageService {
   Future<void> saveNotifications(List<AppNotificationModel> list) async {
     final data = list.take(150).map((n) => n.toMap()).toList();
     await prefs.setString(_keyNotifications, jsonEncode(data));
+  }
+
+  // Caregivers (قاعدة بيانات وسجل الكوادر التمريضية)
+  List<CaregiverModel> loadCaregivers() {
+    final jsonStr = prefs.getString(_keyCaregivers);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      return [];
+    }
+    try {
+      final List decoded = jsonDecode(jsonStr);
+      return decoded.map((c) => CaregiverModel.fromMap(Map<String, dynamic>.from(c))).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveCaregivers(List<CaregiverModel> list) async {
+    final data = list.map((c) => c.toMap()).toList();
+    await prefs.setString(_keyCaregivers, jsonEncode(data));
   }
 }

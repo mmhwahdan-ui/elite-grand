@@ -92,6 +92,7 @@ class _EditServiceDayDialogState extends State<EditServiceDayDialog> {
     final provider = context.watch<AppProvider>();
     final dateFormat = DateFormat('yyyy/MM/dd', 'ar');
     final allNurses = provider.allNurseNames;
+    final matchedCaregiver = provider.findCaregiverByName(_nurseNameController.text.trim());
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -218,6 +219,7 @@ class _EditServiceDayDialogState extends State<EditServiceDayDialog> {
                             }
                             return null;
                           },
+                          onChanged: (_) => setState(() {}),
                         ),
 
                         // Quick nurse picker chips
@@ -239,10 +241,26 @@ class _EditServiceDayDialogState extends State<EditServiceDayDialog> {
                             runSpacing: 4,
                             children: allNurses.map((name) {
                               final isSelected = _nurseNameController.text.trim() == name;
+                              final cg = provider.findCaregiverByName(name);
                               return ActionChip(
-                                label: Text(name, style: TextStyle(fontSize: 11, fontFamily: 'Cairo', fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                                avatar: cg != null && cg.isBlocked
+                                    ? const Icon(Icons.block, size: 14, color: Colors.red)
+                                    : (isSelected ? const Icon(Icons.check, size: 14, color: Colors.teal) : null),
+                                label: Text(
+                                  name,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontFamily: 'Cairo',
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: cg != null && cg.isBlocked ? Colors.red : null,
+                                  ),
+                                ),
                                 backgroundColor: isSelected ? Colors.teal.shade100 : Colors.grey.shade100,
-                                side: BorderSide(color: isSelected ? Colors.teal : Colors.grey.shade300),
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? Colors.teal
+                                      : (cg != null && cg.isBlocked ? Colors.red.shade300 : Colors.grey.shade300),
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     _nurseNameController.text = name;
@@ -251,6 +269,133 @@ class _EditServiceDayDialogState extends State<EditServiceDayDialog> {
                               );
                             }).toList(),
                           ),
+                        ],
+
+                        // Smart Nurse Inquiry / Alert (تسأل يسجل بنفس الحسابات أم لا)
+                        if (matchedCaregiver != null) ...[
+                          const SizedBox(height: 10),
+                          if (matchedCaregiver.isBlocked) ...[
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.red.shade300),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 22),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'تحذير: هذا الممرض محظور بسبب مشاكل: ${matchedCaregiver.blockReason ?? "غير محدد"}',
+                                      style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'Cairo'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.teal.shade50.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.teal.shade300),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.verified, color: Colors.teal, size: 20),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'مقدم الخدمة مسجل بقاعدة البيانات (${matchedCaregiver.code})',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.teal, fontFamily: 'Cairo'),
+                                      ),
+                                      const Spacer(),
+                                      if (matchedCaregiver.isCurrentlyWorking || provider.getCaregiverCurrentCase(matchedCaregiver.name) != null)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.shade100,
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: Colors.green),
+                                          ),
+                                          child: Text(
+                                            'يعمل الآن مع: ${provider.getCaregiverCurrentCase(matchedCaregiver.name) ?? matchedCaregiver.currentClientName ?? ""}',
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF14532D), fontFamily: 'Cairo'),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'السعر المعتمد للممرض: ${matchedCaregiver.dailyPrice.toStringAsFixed(0)} ج.م / يوم (${matchedCaregiver.shiftPreferenceArabic})',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade800, fontFamily: 'Cairo'),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  if (double.tryParse(_nursePriceController.text.trim()) == matchedCaregiver.dailyPrice) ...[
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.shade100,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.check, size: 14, color: Colors.green),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'يتم التسجيل بنفس الحسابات والسعر المعتمد للممرض',
+                                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green, fontFamily: 'Cairo'),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    Text(
+                                      'هل تريد تسجيل الوردية بنفس الحسابات والأسعار المسجلة له (${matchedCaregiver.dailyPrice.toStringAsFixed(0)} ج)؟',
+                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF0F172A), fontFamily: 'Cairo'),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        ElevatedButton.icon(
+                                          onPressed: () {
+                                            setState(() {
+                                              _nursePriceController.text = matchedCaregiver.dailyPrice.toStringAsFixed(0);
+                                            });
+                                          },
+                                          icon: const Icon(Icons.check, size: 14),
+                                          label: Text(
+                                            'نعم، تطبيق حسابه المعتمد (${matchedCaregiver.dailyPrice.toStringAsFixed(0)} ج)',
+                                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.teal,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            elevation: 0,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        TextButton(
+                                          onPressed: () {},
+                                          child: Text(
+                                            'لا، استخدام سعر مخصص (${_nursePriceController.text} ج)',
+                                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                         const SizedBox(height: 16),
 

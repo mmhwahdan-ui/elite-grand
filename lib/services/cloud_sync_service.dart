@@ -11,6 +11,7 @@ import '../models/nurse_transaction_model.dart';
 import '../models/partner_loan_model.dart';
 import '../models/partner_settlement_model.dart';
 import '../models/app_notification_model.dart';
+import '../models/caregiver_model.dart';
 
 enum SyncStatus {
   idle,
@@ -31,6 +32,7 @@ class SyncResult {
   final List<PartnerLoanModel>? partnerLoans;
   final List<PartnerSettlementModel>? partnerSettlements;
   final List<UserModel>? users;
+  final List<CaregiverModel>? caregivers;
   final List<AppNotificationModel>? notifications;
   final List<String>? deletedIds;
   final Map<String, double>? openingBalances;
@@ -46,6 +48,7 @@ class SyncResult {
     this.partnerLoans,
     this.partnerSettlements,
     this.users,
+    this.caregivers,
     this.notifications,
     this.deletedIds,
     this.openingBalances,
@@ -104,6 +107,7 @@ class CloudSyncService {
     List<PartnerLoanModel> partnerLoans = const [],
     List<PartnerSettlementModel> partnerSettlements = const [],
     required List<UserModel> users,
+    List<CaregiverModel> caregivers = const [],
     List<AppNotificationModel> notifications = const [],
     List<String> deletedIds = const [],
     Map<String, double>? openingBalances,
@@ -125,6 +129,7 @@ class CloudSyncService {
         'partnerLoans': partnerLoans.map((l) => l.toMap()).toList(),
         'partnerSettlements': partnerSettlements.map((s) => s.toMap()).toList(),
         'users': users.map((u) => u.toMap()).toList(),
+        'caregivers': caregivers.map((c) => c.toMap()).toList(),
         'notifications': notifications.take(150).map((n) => n.toMap()).toList(),
       };
 
@@ -247,6 +252,13 @@ class CloudSyncService {
               .toList();
         }
 
+        List<CaregiverModel>? remoteCaregivers;
+        if (data['caregivers'] is List) {
+          remoteCaregivers = (data['caregivers'] as List)
+              .map((c) => CaregiverModel.fromMap(Map<String, dynamic>.from(c)))
+              .toList();
+        }
+
         List<AppNotificationModel>? remoteNotifications;
         if (data['notifications'] is List) {
           remoteNotifications = (data['notifications'] as List)
@@ -268,6 +280,7 @@ class CloudSyncService {
           partnerLoans: remotePartnerLoans,
           partnerSettlements: remotePartnerSettlements,
           users: remoteUsers,
+          caregivers: remoteCaregivers,
           notifications: remoteNotifications,
           deletedIds: remoteDeletedIds,
           openingBalances: remoteOpeningBalances,

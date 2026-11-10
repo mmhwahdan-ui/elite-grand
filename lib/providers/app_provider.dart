@@ -12,6 +12,7 @@ import '../models/service_day_model.dart';
 import '../models/nurse_transaction_model.dart';
 import '../models/partner_loan_model.dart';
 import '../models/partner_settlement_model.dart';
+import '../models/caregiver_model.dart';
 import '../services/storage_service.dart';
 import '../services/cloud_sync_service.dart';
 
@@ -29,6 +30,7 @@ class AppProvider extends ChangeNotifier {
   List<NurseTransactionModel> _nurseTransactions = [];
   List<PartnerLoanModel> _partnerLoans = [];
   List<PartnerSettlementModel> _partnerSettlements = [];
+  List<CaregiverModel> _caregivers = [];
   List<String> _deletedIds = [];
   Map<String, double> _openingBalances = {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0};
 
@@ -58,6 +60,7 @@ class AppProvider extends ChangeNotifier {
   List<NurseTransactionModel> get nurseTransactions => List.unmodifiable(_nurseTransactions);
   List<PartnerLoanModel> get partnerLoans => List.unmodifiable(_partnerLoans);
   List<PartnerSettlementModel> get partnerSettlements => List.unmodifiable(_partnerSettlements);
+  List<CaregiverModel> get caregivers => List.unmodifiable(_caregivers);
   List<String> get deletedIds => List.unmodifiable(_deletedIds);
   Map<String, double> get openingBalances => Map.unmodifiable(_openingBalances);
   bool get isLoading => _isLoading;
@@ -134,6 +137,17 @@ class AppProvider extends ChangeNotifier {
   bool get canViewFinancialReports => isManager || (_currentUser?.permissions.canViewFinancialReports ?? false);
   bool get canManagePermissions => isManager || (_currentUser?.permissions.canManagePermissions ?? false);
   bool get canEditAnyData => isManager || (_currentUser?.permissions.canEditAnyData ?? false);
+
+  /// صلاحية ملء وتعديل قاعدة بيانات مقدمي الخدمة (حصرياً لمديرة المتابعة shimaa والمدير wahdan)
+  bool get canManageCaregivers =>
+      _currentUser?.username == 'wahdan' ||
+      _currentUser?.username == 'shimaa' ||
+      isManager ||
+      isFollowup ||
+      (_currentUser?.permissions.canEditAnyData ?? false);
+
+  /// هل الحساب الحالي للاطلاع فقط على قاعدة بيانات مقدمي الخدمة (مثل أ/ زيزو)
+  bool get isCaregiverViewerOnly => _currentUser?.username == 'zezo' || (!canManageCaregivers);
 
   // Filtered Client Lists
   List<ClientModel> get activeClients =>
@@ -327,6 +341,7 @@ class AppProvider extends ChangeNotifier {
     _nurseTransactions = storageService.loadNurseTransactions().where((t) => !deletedSet.contains(t.id)).toList();
     _partnerLoans = storageService.loadPartnerLoans().where((l) => !deletedSet.contains(l.id)).toList();
     _partnerSettlements = storageService.loadPartnerSettlements().where((s) => !deletedSet.contains(s.id)).toList();
+    _caregivers = storageService.loadCaregivers().where((c) => !deletedSet.contains(c.id)).toList();
     _notifications = storageService.loadNotifications();
     for (final n in _notifications) {
       _knownNotificationIds.add(n.id);
@@ -1293,6 +1308,10 @@ class AppProvider extends ChangeNotifier {
           _partnerSettlements = result.partnerSettlements!.where((s) => !deletedSet.contains(s.id)).toList();
           await storageService.savePartnerSettlements(_partnerSettlements);
         }
+        if (result.caregivers != null) {
+          _caregivers = result.caregivers!.where((c) => !deletedSet.contains(c.id)).toList();
+          await storageService.saveCaregivers(_caregivers);
+        }
         if (result.users != null && result.users!.isNotEmpty) {
           _users = result.users!;
           await storageService.saveUsers(_users);
@@ -1359,6 +1378,7 @@ class AppProvider extends ChangeNotifier {
           partnerLoans: _partnerLoans,
           partnerSettlements: _partnerSettlements,
           users: _users,
+          caregivers: _caregivers,
           notifications: _notifications,
           deletedIds: _deletedIds,
           openingBalances: _openingBalances,
@@ -1381,6 +1401,7 @@ class AppProvider extends ChangeNotifier {
     await storageService.saveNurseTransactions(_nurseTransactions);
     await storageService.savePartnerLoans(_partnerLoans);
     await storageService.savePartnerSettlements(_partnerSettlements);
+    await storageService.saveCaregivers(_caregivers);
     await storageService.saveOpeningBalances(_openingBalances);
     await storageService.saveNotifications(_notifications);
     notifyListeners();
@@ -1395,6 +1416,7 @@ class AppProvider extends ChangeNotifier {
       partnerLoans: _partnerLoans,
       partnerSettlements: _partnerSettlements,
       users: _users,
+      caregivers: _caregivers,
       notifications: _notifications,
       deletedIds: _deletedIds,
       openingBalances: _openingBalances,
@@ -1418,6 +1440,10 @@ class AppProvider extends ChangeNotifier {
     }
     for (var t in _nurseTransactions) {
       final n = t.nurseName.trim();
+      if (n.isNotEmpty) set.add(n);
+    }
+    for (var c in _caregivers) {
+      final n = c.name.trim();
       if (n.isNotEmpty) set.add(n);
     }
     final list = set.toList();
@@ -1944,5 +1970,187 @@ class AppProvider extends ChangeNotifier {
     ];
     if (month >= 1 && month <= 12) return months[month - 1];
     return '';
+  }
+
+  // ==========================================
+  // --- Caregivers & Staff Database (قاعدة بيانات وسجل مقدمي الخدمة) ---
+  // ==========================================
+
+  /// توليد كود تلقائي لمقدم الخدمة (e.g. CG-001, CG-002...)
+  String generateNextCaregiverCode() {
+    int maxNum = 0;
+    for (var c in _caregivers) {
+      final digits = c.code.replaceAll(RegExp(r'[^0-9]'), '');
+      final n = int.tryParse(digits);
+      if (n != null && n > maxNum) {
+        maxNum = n;
+      }
+    }
+    final nextNum = maxNum + 1;
+    return 'CG-${nextNum.toString().padLeft(3, '0')}';
+  }
+
+  /// البحث عن مقدم خدمة بالاسم
+  CaregiverModel? findCaregiverByName(String name) {
+    final clean = name.trim().toLowerCase();
+    if (clean.isEmpty) return null;
+    try {
+      return _caregivers.firstWhere(
+        (c) => c.name.trim().toLowerCase() == clean,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// البحث عن مقدم خدمة بالكود
+  CaregiverModel? findCaregiverByCode(String code) {
+    final clean = code.trim().toLowerCase();
+    if (clean.isEmpty) return null;
+    try {
+      return _caregivers.firstWhere(
+        (c) => c.code.trim().toLowerCase() == clean,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// الحالة الحالية التي يعمل بها مقدم الخدمة الآن
+  String? getCaregiverCurrentCase(String caregiverName) {
+    final clean = caregiverName.trim().toLowerCase();
+    if (clean.isEmpty) return null;
+
+    // 1. أولاً نبحث في العملاء النشطين (active)
+    for (var client in _clients) {
+      if (client.status == 'active' &&
+          (client.nurseAssigned ?? '').trim().toLowerCase() == clean) {
+        return client.name;
+      }
+    }
+
+    // 2. التحقق من الورديات المسجلة خلال آخر 3 أيام لعملاء نشطين
+    for (var client in activeClients) {
+      final shifts = getClientServiceDays(client.id);
+      if (shifts.isNotEmpty) {
+        final recentShift = shifts.first;
+        if (recentShift.nurseName.trim().toLowerCase() == clean &&
+            DateTime.now().difference(recentShift.date).inDays.abs() <= 3) {
+          return client.name;
+        }
+      }
+    }
+
+    // 3. التحقق من السجل المحفوظ في ملف مقدم الخدمة
+    final registered = findCaregiverByName(caregiverName);
+    if (registered != null &&
+        registered.isCurrentlyWorking &&
+        registered.currentClientName != null &&
+        registered.currentClientName!.trim().isNotEmpty) {
+      return registered.currentClientName!.trim();
+    }
+
+    return null;
+  }
+
+  /// جلب قائمة بكافة العملاء الذين اشتغل معهم مقدم الخدمة
+  List<String> getCaregiverPastClients(String caregiverName) {
+    final set = <String>{};
+    final clean = caregiverName.trim().toLowerCase();
+    if (clean.isEmpty) return [];
+
+    // من الورديات المسجلة فعلياً في النظام
+    for (var d in _serviceDays) {
+      if (d.nurseName.trim().toLowerCase() == clean) {
+        try {
+          final client = _clients.firstWhere((c) => c.id == d.clientId);
+          if (client.name.trim().isNotEmpty) {
+            set.add(client.name.trim());
+          }
+        } catch (_) {}
+      }
+    }
+
+    // من ملف مقدم الخدمة المحفوظ
+    final registered = findCaregiverByName(caregiverName);
+    if (registered != null) {
+      for (var p in registered.pastClients) {
+        if (p.trim().isNotEmpty) set.add(p.trim());
+      }
+    }
+
+    final list = set.toList();
+    list.sort((a, b) => a.compareTo(b));
+    return list;
+  }
+
+  /// إضافة مقدم خدمة جديد إلى قاعدة البيانات
+  Future<void> addCaregiver(CaregiverModel caregiver) async {
+    _caregivers.add(caregiver);
+    await _logAction(
+      title: 'إضافة مقدم خدمة بقاعدة البيانات',
+      description: '${_currentUser?.displayName ?? 'المستخدم'} قام بإضافة: ${caregiver.name} (كود: ${caregiver.code}) - السعر: ${caregiver.dailyPrice.toStringAsFixed(0)} ج',
+      actionType: 'add_caregiver',
+      metadata: {'caregiverId': caregiver.id, 'name': caregiver.name},
+    );
+    await _persistAndSync();
+  }
+
+  /// تعديل بيانات مقدم خدمة
+  Future<void> updateCaregiver(CaregiverModel caregiver) async {
+    final idx = _caregivers.indexWhere((c) => c.id == caregiver.id);
+    if (idx != -1) {
+      _caregivers[idx] = caregiver;
+      await _logAction(
+        title: 'تعديل ملف مقدم خدمة',
+        description: '${_currentUser?.displayName ?? 'المستخدم'} قام بتعديل بيانات: ${caregiver.name} (كود: ${caregiver.code})',
+        actionType: 'edit_caregiver',
+        metadata: {'caregiverId': caregiver.id, 'name': caregiver.name},
+      );
+      await _persistAndSync();
+    }
+  }
+
+  /// حظر أو فك حظر مقدم خدمة بسبب مشاكل
+  Future<void> toggleCaregiverBlock(
+    String caregiverId, {
+    required bool isBlocked,
+    String? reason,
+  }) async {
+    final idx = _caregivers.indexWhere((c) => c.id == caregiverId);
+    if (idx != -1) {
+      final old = _caregivers[idx];
+      _caregivers[idx] = old.copyWith(
+        isBlocked: isBlocked,
+        blockReason: isBlocked ? reason : null,
+      );
+      await _logAction(
+        title: isBlocked ? 'حظر مقدم خدمة لمشاكل' : 'إلغاء حظر مقدم خدمة',
+        description: isBlocked
+            ? '${_currentUser?.displayName ?? 'المستخدم'} قام بحظر: ${old.name} - السبب: ${reason ?? "غير محدد"}'
+            : '${_currentUser?.displayName ?? 'المستخدم'} قام بإلغاء حظر: ${old.name}',
+        actionType: isBlocked ? 'block_caregiver' : 'unblock_caregiver',
+        metadata: {'caregiverId': old.id, 'name': old.name, 'reason': reason},
+      );
+      await _persistAndSync();
+    }
+  }
+
+  /// حذف مقدم خدمة
+  Future<void> deleteCaregiver(String caregiverId) async {
+    final idx = _caregivers.indexWhere((c) => c.id == caregiverId);
+    if (idx != -1) {
+      final removed = _caregivers[idx];
+      _caregivers.removeAt(idx);
+      _deletedIds.add(caregiverId);
+      await storageService.saveDeletedIds(_deletedIds);
+      await _logAction(
+        title: 'حذف مقدم خدمة',
+        description: '${_currentUser?.displayName ?? 'المستخدم'} قام بحذف: ${removed.name} (كود: ${removed.code})',
+        actionType: 'delete_caregiver',
+        metadata: {'caregiverId': caregiverId, 'name': removed.name},
+      );
+      await _persistAndSync();
+    }
   }
 }

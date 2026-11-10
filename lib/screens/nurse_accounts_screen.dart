@@ -1,3 +1,4 @@
+import 'caregivers_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -193,6 +194,13 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
               ),
             ),
             actions: [
+            IconButton(
+              icon: const Icon(Icons.badge_outlined),
+              tooltip: 'قاعدة بيانات وسجل مقدمي الخدمة',
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
+              },
+            ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
