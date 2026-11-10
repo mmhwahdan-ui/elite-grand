@@ -365,12 +365,14 @@ class AppProvider extends ChangeNotifier {
 
     // حساب الإيرادات وتكلفة التمريض يوماً بيوم خلال الفترة
     for (int i = 0; i < totalDaysInRange; i++) {
-      final currentDay = sDay.add(Duration(days: i));
+      final currentDay = DateTime(sDay.year, sDay.month, sDay.day + i);
 
-      // 1. فحص الورديات المسجلة فعلياً في جدول _serviceDays لهذا اليوم
+      // 1. فحص الورديات المسجلة فعلياً في جدول _serviceDays لهذا اليوم باليوم والشهر والسنة
       final daysLoggedForCurrentDay = _serviceDays.where((d) {
-        final dDate = DateTime(d.date.year, d.date.month, d.date.day);
-        return dDate.isAtSameMomentAs(currentDay);
+        final dLocal = d.date.toLocal();
+        return dLocal.year == currentDay.year &&
+            dLocal.month == currentDay.month &&
+            dLocal.day == currentDay.day;
       }).toList();
 
       final Set<String> clientsHandledToday = {};
@@ -383,22 +385,27 @@ class AppProvider extends ChangeNotifier {
         clientsHandledToday.add(loggedDay.clientId);
       }
 
-      // 2. فحص الحالات النشطة التي لم تُسجل ورديتها يدوياً لهذا اليوم بعد واحتساب يومية تعاقدها
+      // 2. فحص الحالات النشطة التي تعمل في هذا اليوم ولم تُسجل ورديتها يدوياً بعد واحتساب يوميتها التعاقدية
       for (final client in _clients) {
         if (clientsHandledToday.contains(client.id)) continue;
         if (client.startDate == null || client.dailyPrice <= 0) continue;
 
-        final cStart = DateTime(client.startDate!.year, client.startDate!.month, client.startDate!.day);
-        final DateTime cEnd;
+        final cStart = client.startDate!.toLocal();
+        final cStartDay = DateTime(cStart.year, cStart.month, cStart.day);
+        final DateTime cEndDay;
         if (client.endDate != null) {
-          cEnd = DateTime(client.endDate!.year, client.endDate!.month, client.endDate!.day);
+          final cEnd = client.endDate!.toLocal();
+          cEndDay = DateTime(cEnd.year, cEnd.month, cEnd.day);
         } else {
           final now = DateTime.now();
-          cEnd = DateTime(now.year, now.month, now.day);
+          cEndDay = DateTime(now.year, now.month, now.day);
         }
 
-        if (!currentDay.isBefore(cStart) && !currentDay.isAfter(cEnd)) {
-          if (client.status == 'active' || client.status == 'completed') {
+        final curDayNorm = DateTime(currentDay.year, currentDay.month, currentDay.day);
+        if (!curDayNorm.isBefore(cStartDay) && !curDayNorm.isAfter(cEndDay)) {
+          if (client.status == 'active' ||
+              client.status == 'ready_to_start' ||
+              client.status == 'completed') {
             revenues += client.dailyPrice;
             nurseCosts += client.nurseDailyPrice;
             shiftsCount++;
@@ -410,13 +417,24 @@ class AppProvider extends ChangeNotifier {
 
     final grossProfit = revenues - nurseCosts;
 
-    // 3. حساب المصروفات التشغيلية خلال الفترة (مع استثناء سلف الشركاء وتصفية الأرباح)
+    // 3. حساب المصروفات التشغيلية الحقيقية خلال الفترة
+    // نستثني سلف الشركاء وتوزيع الأرباح، ونستثني صرف مستحقات وسلف التمريض
+    // لأن أجور التمريض محسوبة بالفعل ومخصومة ضمن (nurseCosts)، واحتساب صرفها هنا يؤدي لخصم التمريض مرتين!
     double expenses = 0.0;
     for (final exp in _expenses) {
-      if (exp.category == 'partner_loan' || exp.category == 'partner_settlement') continue;
-      final expDate = DateTime(exp.expenseDate.year, exp.expenseDate.month, exp.expenseDate.day);
-      if (!expDate.isBefore(DateTime(sDate.year, sDate.month, sDate.day)) &&
-          !expDate.isAfter(DateTime(eDate.year, eDate.month, eDate.day))) {
+      final cat = exp.category.toLowerCase().trim();
+      if (cat == 'partner_loan' ||
+          cat == 'partner_settlement' ||
+          cat == 'nurse_dues' ||
+          cat == 'nurse_advance' ||
+          cat == 'nurse_salary' ||
+          cat == 'advances') {
+        continue;
+      }
+
+      final expLocal = exp.expenseDate.toLocal();
+      final expDay = DateTime(expLocal.year, expLocal.month, expLocal.day);
+      if (!expDay.isBefore(sDay) && !expDay.isAfter(eDay)) {
         expenses += exp.amount;
       }
     }
