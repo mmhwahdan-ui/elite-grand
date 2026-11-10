@@ -117,9 +117,31 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              widget.client.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Cairo'),
+                            Row(
+                              children: [
+                                Text(
+                                  widget.client.name,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Cairo'),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: widget.client.isExistingClient ? Colors.blue.shade50 : Colors.green.shade50,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: widget.client.isExistingClient ? Colors.blue.shade200 : Colors.green.shade200),
+                                  ),
+                                  child: Text(
+                                    widget.client.isExistingClient ? 'عميل حالي' : 'عميل جديد',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontFamily: 'Cairo',
+                                      fontWeight: FontWeight.bold,
+                                      color: widget.client.isExistingClient ? Colors.blue.shade900 : Colors.green.shade900,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             Text(
                               '${widget.client.serviceTypeArabic} | سعر اليوم: ${widget.client.dailyPrice.toStringAsFixed(0)} ج.م | يومية التمريض: ${widget.client.nurseDailyPrice.toStringAsFixed(0)} ج.م',

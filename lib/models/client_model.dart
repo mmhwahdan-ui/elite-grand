@@ -41,32 +41,23 @@ class ClientModel {
     required this.updatedAt,
   });
 
-  // Calculate served days
+  // Calculate served days (based on determined duration or elapsed days if open-ended)
   int get servedDays {
     if (startDate == null) return 0;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final start = DateTime(startDate!.year, startDate!.month, startDate!.day);
 
-    DateTime effectiveEnd;
-    if (status == 'completed' || status == 'stopped_by_accountant') {
-      effectiveEnd = endDate != null
-          ? DateTime(endDate!.year, endDate!.month, endDate!.day)
-          : today;
+    if (endDate != null) {
+      // If duration is determined (سواء عميل حالي أو جديد), calculate based on the determined duration!
+      final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
+      if (end.isBefore(start)) return 1;
+      return end.difference(start).inDays + 1;
     } else {
-      // Service is active
-      if (endDate != null) {
-        final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
-        effectiveEnd = today.isBefore(end) ? today : end;
-      } else {
-        effectiveEnd = today;
-      }
+      // If duration is open-ended, calculate from start date up to today
+      if (today.isBefore(start)) return 1;
+      return today.difference(start).inDays + 1;
     }
-
-    if (effectiveEnd.isBefore(start)) return 0;
-
-    final differenceInDays = effectiveEnd.difference(start).inDays + 1; // Service counts from day 1
-    return differenceInDays > 0 ? differenceInDays : 1;
   }
 
   // Total planned / contracted days if an end date was specified

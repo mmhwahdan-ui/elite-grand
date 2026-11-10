@@ -39,7 +39,7 @@ class _AddServiceDayDialogState extends State<AddServiceDayDialog> {
 
   bool _isSubmitting = false;
 
-  @override
+    @override
   void initState() {
     super.initState();
     _nurseNameController = TextEditingController(text: widget.client.nurseAssigned ?? '');
@@ -50,6 +50,14 @@ class _AddServiceDayDialogState extends State<AddServiceDayDialog> {
       text: widget.client.nurseDailyPrice > 0 ? widget.client.nurseDailyPrice.toStringAsFixed(0) : '',
     );
     _shiftType = widget.client.serviceType.isNotEmpty ? widget.client.serviceType : 'hours12';
+
+    if (widget.client.startDate != null) {
+      _batchStartDate = widget.client.startDate!;
+      if (widget.client.endDate != null) {
+        _batchDaysCount = widget.client.servedDays;
+        _selectedMode = 1;
+      }
+    }
 
     _generateDefaultBatchDates();
   }
@@ -137,6 +145,90 @@ class _AddServiceDayDialogState extends State<AddServiceDayDialog> {
                 ],
               ),
               const Divider(height: 24),
+
+              // Contract Period & Calculated Accounts Info Card
+              if (widget.client.startDate != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.indigo.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.verified_outlined, color: Colors.indigo, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              widget.client.endDate != null
+                                  ? 'المدة المحددة للتعاقد: من ${dateFormat.format(widget.client.startDate!)} إلى ${dateFormat.format(widget.client.endDate!)} (${widget.client.servedDays} يوم)'
+                                  : 'تاريخ بدء الخدمة: ${dateFormat.format(widget.client.startDate!)} (مدة مفتوحة)',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.indigo),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              widget.client.isExistingClient ? 'عميل حالي' : 'عميل جديد',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigo.shade900),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'حساب العميل عن المدة: ${(widget.client.servedDays * widget.client.dailyPrice).toStringAsFixed(0)} ج.م',
+                            style: TextStyle(fontSize: 12, color: Colors.indigo.shade900, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            'حساب مقدم الخدمة: ${(widget.client.servedDays * widget.client.nurseDailyPrice).toStringAsFixed(0)} ج.م',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF047857), fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      if (widget.client.endDate != null) ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _selectedMode = 1;
+                                _batchStartDate = widget.client.startDate!;
+                                _batchDaysCount = widget.client.servedDays;
+                                _generateDefaultBatchDates();
+                              });
+                            },
+                            icon: const Icon(Icons.playlist_add_check, size: 18),
+                            label: Text(
+                              'تطبيق وتسجيل أيام المدة المحددة (${widget.client.servedDays} يوم) في الحسابات',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
 
               // Mode Selector
               Container(

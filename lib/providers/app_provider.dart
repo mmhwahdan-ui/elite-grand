@@ -543,14 +543,41 @@ class AppProvider extends ChangeNotifier {
     final index = _clients.indexWhere((c) => c.id == clientId);
     if (index != -1) {
       final current = _clients[index];
+      final start = startDate ?? DateTime.now();
+      final end = isOpenEnded ? null : endDate;
+      final nurse = nurseAssigned ?? current.nurseAssigned;
+
       _clients[index] = current.copyWith(
-        startDate: startDate ?? DateTime.now(),
-        endDate: isOpenEnded ? null : endDate,
+        startDate: start,
+        endDate: end,
         clearEndDate: isOpenEnded,
-        nurseAssigned: nurseAssigned ?? current.nurseAssigned,
+        nurseAssigned: nurse,
         status: 'active',
         updatedAt: DateTime.now(),
       );
+
+      // Auto-generate service days if duration is determined and nurse assigned
+      if (!isOpenEnded && end != null && nurse != null && nurse.trim().isNotEmpty) {
+        final startNorm = DateTime(start.year, start.month, start.day);
+        final endNorm = DateTime(end.year, end.month, end.day);
+        final int days = endNorm.difference(startNorm).inDays + 1;
+        if (days > 0) {
+          final List<DateTime> dates = [];
+          for (int i = 0; i < days; i++) {
+            dates.add(startNorm.add(Duration(days: i)));
+          }
+          await recordBatchServiceDays(
+            clientId: clientId,
+            dates: dates,
+            nurseName: nurse,
+            shiftType: current.serviceType,
+            clientPrice: current.dailyPrice,
+            nursePrice: current.nurseDailyPrice,
+            notes: 'تسجيل آلي للمدة المحددة للتعاقد ($days يوم)',
+          );
+        }
+      }
+
       await _persistAndSync();
     }
   }
@@ -692,8 +719,15 @@ class AppProvider extends ChangeNotifier {
   }) async {
     final client = _clients.firstWhere((c) => c.id == clientId);
     for (final date in dates) {
+      final existingIndex = _serviceDays.indexWhere(
+        (d) => d.clientId == clientId &&
+               d.date.year == date.year &&
+               d.date.month == date.month &&
+               d.date.day == date.day
+      );
+
       final day = ServiceDayModel(
-        id: 'day_${_uuid.v4().substring(0, 8)}',
+        id: existingIndex != -1 ? _serviceDays[existingIndex].id : 'day_${_uuid.v4().substring(0, 8)}',
         clientId: clientId,
         clientName: client.name,
         date: date,
@@ -705,7 +739,12 @@ class AppProvider extends ChangeNotifier {
         recordedBy: _currentUser?.username ?? 'wahdan',
         createdAt: DateTime.now(),
       );
-      _serviceDays.insert(0, day);
+
+      if (existingIndex != -1) {
+        _serviceDays[existingIndex] = day;
+      } else {
+        _serviceDays.insert(0, day);
+      }
     }
     await _persistAndSync();
   }
@@ -1003,21 +1042,70 @@ class AppProvider extends ChangeNotifier {
 
   /// كشف ورديات ممرض معين مرتبة من الأحدث للأقدم
   List<ServiceDayModel> getNurseShifts(String nurseName) {
-    final list = _serviceDays.where((d) => d.nurseName.trim() == nurseName.trim()).toList();
+    final n = nurseName.trim();
+    final list = _serviceDays.where((d) => d.nurseName.trim() == n).toList();
+
+    // If client is assigned to this nurse but has no logged days, construct shifts from determined duration
+    for (var c in _clients) {
+      if ((c.nurseAssigned ?? '').trim() == n) {
+        final clientLogged = _serviceDays.where((d) => d.clientId == c.id);
+        if (clientLogged.isEmpty && c.startDate != null) {
+          final int days = getClientServedDaysCount(c);
+          final startNorm = DateTime(c.startDate!.year, c.startDate!.month, c.startDate!.day);
+          for (int i = 0; i < days; i++) {
+            list.add(ServiceDayModel(
+              id: 'calc_${c.id}_$i',
+              clientId: c.id,
+              clientName: c.name,
+              date: startNorm.add(Duration(days: i)),
+              nurseName: n,
+              shiftType: c.serviceType,
+              clientPrice: c.dailyPrice,
+              nursePrice: c.nurseDailyPrice,
+              notes: 'حساب طبقاً للمدة المحددة بالتعاقد',
+              recordedBy: c.createdBy,
+              createdAt: c.createdAt,
+            ));
+          }
+        }
+      }
+    }
+
     list.sort((a, b) => b.date.compareTo(a.date));
     return list;
   }
 
-  /// عدد أيام العمل المنفذة لهذا الممرض
+  /// عدد أيام العمل المنفذة لهذا الممرض (سواء مسجلة في الشفتات أو من واقع المدة المحددة للعميل)
   int getNurseDaysCount(String nurseName) {
-    return _serviceDays.where((d) => d.nurseName.trim() == nurseName.trim()).length;
+    final n = nurseName.trim();
+    int count = _serviceDays.where((d) => d.nurseName.trim() == n).length;
+    for (var c in _clients) {
+      if ((c.nurseAssigned ?? '').trim() == n) {
+        final clientLogged = _serviceDays.where((d) => d.clientId == c.id);
+        if (clientLogged.isEmpty) {
+          count += getClientServedDaysCount(c);
+        }
+      }
+    }
+    return count;
   }
 
-  /// إجمالي مستحقات الممرض من واقع أسعار الأيام والورديات
+  /// إجمالي مستحقات الممرض من واقع أسعار الأيام والورديات والمدة المحددة للعملاء
   double getNurseTotalEarned(String nurseName) {
-    return _serviceDays
-        .where((d) => d.nurseName.trim() == nurseName.trim())
+    final n = nurseName.trim();
+    double earned = _serviceDays
+        .where((d) => d.nurseName.trim() == n)
         .fold(0.0, (sum, d) => sum + d.nursePrice);
+
+    for (var c in _clients) {
+      if ((c.nurseAssigned ?? '').trim() == n) {
+        final clientLogged = _serviceDays.where((d) => d.clientId == c.id);
+        if (clientLogged.isEmpty) {
+          earned += getClientNurseCost(c);
+        }
+      }
+    }
+    return earned;
   }
 
   /// كشف المعاملات المالية والسلف والمدفوعات الخاصة بالممرض
