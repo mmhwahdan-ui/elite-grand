@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart' hide TextDirection;
 import '../models/app_notification_model.dart';
+import '../models/period_financial_summary.dart';
 import '../services/sound_service.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -331,6 +332,217 @@ class AppProvider extends ChangeNotifier {
       }
     }
     return total;
+  }
+
+  // --- Periodic Net Profit Calculations (Daily, Weekly, Monthly Cycle 23) ---
+
+  /// حساب ملخص مالي دقيق لأي فترة زمنية محددة
+  PeriodFinancialSummary getFinancialSummaryForRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    required String periodType,
+    required String periodTitle,
+    int? daysRemaining,
+  }) {
+    final sDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+    final eDate = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59, 999);
+
+    double revenues = 0.0;
+    double nurseCosts = 0.0;
+    int shiftsCount = 0;
+    final Set<String> activeClientIds = {};
+
+    // 1. حساب الإيرادات وتكلفة التمريض من أيام الخدمة المسجلة في الفترة
+    for (final day in _serviceDays) {
+      final dDate = DateTime(day.date.year, day.date.month, day.date.day);
+      if (!dDate.isBefore(DateTime(sDate.year, sDate.month, sDate.day)) &&
+          !dDate.isAfter(DateTime(eDate.year, eDate.month, eDate.day))) {
+        revenues += day.clientPrice;
+        nurseCosts += day.nursePrice;
+        shiftsCount++;
+        activeClientIds.add(day.clientId);
+      }
+    }
+
+    // 2. فحص الحالات التي ليس لها أيام مسجلة منفصلة في جدول _serviceDays، واحتسابها من تواريخ التعاقد
+    for (final client in _clients) {
+      final hasLoggedDays = _serviceDays.any((d) => d.clientId == client.id);
+      if (hasLoggedDays) continue;
+
+      if (client.startDate == null || client.dailyPrice <= 0) continue;
+      final cStart = DateTime(client.startDate!.year, client.startDate!.month, client.startDate!.day);
+      final DateTime cEnd;
+      if (client.endDate != null) {
+        cEnd = DateTime(client.endDate!.year, client.endDate!.month, client.endDate!.day);
+      } else {
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final rEnd = DateTime(eDate.year, eDate.month, eDate.day);
+        cEnd = today.isBefore(rEnd) ? today : rEnd;
+      }
+
+      final rStart = DateTime(sDate.year, sDate.month, sDate.day);
+      final rEnd = DateTime(eDate.year, eDate.month, eDate.day);
+
+      final overlapStart = cStart.isAfter(rStart) ? cStart : rStart;
+      final overlapEnd = cEnd.isBefore(rEnd) ? cEnd : rEnd;
+
+      if (!overlapStart.isAfter(overlapEnd)) {
+        final days = overlapEnd.difference(overlapStart).inDays + 1;
+        if (days > 0) {
+          revenues += days * client.dailyPrice;
+          nurseCosts += days * client.nurseDailyPrice;
+          shiftsCount += days;
+          activeClientIds.add(client.id);
+        }
+      }
+    }
+
+    final grossProfit = revenues - nurseCosts;
+
+    // 3. حساب المصروفات التشغيلية خلال الفترة (مع استثناء سلف الشركاء وتصفية الأرباح)
+    double expenses = 0.0;
+    for (final exp in _expenses) {
+      if (exp.category == 'partner_loan' || exp.category == 'partner_settlement') continue;
+      final expDate = DateTime(exp.expenseDate.year, exp.expenseDate.month, exp.expenseDate.day);
+      if (!expDate.isBefore(DateTime(sDate.year, sDate.month, sDate.day)) &&
+          !expDate.isAfter(DateTime(eDate.year, eDate.month, eDate.day))) {
+        expenses += exp.amount;
+      }
+    }
+
+    final netProfit = grossProfit - expenses;
+
+    // 4. حساب أنصبة الشركاء للدورة
+    double wahdanShare = 0.0;
+    double shimaaShare = 0.0;
+    double zezoShare = 0.0;
+
+    if (netProfit > 0) {
+      final wahdanBase = netProfit * 0.40;
+      final shimaaBase = netProfit * 0.40;
+      final zezoBase = netProfit * 0.20;
+
+      if (shimaaBase < 6000.0) {
+        final subsidy = 6000.0 - shimaaBase;
+        shimaaShare = 6000.0;
+        final wahdanDed = subsidy * (40.0 / 60.0);
+        final zezoDed = subsidy * (20.0 / 60.0);
+        wahdanShare = (wahdanBase - wahdanDed).clamp(0.0, double.infinity);
+        zezoShare = (zezoBase - zezoDed).clamp(0.0, double.infinity);
+      } else {
+        wahdanShare = wahdanBase;
+        shimaaShare = shimaaBase;
+        zezoShare = zezoBase;
+      }
+    }
+
+    return PeriodFinancialSummary(
+      periodType: periodType,
+      periodTitle: periodTitle,
+      startDate: sDate,
+      endDate: eDate,
+      revenues: revenues,
+      nurseCosts: nurseCosts,
+      grossProfit: grossProfit,
+      expenses: expenses,
+      netProfit: netProfit,
+      shiftsCount: shiftsCount,
+      activeClientsCount: activeClientIds.length,
+      daysRemainingUntil23: daysRemaining,
+      wahdanShare: wahdanShare,
+      shimaaShare: shimaaShare,
+      zezoShare: zezoShare,
+    );
+  }
+
+  /// صافي الربح اليومي (ليوم محدد أو اليوم الحالي)
+  PeriodFinancialSummary getDailyNetProfitSummary([DateTime? targetDate]) {
+    final date = targetDate ?? DateTime.now();
+    final sDate = DateTime(date.year, date.month, date.day);
+    final eDate = DateTime(date.year, date.month, date.day);
+    final isToday = date.year == DateTime.now().year &&
+        date.month == DateTime.now().month &&
+        date.day == DateTime.now().day;
+    final title = isToday
+        ? 'اليوم (${DateFormat('yyyy/MM/dd').format(date)})'
+        : 'يوم ${DateFormat('yyyy/MM/dd').format(date)}';
+
+    return getFinancialSummaryForRange(
+      startDate: sDate,
+      endDate: eDate,
+      periodType: 'daily',
+      periodTitle: title,
+    );
+  }
+
+  /// صافي الربح الأسبوعي (آخر 7 أيام حتى تاريخ محدد أو اليوم)
+  PeriodFinancialSummary getWeeklyNetProfitSummary([DateTime? referenceDate]) {
+    final ref = referenceDate ?? DateTime.now();
+    final eDate = DateTime(ref.year, ref.month, ref.day);
+    final sDate = eDate.subtract(const Duration(days: 6));
+    final title = 'آخر 7 أيام (${DateFormat('MM/dd').format(sDate)} - ${DateFormat('MM/dd').format(eDate)})';
+
+    return getFinancialSummaryForRange(
+      startDate: sDate,
+      endDate: eDate,
+      periodType: 'weekly',
+      periodTitle: title,
+    );
+  }
+
+  /// صافي الربح الشهري وفق دورة يوم 23 من كل شهر
+  /// الدورة تمتد من يوم 24 من الشهر السابق حتى يوم 23 من الشهر الحالي
+  /// يمكن تمرير offsetCycles للتنقل للدورات السابقة (-1، -2) أو القادمة (+1)
+  PeriodFinancialSummary getMonthlyNetProfitSummary({DateTime? referenceDate, int offsetCycles = 0}) {
+    final ref = referenceDate ?? DateTime.now();
+
+    // تحديد شهر وسنة نهاية الدورة
+    int targetMonth = ref.month;
+    int targetYear = ref.year;
+
+    // إذا تجاوز اليوم تاريخ 23، فإننا نكون قد بدأنا في الدورة التالية التي تنتهي يوم 23 من الشهر القادم
+    if (ref.day > 23) {
+      if (targetMonth == 12) {
+        targetMonth = 1;
+        targetYear++;
+      } else {
+        targetMonth++;
+      }
+    }
+
+    // تطبيق إزاحة الدورات (offsetCycles)
+    if (offsetCycles != 0) {
+      int totalMonths = (targetYear * 12 + (targetMonth - 1)) + offsetCycles;
+      targetYear = totalMonths ~/ 12;
+      targetMonth = (totalMonths % 12) + 1;
+    }
+
+    // تاريخ نهاية الدورة هو يوم 23 من الشهر المستهدف
+    final cycleEnd = DateTime(targetYear, targetMonth, 23);
+
+    // تاريخ بداية الدورة هو يوم 24 من الشهر السابق
+    final prevMonth = targetMonth == 1 ? 12 : targetMonth - 1;
+    final prevYear = targetMonth == 1 ? targetYear - 1 : targetYear;
+    final cycleStart = DateTime(prevYear, prevMonth, 24);
+
+    // حساب الأيام المتبقية حتى يوم 23
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    int daysRemaining = 0;
+    if (cycleEnd.isAfter(today) || cycleEnd.isAtSameMomentAs(today)) {
+      daysRemaining = cycleEnd.difference(today).inDays;
+    }
+
+    final cycleTitle = 'دورة 23 ${_getMonthName(targetMonth)} $targetYear (${DateFormat('MM/dd').format(cycleStart)} - ${DateFormat('MM/dd').format(cycleEnd)})';
+
+    return getFinancialSummaryForRange(
+      startDate: cycleStart,
+      endDate: cycleEnd,
+      periodType: 'monthly_23',
+      periodTitle: cycleTitle,
+      daysRemaining: daysRemaining,
+    );
   }
 
   // Initialization

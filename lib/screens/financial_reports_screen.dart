@@ -6,6 +6,7 @@ import '../widgets/custom_card.dart';
 import '../services/export_service.dart';
 import 'nurse_accounts_screen.dart';
 import 'partner_settlement_screen.dart';
+import '../widgets/periodic_net_profit_card.dart';
 
 class FinancialReportsScreen extends StatelessWidget {
   const FinancialReportsScreen({super.key});
@@ -206,6 +207,10 @@ class FinancialReportsScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              // مؤشرات صافي الربح الدوري (اليومي، الأسبوعي، والشهري وفق دورة يوم 23)
+              const PeriodicNetProfitCard(),
               const SizedBox(height: 16),
 
               // 1. Treasury & Account Balances (البنك والمحفظة والكاش)

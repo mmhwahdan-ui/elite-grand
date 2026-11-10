@@ -4,6 +4,7 @@ import '../models/client_model.dart';
 import '../models/expense_model.dart';
 import '../models/payment_model.dart';
 import '../models/partner_settlement_model.dart';
+import '../models/period_financial_summary.dart';
 import '../providers/app_provider.dart';
 
 import 'export_stub.dart'
@@ -370,6 +371,110 @@ class ExportService {
     for (var entry in expensesByCategory.entries) {
       sheet.appendRow([entry.key, entry.value, 'مصروفات تشغيلية'].map(_cell).toList());
     }
+
+    sheet.appendRow([_cell('')]);
+
+    // Section 5: Periodic Net Profits (Daily, Weekly, Monthly Cycle 23)
+    sheet.appendRow([_cell('مؤشرات صافي الأرباح الدورية (اليومي، الأسبوعي، ودورة نهاية الشهر حتى يوم 23)')]);
+    _styleRow(sheet, sheet.maxRows - 1, 9, _subHeaderStyle);
+
+    final periodicHeaders = [
+      'الفترة المحاسبية',
+      'إيراد التعاقدات (ج.م)',
+      'مستحقات التمريض (ج.م)',
+      'ربح فروق الأسعار (ج.م)',
+      'المصروفات التشغيلية (ج.م)',
+      'صافي الربح الفعلي (ج.م)',
+      'هامش الربح',
+      'الورديات المنفذة',
+      'الحالات المخدومة',
+    ];
+    sheet.appendRow(periodicHeaders.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, periodicHeaders.length, _headerStyle);
+
+    final daily = provider.getDailyNetProfitSummary();
+    final weekly = provider.getWeeklyNetProfitSummary();
+    final monthly = provider.getMonthlyNetProfitSummary();
+
+    sheet.appendRow([
+      'اليومي (اليوم)',
+      daily.revenues,
+      daily.nurseCosts,
+      daily.grossProfit,
+      daily.expenses,
+      daily.netProfit,
+      '${daily.profitMargin.toStringAsFixed(1)}%',
+      daily.shiftsCount,
+      daily.activeClientsCount,
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      'الأسبوعي (آخر 7 أيام)',
+      weekly.revenues,
+      weekly.nurseCosts,
+      weekly.grossProfit,
+      weekly.expenses,
+      weekly.netProfit,
+      '${weekly.profitMargin.toStringAsFixed(1)}%',
+      weekly.shiftsCount,
+      weekly.activeClientsCount,
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      'الشهري (${monthly.periodTitle})',
+      monthly.revenues,
+      monthly.nurseCosts,
+      monthly.grossProfit,
+      monthly.expenses,
+      monthly.netProfit,
+      '${monthly.profitMargin.toStringAsFixed(1)}%',
+      monthly.shiftsCount,
+      monthly.activeClientsCount,
+    ].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, periodicHeaders.length, _totalRowStyle);
+
+    sheet.appendRow([_cell('')]);
+
+    // Monthly Partner Distributions Summary
+    sheet.appendRow([_cell('توزيع أرباح دورة يوم 23 الشهرية على الشركاء:')]);
+    _styleRow(sheet, sheet.maxRows - 1, 4, _subHeaderStyle);
+
+    final partnerHeaders = ['الشريك والصفة', 'النسبة المعتمدة', 'مبلغ صافي الربح المستحق (ج.م)', 'ملاحظات الضمان'];
+    sheet.appendRow(partnerHeaders.map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, partnerHeaders.length, _headerStyle);
+
+    sheet.appendRow([
+      'أ/ وهدان (المدير العام)',
+      '40%',
+      monthly.wahdanShare,
+      'حصة أساسية بعد المصروفات',
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      'أ/ شيماء (المتابعة والتشغيل)',
+      '40%',
+      monthly.shimaaShare,
+      monthly.netProfit > 0 && (monthly.netProfit * 0.40 < 6000)
+          ? 'تم تطبيق الحد الأدنى للضمان (6000 ج.م)'
+          : 'حصة أساسية 40%',
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      'أ/ زيزو (الحسابات والمالية)',
+      '20%',
+      monthly.zezoShare,
+      'حصة أساسية 20%',
+    ].map(_cell).toList());
+
+    sheet.appendRow([
+      'حالة تصفية دورة الشهر (يوم 23)',
+      monthly.daysRemainingUntil23 != null && monthly.daysRemainingUntil23! > 0
+          ? 'متبقي ${monthly.daysRemainingUntil23} يوم على التصفية'
+          : 'موعد تصفية الشهر اليوم',
+      monthly.netProfit,
+      'الدورة من 24 الشهر السابق إلى 23 الشهر الحالي',
+    ].map(_cell).toList());
+    _styleRow(sheet, sheet.maxRows - 1, partnerHeaders.length, _totalRowStyle);
 
     final fileDateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
     _saveExcel(excel, 'التقرير_المالي_الشامل_والأرصدة_إيليت_جراند_$fileDateStr.xlsx');
