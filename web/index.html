@@ -67,6 +67,57 @@
     <h2>إيليت جراند للتمريض المنزلي</h2>
     <p>جاري تحميل النظام والمزامنة السحابية...</p>
   </div>
+  <script>
+    // Audio Notification Synthesizer (Crystal-clear chime, works 24/7 without external audio files)
+    window._egAudioCtx = null;
+    function getEgAudioCtx() {
+      try {
+        if (!window._egAudioCtx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) window._egAudioCtx = new AudioCtx();
+        }
+        if (window._egAudioCtx && window._egAudioCtx.state === 'suspended') {
+          window._egAudioCtx.resume();
+        }
+        return window._egAudioCtx;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Auto unlock on first user interaction anywhere
+    ['click', 'touchstart', 'keydown'].forEach(function(evt) {
+      document.addEventListener(evt, function() { getEgAudioCtx(); }, { passive: true });
+    });
+
+    window.playEliteGrandAlertSound = function() {
+      try {
+        const ctx = getEgAudioCtx();
+        if (!ctx) return;
+
+        const playTone = (freq, startTime, duration, volume) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, startTime);
+          gain.gain.setValueAtTime(volume, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + duration);
+        };
+
+        const now = ctx.currentTime + 0.03;
+        // 3-Tone Bright Notification Chime (E5 -> A5 -> C#6)
+        playTone(659.25, now, 0.28, 0.35);
+        playTone(880.00, now + 0.11, 0.35, 0.40);
+        playTone(1108.73, now + 0.22, 0.55, 0.45);
+      } catch (err) {
+        console.warn("Sound play error:", err);
+      }
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

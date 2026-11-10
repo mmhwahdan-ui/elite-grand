@@ -8,6 +8,7 @@ import '../models/service_day_model.dart';
 import '../models/nurse_transaction_model.dart';
 import '../models/partner_loan_model.dart';
 import '../models/partner_settlement_model.dart';
+import '../models/app_notification_model.dart';
 
 class StorageService {
   static const String _keyUsers = 'eg_users_data';
@@ -23,6 +24,7 @@ class StorageService {
   static const String _keyNurseTransactions = 'eg_nurse_transactions_data';
   static const String _keyPartnerLoans = 'eg_partner_loans_data';
   static const String _keyPartnerSettlements = 'eg_partner_settlements_data';
+  static const String _keyNotifications = 'eg_notifications_data';
 
   final SharedPreferences prefs;
 
@@ -100,9 +102,7 @@ class StorageService {
   List<UserModel> loadUsers() {
     final jsonStr = prefs.getString(_keyUsers);
     if (jsonStr == null || jsonStr.isEmpty) {
-      final defaultUsers = UserModel.getDefaultUsers();
-      saveUsers(defaultUsers);
-      return defaultUsers;
+      return UserModel.getDefaultUsers();
     }
     try {
       final List decoded = jsonDecode(jsonStr);
@@ -113,8 +113,8 @@ class StorageService {
   }
 
   Future<void> saveUsers(List<UserModel> users) async {
-    final list = users.map((u) => u.toMap()).toList();
-    await prefs.setString(_keyUsers, jsonEncode(list));
+    final data = users.map((u) => u.toMap()).toList();
+    await prefs.setString(_keyUsers, jsonEncode(data));
   }
 
   // Clients
@@ -132,8 +132,8 @@ class StorageService {
   }
 
   Future<void> saveClients(List<ClientModel> clients) async {
-    final list = clients.map((c) => c.toMap()).toList();
-    await prefs.setString(_keyClients, jsonEncode(list));
+    final data = clients.map((c) => c.toMap()).toList();
+    await prefs.setString(_keyClients, jsonEncode(data));
   }
 
   // Payments
@@ -151,8 +151,8 @@ class StorageService {
   }
 
   Future<void> savePayments(List<PaymentModel> payments) async {
-    final list = payments.map((p) => p.toMap()).toList();
-    await prefs.setString(_keyPayments, jsonEncode(list));
+    final data = payments.map((p) => p.toMap()).toList();
+    await prefs.setString(_keyPayments, jsonEncode(data));
   }
 
   // Expenses
@@ -170,11 +170,11 @@ class StorageService {
   }
 
   Future<void> saveExpenses(List<ExpenseModel> expenses) async {
-    final list = expenses.map((e) => e.toMap()).toList();
-    await prefs.setString(_keyExpenses, jsonEncode(list));
+    final data = expenses.map((e) => e.toMap()).toList();
+    await prefs.setString(_keyExpenses, jsonEncode(data));
   }
 
-  // Service Days (أيام الخدمة والشفتات المتغيرة)
+  // Service Days (أيام الخدمة والشفتات)
   List<ServiceDayModel> loadServiceDays() {
     final jsonStr = prefs.getString(_keyServiceDays);
     if (jsonStr == null || jsonStr.isEmpty) {
@@ -188,12 +188,12 @@ class StorageService {
     }
   }
 
-  Future<void> saveServiceDays(List<ServiceDayModel> serviceDays) async {
-    final list = serviceDays.map((d) => d.toMap()).toList();
-    await prefs.setString(_keyServiceDays, jsonEncode(list));
+  Future<void> saveServiceDays(List<ServiceDayModel> list) async {
+    final data = list.map((d) => d.toMap()).toList();
+    await prefs.setString(_keyServiceDays, jsonEncode(data));
   }
 
-  // Nurse Transactions (سلف ومدفوعات التمريض)
+  // Nurse Transactions (معاملات وسلف وصرف التمريض)
   List<NurseTransactionModel> loadNurseTransactions() {
     final jsonStr = prefs.getString(_keyNurseTransactions);
     if (jsonStr == null || jsonStr.isEmpty) {
@@ -248,5 +248,24 @@ class StorageService {
   Future<void> savePartnerSettlements(List<PartnerSettlementModel> list) async {
     final data = list.map((s) => s.toMap()).toList();
     await prefs.setString(_keyPartnerSettlements, jsonEncode(data));
+  }
+
+  // Notifications & Activity Logs (الإشعارات وسجل العمليات)
+  List<AppNotificationModel> loadNotifications() {
+    final jsonStr = prefs.getString(_keyNotifications);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      return [];
+    }
+    try {
+      final List decoded = jsonDecode(jsonStr);
+      return decoded.map((n) => AppNotificationModel.fromMap(Map<String, dynamic>.from(n))).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveNotifications(List<AppNotificationModel> list) async {
+    final data = list.take(150).map((n) => n.toMap()).toList();
+    await prefs.setString(_keyNotifications, jsonEncode(data));
   }
 }

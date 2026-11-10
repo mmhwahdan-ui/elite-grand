@@ -40,8 +40,8 @@ function smartMerge(serverList, incomingList, deletedSet, dateField = 'updatedAt
       map.set(item.id, item);
     } else {
       const existing = map.get(item.id);
-      const incomingTime = new Date(item[dateField] || item.createdAt || 0).getTime();
-      const existingTime = new Date(existing[dateField] || existing.createdAt || 0).getTime();
+      const incomingTime = new Date(item[dateField] || item.createdAt || item.timestamp || 0).getTime();
+      const existingTime = new Date(existing[dateField] || existing.createdAt || existing.timestamp || 0).getTime();
 
       if (incomingTime >= existingTime) {
         map.set(item.id, { ...existing, ...item });
@@ -87,6 +87,7 @@ function syncWithFirebase() {
               partnerLoans: [],
               partnerSettlements: [],
               users: [],
+              notifications: [],
               deletedIds: [],
               openingBalances: { bank: 0, wallet: 0, cash: 0 }
             };
@@ -110,7 +111,8 @@ function syncWithFirebase() {
               nurseTransactions: smartMerge(local.nurseTransactions, remote.nurseTransactions, deletedSet, 'createdAt'),
               partnerLoans: smartMerge(local.partnerLoans, remote.partnerLoans, deletedSet, 'createdAt'),
               partnerSettlements: smartMerge(local.partnerSettlements, remote.partnerSettlements, deletedSet, 'createdAt'),
-              users: smartMerge(local.users, remote.users, new Set(), 'id')
+              users: smartMerge(local.users, remote.users, new Set(), 'id'),
+              notifications: smartMerge(local.notifications, remote.notifications, new Set(), 'timestamp').slice(0, 150),
             };
             const mergedStr = JSON.stringify(merged, null, 2);
             fs.writeFile(DATA_FILE, mergedStr, 'utf8', () => {});
@@ -158,6 +160,7 @@ const server = http.createServer((req, res) => {
           parsed.nurseTransactions = (parsed.nurseTransactions || []).filter(t => t && !deletedSet.has(t.id));
           parsed.partnerLoans = (parsed.partnerLoans || []).filter(l => l && !deletedSet.has(l.id));
           parsed.partnerSettlements = (parsed.partnerSettlements || []).filter(s => s && !deletedSet.has(s.id));
+          parsed.notifications = parsed.notifications || [];
           if (!parsed.openingBalances) {
             parsed.openingBalances = { bank: 0, wallet: 0, cash: 0 };
           }
@@ -191,6 +194,7 @@ const server = http.createServer((req, res) => {
               partnerLoans: [],
               partnerSettlements: [],
               users: [],
+              notifications: [],
               deletedIds: [],
               openingBalances: { bank: 0, wallet: 0, cash: 0 }
             };
@@ -214,6 +218,7 @@ const server = http.createServer((req, res) => {
             const mergedPartnerLoans = smartMerge(current.partnerLoans, incoming.partnerLoans, deletedSet, 'createdAt');
             const mergedPartnerSettlements = smartMerge(current.partnerSettlements, incoming.partnerSettlements, deletedSet, 'createdAt');
             const mergedUsers = smartMerge(current.users, incoming.users, new Set(), 'id');
+            const mergedNotifications = smartMerge(current.notifications, incoming.notifications, new Set(), 'timestamp').slice(0, 150);
             const mergedOpeningBalances = incoming.openingBalances || current.openingBalances || { bank: 0, wallet: 0, cash: 0 };
 
             const mergedData = {
@@ -228,6 +233,7 @@ const server = http.createServer((req, res) => {
               partnerLoans: mergedPartnerLoans,
               partnerSettlements: mergedPartnerSettlements,
               users: mergedUsers,
+              notifications: mergedNotifications,
             };
 
             const jsonString = JSON.stringify(mergedData, null, 2);

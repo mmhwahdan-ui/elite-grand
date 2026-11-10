@@ -10,6 +10,7 @@ import '../models/service_day_model.dart';
 import '../models/nurse_transaction_model.dart';
 import '../models/partner_loan_model.dart';
 import '../models/partner_settlement_model.dart';
+import '../models/app_notification_model.dart';
 
 enum SyncStatus {
   idle,
@@ -30,6 +31,7 @@ class SyncResult {
   final List<PartnerLoanModel>? partnerLoans;
   final List<PartnerSettlementModel>? partnerSettlements;
   final List<UserModel>? users;
+  final List<AppNotificationModel>? notifications;
   final List<String>? deletedIds;
   final Map<String, double>? openingBalances;
 
@@ -44,6 +46,7 @@ class SyncResult {
     this.partnerLoans,
     this.partnerSettlements,
     this.users,
+    this.notifications,
     this.deletedIds,
     this.openingBalances,
   });
@@ -91,7 +94,7 @@ class CloudSyncService {
     _periodicTimer?.cancel();
   }
 
-  // Push all local data to Cloud with deletedIds and openingBalances
+  // Push all local data to Cloud with deletedIds, openingBalances and notifications
   Future<bool> pushData({
     required List<ClientModel> clients,
     required List<PaymentModel> payments,
@@ -101,6 +104,7 @@ class CloudSyncService {
     List<PartnerLoanModel> partnerLoans = const [],
     List<PartnerSettlementModel> partnerSettlements = const [],
     required List<UserModel> users,
+    List<AppNotificationModel> notifications = const [],
     List<String> deletedIds = const [],
     Map<String, double>? openingBalances,
   }) async {
@@ -121,6 +125,7 @@ class CloudSyncService {
         'partnerLoans': partnerLoans.map((l) => l.toMap()).toList(),
         'partnerSettlements': partnerSettlements.map((s) => s.toMap()).toList(),
         'users': users.map((u) => u.toMap()).toList(),
+        'notifications': notifications.take(150).map((n) => n.toMap()).toList(),
       };
 
       final uri = Uri.parse(endpoint);
@@ -242,6 +247,13 @@ class CloudSyncService {
               .toList();
         }
 
+        List<AppNotificationModel>? remoteNotifications;
+        if (data['notifications'] is List) {
+          remoteNotifications = (data['notifications'] as List)
+              .map((n) => AppNotificationModel.fromMap(Map<String, dynamic>.from(n)))
+              .toList();
+        }
+
         status = SyncStatus.success;
         lastSyncTime = DateTime.now();
 
@@ -256,6 +268,7 @@ class CloudSyncService {
           partnerLoans: remotePartnerLoans,
           partnerSettlements: remotePartnerSettlements,
           users: remoteUsers,
+          notifications: remoteNotifications,
           deletedIds: remoteDeletedIds,
           openingBalances: remoteOpeningBalances,
         );

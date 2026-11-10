@@ -4,6 +4,7 @@ import '../providers/app_provider.dart';
 import '../services/cloud_sync_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/cloud_settings_dialog.dart';
+import '../widgets/notifications_dialog.dart';
 import 'clients_list_screen.dart';
 import 'revenues_screen.dart';
 import 'expenses_screen.dart';
@@ -194,6 +195,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 } else if (val == 'nurses') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const NurseAccountsScreen()));
+                } else if (val == 'notifications') {
+                  provider.markNotificationsAsRead();
+                  showDialog(
+                    context: context,
+                    builder: (_) => const NotificationsDialog(),
+                  );
                 } else if (val == 'settlement') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnerSettlementScreen()));
                 }

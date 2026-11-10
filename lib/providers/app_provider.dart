@@ -1,4 +1,6 @@
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import '../models/app_notification_model.dart';
+import '../services/sound_service.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -30,6 +32,12 @@ class AppProvider extends ChangeNotifier {
   List<String> _deletedIds = [];
   Map<String, double> _openingBalances = {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0};
 
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  List<AppNotificationModel> _notifications = [];
+  final Set<String> _knownNotificationIds = {};
+  int _unreadNotificationCount = 0;
+  bool _soundAlertsEnabled = true;
+
   bool _isLoading = false;
   String? _statusMessage;
 
@@ -56,6 +64,26 @@ class AppProvider extends ChangeNotifier {
   String? get statusMessage => _statusMessage;
   SyncStatus get syncStatus => cloudSyncService.status;
   DateTime? get lastSyncTime => cloudSyncService.lastSyncTime;
+
+  List<AppNotificationModel> get notifications => List.unmodifiable(_notifications);
+  int get unreadNotificationCount => _unreadNotificationCount;
+  bool get soundAlertsEnabled => _soundAlertsEnabled;
+
+  void toggleSoundAlerts(bool val) {
+    _soundAlertsEnabled = val;
+    notifyListeners();
+  }
+
+  void markNotificationsAsRead() {
+    _unreadNotificationCount = 0;
+    notifyListeners();
+  }
+
+  void clearNotifications() async {
+    _notifications.clear();
+    await storageService.saveNotifications(_notifications);
+    notifyListeners();
+  }
 
   // Opening Balances Getters
   double get bankOpeningBalance => _openingBalances['bank'] ?? 0.0;
@@ -299,6 +327,10 @@ class AppProvider extends ChangeNotifier {
     _nurseTransactions = storageService.loadNurseTransactions().where((t) => !deletedSet.contains(t.id)).toList();
     _partnerLoans = storageService.loadPartnerLoans().where((l) => !deletedSet.contains(l.id)).toList();
     _partnerSettlements = storageService.loadPartnerSettlements().where((s) => !deletedSet.contains(s.id)).toList();
+    _notifications = storageService.loadNotifications();
+    for (final n in _notifications) {
+      _knownNotificationIds.add(n.id);
+    }
 
     // Ensure all default users have 123 as password
     for (var u in _users) {
@@ -421,12 +453,18 @@ class AppProvider extends ChangeNotifier {
         _currentUser = _users[index];
       }
       await storageService.saveUsers(_users);
+      await _logAction(
+        title: 'تعديل صلاحيات مستخدم',
+        description: 'تم تعديل صلاحيات المستخدم: ${_users[index].displayName}',
+        actionType: 'user_permissions',
+      );
       await cloudSyncService.pushData(
         clients: _clients,
         payments: _payments,
         expenses: _expenses,
         serviceDays: _serviceDays,
         users: _users,
+        notifications: _notifications,
         deletedIds: _deletedIds,
         openingBalances: _openingBalances,
       );
@@ -454,6 +492,11 @@ class AppProvider extends ChangeNotifier {
       'cash': cash,
     };
     await storageService.saveOpeningBalances(_openingBalances);
+    await _logAction(
+      title: 'تعديل الأرصدة الافتتاحية',
+      description: 'تم تحديث أرصدة الخزينة (بنك: ${bank.toStringAsFixed(0)} ج.م | محفظة: ${wallet.toStringAsFixed(0)} ج.م | كاش: ${cash.toStringAsFixed(0)} ج.م)',
+      actionType: 'balances',
+    );
     await _persistAndSync();
     notifyListeners();
   }
@@ -495,6 +538,12 @@ class AppProvider extends ChangeNotifier {
     );
 
     _clients.insert(0, newClient);
+    await _logAction(
+      title: isExistingClient ? 'تسجيل عميل حالي' : 'إضافة عميل جديد',
+      description: 'تم تسجيل العميل: ${name.trim()} (السعر اليومي: ${dailyPrice.toStringAsFixed(0)} ج.م - يومية التمريض: ${nurseDailyPrice.toStringAsFixed(0)} ج.م)',
+      actionType: 'add_client',
+      metadata: {'clientName': name, 'dailyPrice': dailyPrice},
+    );
     await _persistAndSync();
   }
 
@@ -504,6 +553,12 @@ class AppProvider extends ChangeNotifier {
     if (index != -1) {
       _clients[index] = updated.copyWith(
         updatedAt: DateTime.now(),
+      );
+      await _logAction(
+        title: 'تعديل بيانات عميل',
+        description: 'تم تعديل بيانات العميل: ${updated.name}',
+        actionType: 'edit_client',
+        metadata: {'clientId': updated.id, 'clientName': updated.name},
       );
       await _persistAndSync();
     }
@@ -527,6 +582,12 @@ class AppProvider extends ChangeNotifier {
         serviceType: serviceType,
         status: newStatus,
         updatedAt: DateTime.now(),
+      );
+      await _logAction(
+        title: 'تحديد أسعار الخدمة للعميل',
+        description: 'تم تحديد سعر العميل: ${current.name} (يومي: ${dailyPrice.toStringAsFixed(0)} ج.م - تمريض: ${nurseDailyPrice.toStringAsFixed(0)} ج.م)',
+        actionType: 'pricing',
+        metadata: {'clientId': clientId, 'clientName': current.name},
       );
       await _persistAndSync();
     }
@@ -578,6 +639,15 @@ class AppProvider extends ChangeNotifier {
         }
       }
 
+      final durStr = isOpenEnded
+          ? 'مدة مفتوحة'
+          : 'من ${DateFormat('yyyy/MM/dd').format(start)} إلى ${end != null ? DateFormat('yyyy/MM/dd').format(end) : ''}';
+      await _logAction(
+        title: 'بدء خدمة عميل',
+        description: 'تم بدء الخدمة للعميل: ${current.name} (${durStr}) - التمريض: ${nurse ?? "غير محدد"}',
+        actionType: 'start_service',
+        metadata: {'clientId': clientId, 'clientName': current.name},
+      );
       await _persistAndSync();
     }
   }
@@ -608,6 +678,15 @@ class AppProvider extends ChangeNotifier {
         notes: updatedNotes,
         updatedAt: DateTime.now(),
       );
+      final newEndStr = makeOpenEnded
+          ? 'مدة مفتوحة'
+          : (newEndDate != null ? DateFormat('yyyy/MM/dd').format(newEndDate) : '');
+      await _logAction(
+        title: 'تمديد / تعديل مدة الخدمة',
+        description: 'تم تعديل/تمديد مدة خدمة العميل: ${current.name} (${newEndStr})',
+        actionType: 'extend_service',
+        metadata: {'clientId': clientId, 'clientName': current.name},
+      );
       await _persistAndSync();
     }
   }
@@ -627,6 +706,12 @@ class AppProvider extends ChangeNotifier {
         status: isDueToPaymentDefault ? 'stopped_by_accountant' : 'completed',
         terminationReason: reason,
         updatedAt: DateTime.now(),
+      );
+      await _logAction(
+        title: 'إنهاء خدمة عميل',
+        description: 'تم إنهاء خدمة العميل: ${current.name} (السبب: ${reason.trim()})',
+        actionType: 'end_service',
+        metadata: {'clientId': clientId, 'clientName': current.name},
       );
       await _persistAndSync();
     }
@@ -668,10 +753,22 @@ class AppProvider extends ChangeNotifier {
       }
     }
 
+    String deletedClientName = 'عميل';
+    for (final c in _clients) {
+      if (c.id == clientId) {
+        deletedClientName = c.name;
+        break;
+      }
+    }
     _clients.removeWhere((c) => c.id == clientId);
     _payments.removeWhere((p) => p.clientId == clientId);
     _serviceDays.removeWhere((d) => d.clientId == clientId);
 
+    await _logAction(
+      title: 'حذف عميل',
+      description: 'تم حذف العميل: $deletedClientName من النظام',
+      actionType: 'delete_client',
+    );
     await storageService.saveDeletedIds(_deletedIds);
     await _persistAndSync();
   }
@@ -704,6 +801,12 @@ class AppProvider extends ChangeNotifier {
     );
 
     _serviceDays.insert(0, day);
+    await _logAction(
+      title: 'تسجيل يوم خدمة',
+      description: 'تم تسجيل يوم خدمة (${DateFormat('yyyy/MM/dd').format(date)}) للعميل: ${client.name} - التمريض: ${day.nurseName}',
+      actionType: 'service_days',
+      metadata: {'clientId': clientId, 'clientName': client.name, 'nurseName': day.nurseName},
+    );
     await _persistAndSync();
   }
 
@@ -746,15 +849,35 @@ class AppProvider extends ChangeNotifier {
         _serviceDays.insert(0, day);
       }
     }
+    await _logAction(
+      title: 'تسجيل أيام الخدمة',
+      description: 'تم تسجيل ${dates.length} يوم خدمة للعميل: ${client.name} - التمريض: ${nurseName.trim()}',
+      actionType: 'service_days',
+      metadata: {'clientId': clientId, 'clientName': client.name, 'daysCount': dates.length},
+    );
     await _persistAndSync();
   }
 
   /// حذف يوم خدمة محدد
   Future<void> deleteServiceDay(String dayId) async {
+    String targetClient = 'عميل';
+    String targetNurse = '';
+    for (final d in _serviceDays) {
+      if (d.id == dayId) {
+        targetClient = d.clientName;
+        targetNurse = d.nurseName;
+        break;
+      }
+    }
     if (!_deletedIds.contains(dayId)) {
       _deletedIds.add(dayId);
     }
     _serviceDays.removeWhere((d) => d.id == dayId);
+    await _logAction(
+      title: 'حذف يوم خدمة',
+      description: 'تم حذف يوم خدمة للعميل: $targetClient (التمريض: $targetNurse)',
+      actionType: 'service_days',
+    );
     await storageService.saveDeletedIds(_deletedIds);
     await _persistAndSync();
   }
@@ -784,15 +907,35 @@ class AppProvider extends ChangeNotifier {
     );
 
     _payments.insert(0, newPayment);
+    await _logAction(
+      title: 'تسجيل تحصيل نقدية',
+      description: 'تم تحصيل مبلغ ${amount.toStringAsFixed(0)} ج.م من العميل: ${client.name} (${_getChannelArabic(paymentChannel)})',
+      actionType: 'payment',
+      metadata: {'clientId': clientId, 'clientName': client.name, 'amount': amount},
+    );
     await _persistAndSync();
   }
 
   Future<void> deletePayment(String paymentId) async {
     if (!canEditAnyData) return;
+    String targetClient = 'عميل';
+    double targetAmount = 0.0;
+    for (final p in _payments) {
+      if (p.id == paymentId) {
+        targetClient = p.clientName;
+        targetAmount = p.amount;
+        break;
+      }
+    }
     if (!_deletedIds.contains(paymentId)) {
       _deletedIds.add(paymentId);
     }
     _payments.removeWhere((p) => p.id == paymentId);
+    await _logAction(
+      title: 'حذف دفعة نقدية',
+      description: 'تم حذف دفعة بقيمة ${targetAmount.toStringAsFixed(0)} ج.م للعميل: $targetClient',
+      actionType: 'delete_payment',
+    );
     await storageService.saveDeletedIds(_deletedIds);
     await _persistAndSync();
   }
@@ -823,15 +966,35 @@ class AppProvider extends ChangeNotifier {
     );
 
     _expenses.insert(0, newExpense);
+    await _logAction(
+      title: 'تسجيل مصروف جديد',
+      description: 'تم تسجيل مصروف: ${title.trim()} بقيمة ${amount.toStringAsFixed(0)} ج.م (${_getChannelArabic(paymentChannel)})',
+      actionType: 'expense',
+      metadata: {'amount': amount, 'title': title},
+    );
     await _persistAndSync();
   }
 
   Future<void> deleteExpense(String expenseId) async {
     if (!canEditAnyData) return;
+    String targetTitle = 'مصروف';
+    double targetAmount = 0.0;
+    for (final e in _expenses) {
+      if (e.id == expenseId) {
+        targetTitle = e.title;
+        targetAmount = e.amount;
+        break;
+      }
+    }
     if (!_deletedIds.contains(expenseId)) {
       _deletedIds.add(expenseId);
     }
     _expenses.removeWhere((e) => e.id == expenseId);
+    await _logAction(
+      title: 'حذف مصروف',
+      description: 'تم حذف مصروف: $targetTitle بقيمة ${targetAmount.toStringAsFixed(0)} ج.م',
+      actionType: 'delete_expense',
+    );
     await storageService.saveDeletedIds(_deletedIds);
     await _persistAndSync();
   }
@@ -847,12 +1010,18 @@ class AppProvider extends ChangeNotifier {
         _currentUser = _users[index];
       }
       await storageService.saveUsers(_users);
+      await _logAction(
+        title: 'تعديل صلاحيات مستخدم',
+        description: 'تم تعديل صلاحيات المستخدم: ${_users[index].displayName}',
+        actionType: 'user_permissions',
+      );
       await cloudSyncService.pushData(
         clients: _clients,
         payments: _payments,
         expenses: _expenses,
         serviceDays: _serviceDays,
         users: _users,
+        notifications: _notifications,
         deletedIds: _deletedIds,
         openingBalances: _openingBalances,
       );
@@ -874,16 +1043,154 @@ class AppProvider extends ChangeNotifier {
         _currentUser = _users[index];
       }
       await storageService.saveUsers(_users);
+      await _logAction(
+        title: 'تعديل بيانات مستخدم',
+        description: 'تم تعديل بيانات المستخدم: ${displayName.trim()} (${roleTitle.trim()})',
+        actionType: 'user_permissions',
+      );
       await cloudSyncService.pushData(
         clients: _clients,
         payments: _payments,
         expenses: _expenses,
         serviceDays: _serviceDays,
         users: _users,
+        notifications: _notifications,
         deletedIds: _deletedIds,
         openingBalances: _openingBalances,
       );
       notifyListeners();
+    }
+  }
+
+  // --- Real-time Audible Notifications & Activity Logging ---
+
+  void _triggerRemoteNotificationAlert(AppNotificationModel notif) {
+    if (_soundAlertsEnabled) {
+      SoundService.playNotificationSound();
+    }
+
+    final messenger = scaffoldMessengerKey.currentState;
+    if (messenger != null) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF0A2540),
+          elevation: 10,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF00D09C), width: 1.5),
+          ),
+          duration: const Duration(seconds: 6),
+          content: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00D09C).withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.notifications_active,
+                    color: Color(0xFF00D09C),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notif.title,
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              notif.userName,
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF00D09C),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        notif.description,
+                        style: const TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 12,
+                          color: Color(0xFFE2E8F0),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _logAction({
+    required String title,
+    required String description,
+    required String actionType,
+    Map<String, dynamic>? metadata,
+  }) async {
+    final notif = AppNotificationModel(
+      id: 'ntf_${_uuid.v4().substring(0, 8)}',
+      title: title,
+      description: description,
+      actionType: actionType,
+      userId: _currentUser?.id ?? 'usr_anonymous',
+      userName: _currentUser?.displayName ?? _currentUser?.username ?? 'مستخدم',
+      userRole: _currentUser?.roleTitle ?? '',
+      timestamp: DateTime.now(),
+      metadata: metadata,
+    );
+
+    _notifications.insert(0, notif);
+    if (_notifications.length > 150) {
+      _notifications = _notifications.sublist(0, 150);
+    }
+    _knownNotificationIds.add(notif.id);
+    await storageService.saveNotifications(_notifications);
+  }
+
+  String _getChannelArabic(String channel) {
+    switch (channel) {
+      case 'wallet': return 'المحفظة الإلكترونية';
+      case 'bank': return 'الحساب البنكي';
+      case 'cash': return 'الخزينة كاش';
+      default: return channel;
     }
   }
 
@@ -965,6 +1272,50 @@ class AppProvider extends ChangeNotifier {
             );
           }
         }
+        if (result.notifications != null && result.notifications!.isNotEmpty) {
+          final now = DateTime.now();
+          final List<AppNotificationModel> incoming = result.notifications!;
+          incoming.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+          bool hasFreshRemoteEvent = false;
+          AppNotificationModel? freshestNotification;
+
+          for (final notif in incoming) {
+            if (!_knownNotificationIds.contains(notif.id)) {
+              _knownNotificationIds.add(notif.id);
+
+              final isFromOtherUser = _currentUser == null ||
+                  (notif.userId != _currentUser!.id &&
+                   notif.userName.trim() != _currentUser!.displayName.trim() &&
+                   notif.userName.trim() != _currentUser!.username.trim());
+
+              final isRecent = now.difference(notif.timestamp).inSeconds.abs() <= 60;
+
+              if (isFromOtherUser && isRecent) {
+                hasFreshRemoteEvent = true;
+                _unreadNotificationCount++;
+                freshestNotification ??= notif;
+              }
+            }
+          }
+
+          final Map<String, AppNotificationModel> notifMap = {
+            for (var n in _notifications) n.id: n,
+          };
+          for (var n in incoming) {
+            notifMap[n.id] = n;
+          }
+          _notifications = notifMap.values.toList();
+          _notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          if (_notifications.length > 150) {
+            _notifications = _notifications.sublist(0, 150);
+          }
+          await storageService.saveNotifications(_notifications);
+
+          if (hasFreshRemoteEvent && freshestNotification != null) {
+            _triggerRemoteNotificationAlert(freshestNotification);
+          }
+        }
         _statusMessage = 'تمت المزامنة بنجاح';
       } else {
         // If pull was empty or newly initialized endpoint, push local data up
@@ -977,6 +1328,7 @@ class AppProvider extends ChangeNotifier {
           partnerLoans: _partnerLoans,
           partnerSettlements: _partnerSettlements,
           users: _users,
+          notifications: _notifications,
           deletedIds: _deletedIds,
           openingBalances: _openingBalances,
         );
@@ -999,6 +1351,7 @@ class AppProvider extends ChangeNotifier {
     await storageService.savePartnerLoans(_partnerLoans);
     await storageService.savePartnerSettlements(_partnerSettlements);
     await storageService.saveOpeningBalances(_openingBalances);
+    await storageService.saveNotifications(_notifications);
     notifyListeners();
 
     // Push changes asynchronously
@@ -1011,6 +1364,7 @@ class AppProvider extends ChangeNotifier {
       partnerLoans: _partnerLoans,
       partnerSettlements: _partnerSettlements,
       users: _users,
+      notifications: _notifications,
       deletedIds: _deletedIds,
       openingBalances: _openingBalances,
     );
@@ -1183,11 +1537,27 @@ class AppProvider extends ChangeNotifier {
     );
 
     _expenses.insert(0, newExpense);
+    final actTitle = type == 'advance' ? 'تسجيل سلفة تمريض' : 'صرف مستحقات تمريض';
+    await _logAction(
+      title: actTitle,
+      description: 'تم ${actTitle} للممرض: ${nurseName.trim()} بمبلغ ${amount.toStringAsFixed(0)} ج.م (${_getChannelArabic(paymentChannel)})',
+      actionType: type == 'advance' ? 'nurse_advance' : 'nurse_payout',
+      metadata: {'nurseName': nurseName, 'amount': amount},
+    );
     await _persistAndSync();
   }
 
   Future<void> deleteNurseTransaction(String id) async {
     if (!canEditAnyData) return;
+    String targetNurse = 'ممرض';
+    double targetAmount = 0.0;
+    for (final t in _nurseTransactions) {
+      if (t.id == id) {
+        targetNurse = t.nurseName;
+        targetAmount = t.amount;
+        break;
+      }
+    }
     if (!_deletedIds.contains(id)) {
       _deletedIds.add(id);
     }
@@ -1197,6 +1567,11 @@ class AppProvider extends ChangeNotifier {
     }
     _nurseTransactions.removeWhere((t) => t.id == id);
     _expenses.removeWhere((e) => e.id == expId);
+    await _logAction(
+      title: 'حذف معاملة تمريض',
+      description: 'تم حذف معاملة للممرض: $targetNurse بقيمة ${targetAmount.toStringAsFixed(0)} ج.م',
+      actionType: 'nurse_trans',
+    );
     await storageService.saveDeletedIds(_deletedIds);
     await _persistAndSync();
   }
@@ -1299,12 +1674,27 @@ class AppProvider extends ChangeNotifier {
     );
 
     _expenses.insert(0, newExpense);
+    await _logAction(
+      title: 'تسجيل سلفة شريك',
+      description: 'تم تسجيل سلفة للشريك: $partnerName بمبلغ ${totalAmount.toStringAsFixed(0)} ج.م (${_getChannelArabic(paymentChannel)})',
+      actionType: 'partner_loan',
+      metadata: {'partnerName': partnerName, 'amount': totalAmount},
+    );
     await _persistAndSync();
   }
 
   /// حذف سلفة شريك
   Future<void> deletePartnerLoan(String loanId) async {
     if (!canEditAnyData) return;
+    String targetPartner = 'شريك';
+    double targetAmount = 0.0;
+    for (final l in _partnerLoans) {
+      if (l.id == loanId) {
+        targetPartner = l.partnerName;
+        targetAmount = l.totalAmount;
+        break;
+      }
+    }
     if (!_deletedIds.contains(loanId)) {
       _deletedIds.add(loanId);
     }
@@ -1314,6 +1704,11 @@ class AppProvider extends ChangeNotifier {
     }
     _partnerLoans.removeWhere((l) => l.id == loanId);
     _expenses.removeWhere((e) => e.id == expId);
+    await _logAction(
+      title: 'حذف سلفة شريك',
+      description: 'تم حذف سلفة الشريك: $targetPartner بقيمة ${targetAmount.toStringAsFixed(0)} ج.م',
+      actionType: 'partner_loan',
+    );
     await storageService.saveDeletedIds(_deletedIds);
     await _persistAndSync();
   }
@@ -1486,6 +1881,11 @@ class AppProvider extends ChangeNotifier {
       _expenses.insert(0, newExpense);
     }
 
+    await _logAction(
+      title: 'اعتماد تصفية أرباح الشركاء',
+      description: 'تم اعتماد وصرف $cycleTitle - إجمالي المنصرف: ${settlement.totalDisbursed.toStringAsFixed(0)} ج.م (متبقي الخزينة: ${settlement.remainingTreasuryCash.toStringAsFixed(0)} ج.م)',
+      actionType: 'partner_settlement',
+    );
     await _persistAndSync();
   }
 

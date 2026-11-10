@@ -30,6 +30,7 @@ class EliteGrandApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      scaffoldMessengerKey: AppProvider.scaffoldMessengerKey,
       title: 'إيليت جراند للتمريض المنزلي',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
