@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/add_edit_client_dialog.dart';
 import '../widgets/pricing_dialog.dart';
 import '../widgets/start_service_dialog.dart';
+import '../widgets/extend_service_dialog.dart';
 import '../widgets/stop_service_dialog.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/add_service_day_dialog.dart';
@@ -359,7 +360,11 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                           ),
                         if (client.startDate != null || clientDays.isNotEmpty)
                           Text(
-                            'المدة: $servedDays يوم ${clientDays.isNotEmpty ? '(شفتات)' : ''} | إيراد الخدمة: ${accruedCost.toStringAsFixed(0)} ج.م ${client.nurseDailyPrice > 0 || clientDays.isNotEmpty ? '| أرباح الشركة: ${companyProfit.toStringAsFixed(0)} ج.م' : ''}',
+                            client.isOpenEnded
+                                ? 'المدة: مفتوحة (منقضي $servedDays يوم) | إيراد الخدمة: ${accruedCost.toStringAsFixed(0)} ج.م ${client.nurseDailyPrice > 0 || clientDays.isNotEmpty ? '| أرباح: ${companyProfit.toStringAsFixed(0)} ج.م' : ''}'
+                                : (client.endDate != null
+                                    ? 'المدة: ${client.totalContractDays ?? "-"} يوم (منقضي $servedDays | باقي ${client.remainingContractDays ?? 0}) | إيراد: ${accruedCost.toStringAsFixed(0)} ج.م'
+                                    : 'المدة: $servedDays يوم | إيراد الخدمة: ${accruedCost.toStringAsFixed(0)} ج.م'),
                             style: const TextStyle(fontSize: 11, color: Colors.blueGrey, fontFamily: 'Cairo'),
                           ),
                       ],
@@ -432,6 +437,20 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                         showDialog(
                           context: context,
                           builder: (_) => PaymentDialog(preSelectedClient: client),
+                        );
+                      },
+                    ),
+
+                  // Extend or Open Duration for active clients
+                  if (client.status == 'active' && (provider.canStartService || provider.canEditClient || provider.isManager))
+                    ActionChip(
+                      avatar: const Icon(Icons.update, size: 16, color: Colors.indigo),
+                      label: const Text('تمديد / فتح المدة', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.indigo, fontWeight: FontWeight.bold)),
+                      backgroundColor: Colors.indigo.withValues(alpha: 0.08),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => ExtendServiceDialog(client: client),
                         );
                       },
                     ),

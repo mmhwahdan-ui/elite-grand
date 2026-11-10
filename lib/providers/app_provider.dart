@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -535,13 +536,49 @@ class AppProvider extends ChangeNotifier {
   Future<void> startClientService({
     required String clientId,
     DateTime? startDate,
+    DateTime? endDate,
+    bool isOpenEnded = false,
+    String? nurseAssigned,
   }) async {
     final index = _clients.indexWhere((c) => c.id == clientId);
     if (index != -1) {
       final current = _clients[index];
       _clients[index] = current.copyWith(
         startDate: startDate ?? DateTime.now(),
+        endDate: isOpenEnded ? null : endDate,
+        clearEndDate: isOpenEnded,
+        nurseAssigned: nurseAssigned ?? current.nurseAssigned,
         status: 'active',
+        updatedAt: DateTime.now(),
+      );
+      await _persistAndSync();
+    }
+  }
+
+  /// تمديد أو تعديل مدة الخدمة أو فتح المدة للعميل (عند طلب العميل مد الخدمة أو فتحها)
+  Future<void> extendOrUpdateServiceDuration({
+    required String clientId,
+    DateTime? newStartDate,
+    DateTime? newEndDate,
+    bool makeOpenEnded = false,
+    String? note,
+  }) async {
+    final index = _clients.indexWhere((c) => c.id == clientId);
+    if (index != -1) {
+      final current = _clients[index];
+      String updatedNotes = current.notes;
+      if (note != null && note.trim().isNotEmpty) {
+        final stamp = DateFormat('yyyy/MM/dd').format(DateTime.now());
+        updatedNotes = updatedNotes.isEmpty
+            ? '[$stamp] $note'
+            : '$updatedNotes\n[$stamp] $note';
+      }
+
+      _clients[index] = current.copyWith(
+        startDate: newStartDate ?? current.startDate,
+        endDate: makeOpenEnded ? null : (newEndDate ?? current.endDate),
+        clearEndDate: makeOpenEnded,
+        notes: updatedNotes,
         updatedAt: DateTime.now(),
       );
       await _persistAndSync();

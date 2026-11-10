@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/add_edit_client_dialog.dart';
 import '../widgets/pricing_dialog.dart';
 import '../widgets/start_service_dialog.dart';
+import '../widgets/extend_service_dialog.dart';
 import '../widgets/stop_service_dialog.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/add_service_day_dialog.dart';
@@ -349,13 +350,67 @@ class ClientDetailScreen extends StatelessWidget {
                           Expanded(
                             child: _buildDetailTile(
                               'تاريخ الإنهاء',
-                              client.endDate != null ? dateFormat.format(client.endDate!) : 'مستمرة حتى اليوم',
+                              client.endDate != null ? dateFormat.format(client.endDate!) : 'مدة مفتوحة (مستمرة)',
                               Icons.event_busy,
-                              client.endDate != null ? AppTheme.redDebt : Colors.green,
+                              client.endDate != null ? AppTheme.redDebt : Colors.teal,
                             ),
                           ),
                         ],
                       ),
+                      if (client.status == 'active' && client.startDate != null) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: client.isOpenEnded ? Colors.teal.shade50 : Colors.indigo.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: client.isOpenEnded ? Colors.teal.shade200 : Colors.indigo.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                client.isOpenEnded ? Icons.all_inclusive : Icons.date_range,
+                                size: 18,
+                                color: client.isOpenEnded ? Colors.teal : Colors.indigo,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  client.isOpenEnded
+                                      ? 'مدة الخدمة مفتوحة ومستمرة (منقضي $servedDaysCount يوم حتى الآن)'
+                                      : 'التعاقد: ${client.totalContractDays ?? "-"} يوم (منقضي $servedDaysCount يوم | متبقي ${client.remainingContractDays ?? 0} يوم)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontFamily: 'Cairo',
+                                    fontWeight: FontWeight.bold,
+                                    color: client.isOpenEnded ? Colors.teal.shade900 : Colors.indigo.shade900,
+                                  ),
+                                ),
+                              ),
+                              if (provider.canStartService || provider.canEditClient || provider.isManager)
+                                TextButton.icon(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) => ExtendServiceDialog(client: client),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.update, size: 16, color: Colors.indigo),
+                                  label: const Text(
+                                    'تمديد / فتح المدة',
+                                    style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.indigo),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const Divider(height: 24),
 
                       // Billing summary box
@@ -857,6 +912,26 @@ class ClientDetailScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                  // Extend or Open Duration (when client requests extension)
+                  if (client.status == 'active' && (provider.canStartService || provider.canEditClient || provider.isManager)) ...[
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => ExtendServiceDialog(client: client),
+                          );
+                        },
+                        icon: const Icon(Icons.update),
+                        label: const Text('تمديد / فتح المدة', style: TextStyle(fontFamily: 'Cairo')),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.indigo,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
                   // Stop Service button (for Zezo or Wahdan if client defaults)
                   if (client.status == 'active' && provider.canEndService) ...[
                     if (client.startDate == null && provider.canStartService) const SizedBox(width: 12),

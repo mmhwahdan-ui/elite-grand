@@ -44,17 +44,52 @@ class ClientModel {
   // Calculate served days
   int get servedDays {
     if (startDate == null) return 0;
-    final effectiveEnd = endDate ?? DateTime.now();
-    
-    // Normalize to date without time for day calculation
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final start = DateTime(startDate!.year, startDate!.month, startDate!.day);
-    final end = DateTime(effectiveEnd.year, effectiveEnd.month, effectiveEnd.day);
 
-    if (end.isBefore(start)) return 0;
+    DateTime effectiveEnd;
+    if (status == 'completed' || status == 'stopped_by_accountant') {
+      effectiveEnd = endDate != null
+          ? DateTime(endDate!.year, endDate!.month, endDate!.day)
+          : today;
+    } else {
+      // Service is active
+      if (endDate != null) {
+        final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
+        effectiveEnd = today.isBefore(end) ? today : end;
+      } else {
+        effectiveEnd = today;
+      }
+    }
 
-    final differenceInDays = end.difference(start).inDays + 1; // Service counts from day 1
+    if (effectiveEnd.isBefore(start)) return 0;
+
+    final differenceInDays = effectiveEnd.difference(start).inDays + 1; // Service counts from day 1
     return differenceInDays > 0 ? differenceInDays : 1;
   }
+
+  // Total planned / contracted days if an end date was specified
+  int? get totalContractDays {
+    if (startDate == null || endDate == null) return null;
+    final start = DateTime(startDate!.year, startDate!.month, startDate!.day);
+    final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
+    if (end.isBefore(start)) return 0;
+    return end.difference(start).inDays + 1;
+  }
+
+  // Remaining days until planned end date
+  int? get remainingContractDays {
+    if (startDate == null || endDate == null) return null;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
+    if (end.isBefore(today)) return 0;
+    return end.difference(today).inDays;
+  }
+
+  // Is duration open-ended (continuous)
+  bool get isOpenEnded => endDate == null;
 
   // Calculate total accrued service cost billed to client
   double get totalServiceCost {
@@ -117,6 +152,7 @@ class ClientModel {
     double? openingBalance,
     DateTime? startDate,
     DateTime? endDate,
+    bool clearEndDate = false,
     String? status,
     String? terminationReason,
     String? nurseAssigned,
@@ -137,7 +173,7 @@ class ClientModel {
       isExistingClient: isExistingClient ?? this.isExistingClient,
       openingBalance: openingBalance ?? this.openingBalance,
       startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
+      endDate: clearEndDate ? null : (endDate ?? this.endDate),
       status: status ?? this.status,
       terminationReason: terminationReason ?? this.terminationReason,
       nurseAssigned: nurseAssigned ?? this.nurseAssigned,
