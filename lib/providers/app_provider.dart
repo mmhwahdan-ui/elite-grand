@@ -141,7 +141,14 @@ class AppProvider extends ChangeNotifier {
   bool get canEndService => isManager || (_currentUser?.permissions.canEndService ?? false);
   bool get canRecordPayment => isManager || (_currentUser?.permissions.canRecordPayment ?? false);
   bool get canRecordExpense => isManager || (_currentUser?.permissions.canRecordExpense ?? false);
-  bool get canViewFinancialReports => isManager || (_currentUser?.permissions.canViewFinancialReports ?? false);
+  bool get canViewFinancialReports =>
+      isManager ||
+      isFollowup ||
+      isAccountant ||
+      _currentUser?.username == 'wahdan' ||
+      _currentUser?.username == 'shimaa' ||
+      _currentUser?.username == 'zezo' ||
+      (_currentUser?.permissions.canViewFinancialReports ?? false);
   bool get canManagePermissions => isManager || (_currentUser?.permissions.canManagePermissions ?? false);
   bool get canEditAnyData => isManager || (_currentUser?.permissions.canEditAnyData ?? false);
 

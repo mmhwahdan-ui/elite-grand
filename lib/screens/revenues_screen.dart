@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/payment_dialog.dart';
 import '../services/export_service.dart';
+import 'financial_reports_screen.dart';
 
 class RevenuesScreen extends StatefulWidget {
   const RevenuesScreen({super.key});
@@ -186,6 +187,17 @@ class _RevenuesScreenState extends State<RevenuesScreen> {
                             icon: const Icon(Icons.file_download, color: Color(0xFF107C41)),
                             style: IconButton.styleFrom(
                               backgroundColor: const Color(0xFF107C41).withOpacity(0.08),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton(
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
+                            },
+                            tooltip: 'التقارير والأرباح (صافي الربح الدوري)',
+                            icon: const Icon(Icons.analytics_outlined, color: Colors.indigo),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.indigo.withOpacity(0.08),
                             ),
                           ),
                         ],

@@ -267,6 +267,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 4),
 
+            // Financial Reports & Periodic Net Profit button
+            IconButton(
+              icon: const Icon(Icons.analytics_outlined, color: Colors.white),
+              tooltip: 'التقارير والأرباح (صافي الربح الدوري)',
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
+              },
+            ),
+            const SizedBox(width: 4),
+
             // User Profile / Switch Account
             PopupMenuButton<String>(
               onSelected: (val) async {
@@ -294,6 +304,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
                 } else if (val == 'settlement') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnerSettlementScreen()));
+                } else if (val == 'reports') {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
                 }
               },
               tooltip: 'الحساب والإعدادات',
@@ -380,6 +392,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icon(Icons.pie_chart_outline, color: Colors.indigo, size: 20),
                       SizedBox(width: 8),
                       Text('تصفية أرباح الشركاء (يوم 23)', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'reports',
+                  child: Row(
+                    children: [
+                      Icon(Icons.analytics_rounded, color: Colors.blue, size: 20),
+                      SizedBox(width: 8),
+                      Text('التقارير والأرباح (صافي الربح الدوري)', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),

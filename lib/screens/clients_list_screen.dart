@@ -12,6 +12,7 @@ import '../widgets/stop_service_dialog.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/add_service_day_dialog.dart';
 import 'client_detail_screen.dart';
+import 'financial_reports_screen.dart';
 
 class ClientsListScreen extends StatefulWidget {
   const ClientsListScreen({super.key});
@@ -112,6 +113,65 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                       )
                     else
                       const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white54),
+                  ],
+                ),
+              ),
+            ),
+
+            // Quick Net Profit Dashboard Banner (اليومي • الأسبوعي • الشهري دورة 23)
+            InkWell(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
+              },
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1E1B4B), Color(0xFF312E81)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.amber,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.analytics_rounded, color: Color(0xFF1E1B4B), size: 16),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'صافي الأرباح: ',
+                                style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
+                              ),
+                              Text(
+                                'اليوم: ${provider.getDailyNetProfitSummary().netProfit.toStringAsFixed(0)} ج  |  دورة 23: ${provider.getMonthlyNetProfitSummary().netProfit.toStringAsFixed(0)} ج',
+                                style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.amberAccent),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            provider.getMonthlyNetProfitSummary().daysRemainingUntil23 != null && provider.getMonthlyNetProfitSummary().daysRemainingUntil23! > 0
+                                ? 'دورة نهاية الشهر يوم 23 (متبقي ${provider.getMonthlyNetProfitSummary().daysRemainingUntil23} يوم) • اضغط لفتح التقرير المالي'
+                                : 'دورة نهاية الشهر يوم 23 (اليوم موعد التصفية) • اضغط لفتح التقرير المالي',
+                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Color(0xFFC7D2FE)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white70),
                   ],
                 ),
               ),
