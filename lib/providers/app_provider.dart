@@ -13,6 +13,7 @@ import '../models/nurse_transaction_model.dart';
 import '../models/partner_loan_model.dart';
 import '../models/partner_settlement_model.dart';
 import '../models/caregiver_model.dart';
+import '../models/chat_message_model.dart';
 import '../services/storage_service.dart';
 import '../services/cloud_sync_service.dart';
 
@@ -31,6 +32,9 @@ class AppProvider extends ChangeNotifier {
   List<PartnerLoanModel> _partnerLoans = [];
   List<PartnerSettlementModel> _partnerSettlements = [];
   List<CaregiverModel> _caregivers = [];
+  List<ChatMessageModel> _chatMessages = [];
+  final Set<String> _knownChatMessageIds = {};
+  int _unreadChatCount = 0;
   List<String> _deletedIds = [];
   Map<String, double> _openingBalances = {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0};
 
@@ -61,6 +65,8 @@ class AppProvider extends ChangeNotifier {
   List<PartnerLoanModel> get partnerLoans => List.unmodifiable(_partnerLoans);
   List<PartnerSettlementModel> get partnerSettlements => List.unmodifiable(_partnerSettlements);
   List<CaregiverModel> get caregivers => List.unmodifiable(_caregivers);
+  List<ChatMessageModel> get chatMessages => List.unmodifiable(_chatMessages);
+  int get unreadChatCount => _unreadChatCount;
   List<String> get deletedIds => List.unmodifiable(_deletedIds);
   Map<String, double> get openingBalances => Map.unmodifiable(_openingBalances);
   bool get isLoading => _isLoading;
@@ -342,6 +348,10 @@ class AppProvider extends ChangeNotifier {
     _partnerLoans = storageService.loadPartnerLoans().where((l) => !deletedSet.contains(l.id)).toList();
     _partnerSettlements = storageService.loadPartnerSettlements().where((s) => !deletedSet.contains(s.id)).toList();
     _caregivers = storageService.loadCaregivers().where((c) => !deletedSet.contains(c.id)).toList();
+    _chatMessages = storageService.loadChatMessages();
+    for (final m in _chatMessages) {
+      _knownChatMessageIds.add(m.id);
+    }
     _notifications = storageService.loadNotifications();
     for (final n in _notifications) {
       _knownNotificationIds.add(n.id);
@@ -1312,6 +1322,46 @@ class AppProvider extends ChangeNotifier {
           _caregivers = result.caregivers!.where((c) => !deletedSet.contains(c.id)).toList();
           await storageService.saveCaregivers(_caregivers);
         }
+        if (result.chatMessages != null && result.chatMessages!.isNotEmpty) {
+          final incoming = result.chatMessages!;
+          bool hasNewIncomingChatMessage = false;
+          ChatMessageModel? latestNewMsg;
+
+          for (final msg in incoming) {
+            if (!_knownChatMessageIds.contains(msg.id)) {
+              _knownChatMessageIds.add(msg.id);
+              final isFromOtherUser = _currentUser == null ||
+                  (msg.senderId != _currentUser!.id &&
+                   msg.senderUsername.trim() != _currentUser!.username.trim());
+              final isForMe = msg.recipientId == 'all' ||
+                  msg.recipientId == _currentUser?.id ||
+                  msg.recipientId == _currentUser?.username;
+
+              if (isFromOtherUser && isForMe) {
+                hasNewIncomingChatMessage = true;
+                _unreadChatCount++;
+                latestNewMsg ??= msg;
+              }
+            }
+          }
+
+          final Map<String, ChatMessageModel> msgMap = {
+            for (var m in _chatMessages) m.id: m,
+          };
+          for (var m in incoming) {
+            msgMap[m.id] = m;
+          }
+          _chatMessages = msgMap.values.toList();
+          _chatMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+          if (_chatMessages.length > 300) {
+            _chatMessages = _chatMessages.sublist(_chatMessages.length - 300);
+          }
+          await storageService.saveChatMessages(_chatMessages);
+
+          if (hasNewIncomingChatMessage && latestNewMsg != null) {
+            _triggerChatMessageAlert(latestNewMsg);
+          }
+        }
         if (result.users != null && result.users!.isNotEmpty) {
           _users = result.users!;
           await storageService.saveUsers(_users);
@@ -1379,6 +1429,7 @@ class AppProvider extends ChangeNotifier {
           partnerSettlements: _partnerSettlements,
           users: _users,
           caregivers: _caregivers,
+          chatMessages: _chatMessages,
           notifications: _notifications,
           deletedIds: _deletedIds,
           openingBalances: _openingBalances,
@@ -1402,6 +1453,7 @@ class AppProvider extends ChangeNotifier {
     await storageService.savePartnerLoans(_partnerLoans);
     await storageService.savePartnerSettlements(_partnerSettlements);
     await storageService.saveCaregivers(_caregivers);
+    await storageService.saveChatMessages(_chatMessages);
     await storageService.saveOpeningBalances(_openingBalances);
     await storageService.saveNotifications(_notifications);
     notifyListeners();
@@ -1417,6 +1469,7 @@ class AppProvider extends ChangeNotifier {
       partnerSettlements: _partnerSettlements,
       users: _users,
       caregivers: _caregivers,
+      chatMessages: _chatMessages,
       notifications: _notifications,
       deletedIds: _deletedIds,
       openingBalances: _openingBalances,
@@ -1973,8 +2026,176 @@ class AppProvider extends ChangeNotifier {
   }
 
   // ==========================================
-  // --- Caregivers & Staff Database (قاعدة بيانات وسجل مقدمي الخدمة) ---
+  // --- Real-time Chat Alert & Methods (شات وتواصل أفراد الشركة) ---
   // ==========================================
+
+  void _triggerChatMessageAlert(ChatMessageModel msg) {
+    if (_soundAlertsEnabled) {
+      SoundService.playNotificationSound();
+    }
+
+    final messenger = scaffoldMessengerKey.currentState;
+    if (messenger != null) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF0F172A),
+          elevation: 10,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF38BDF8), width: 1.5),
+          ),
+          duration: const Duration(seconds: 4),
+          content: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF38BDF8).withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.chat_bubble_rounded,
+                    color: Color(0xFF38BDF8),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            msg.isGroupMessage ? 'رسالة في شات الفريق' : 'رسالة خاصة جديدة',
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'من: ${msg.senderDisplayName}',
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF38BDF8),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        msg.text,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 12,
+                          color: Color(0xFFE2E8F0),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  /// جلب رسائل شات الفريق العام
+  List<ChatMessageModel> get groupChatMessages {
+    return _chatMessages.where((m) => m.isGroupMessage).toList();
+  }
+
+  /// جلب الرسائل الخاصة مع مستخدم معين
+  List<ChatMessageModel> getDirectMessagesWith(String otherUserId, [String? otherUsername]) {
+    final myId = _currentUser?.id ?? '';
+    final myUser = _currentUser?.username ?? '';
+    return _chatMessages.where((m) {
+      if (m.isGroupMessage) return false;
+      final sentByMeToOther = (m.senderId == myId || m.senderUsername == myUser) &&
+          (m.recipientId == otherUserId || (otherUsername != null && m.recipientId == otherUsername));
+      final sentByOtherToMe = (m.senderId == otherUserId || (otherUsername != null && m.senderUsername == otherUsername)) &&
+          (m.recipientId == myId || m.recipientId == myUser);
+      return sentByMeToOther || sentByOtherToMe;
+    }).toList();
+  }
+
+  /// إرسال رسالة جديدة
+  Future<void> sendChatMessage({
+    required String text,
+    String recipientId = 'all',
+    String recipientName = 'الجميع',
+    String? tag,
+    String? relatedClientName,
+  }) async {
+    final cleanText = text.trim();
+    if (cleanText.isEmpty) return;
+
+    final newMsg = ChatMessageModel(
+      id: 'msg_${_uuid.v4().substring(0, 8)}',
+      senderId: _currentUser?.id ?? 'usr_guest',
+      senderUsername: _currentUser?.username ?? 'user',
+      senderDisplayName: _currentUser?.displayName ?? 'مستخدم',
+      senderRole: _currentUser?.roleTitle ?? '',
+      recipientId: recipientId,
+      recipientName: recipientName,
+      text: cleanText,
+      tag: tag,
+      relatedClientName: relatedClientName,
+      timestamp: DateTime.now(),
+      isRead: false,
+    );
+
+    _knownChatMessageIds.add(newMsg.id);
+    _chatMessages.add(newMsg);
+    if (_chatMessages.length > 300) {
+      _chatMessages = _chatMessages.sublist(_chatMessages.length - 300);
+    }
+
+    await storageService.saveChatMessages(_chatMessages);
+    notifyListeners();
+
+    // Push to cloud instantly
+    cloudSyncService.pushData(
+      clients: _clients,
+      payments: _payments,
+      expenses: _expenses,
+      serviceDays: _serviceDays,
+      nurseTransactions: _nurseTransactions,
+      partnerLoans: _partnerLoans,
+      partnerSettlements: _partnerSettlements,
+      users: _users,
+      caregivers: _caregivers,
+      chatMessages: _chatMessages,
+      notifications: _notifications,
+      deletedIds: _deletedIds,
+      openingBalances: _openingBalances,
+    );
+  }
+
+  /// تحديد الرسائل كمقروءة
+  void markChatAsRead([String? recipientId]) {
+    _unreadChatCount = 0;
+    notifyListeners();
+  }
+
+  // ==========================================
+  // --- Caregivers & Staff Database (قاعدة بيانات وسجل مقدمي الخدمة) ---
 
   /// توليد كود تلقائي لمقدم الخدمة (e.g. CG-001, CG-002...)
   String generateNextCaregiverCode() {

@@ -10,6 +10,7 @@ import '../models/partner_loan_model.dart';
 import '../models/partner_settlement_model.dart';
 import '../models/app_notification_model.dart';
 import '../models/caregiver_model.dart';
+import '../models/chat_message_model.dart';
 
 class StorageService {
   static const String _keyUsers = 'eg_users_data';
@@ -27,6 +28,7 @@ class StorageService {
   static const String _keyPartnerSettlements = 'eg_partner_settlements_data';
   static const String _keyNotifications = 'eg_notifications_data';
   static const String _keyCaregivers = 'eg_caregivers_data';
+  static const String _keyChatMessages = 'eg_chat_messages_data';
 
   final SharedPreferences prefs;
 
@@ -288,5 +290,24 @@ class StorageService {
   Future<void> saveCaregivers(List<CaregiverModel> list) async {
     final data = list.map((c) => c.toMap()).toList();
     await prefs.setString(_keyCaregivers, jsonEncode(data));
+  }
+
+  // Chat Messages (شات ورسائل الفريق الداخلي للشركة)
+  List<ChatMessageModel> loadChatMessages() {
+    final jsonStr = prefs.getString(_keyChatMessages);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      return [];
+    }
+    try {
+      final List decoded = jsonDecode(jsonStr);
+      return decoded.map((m) => ChatMessageModel.fromMap(Map<String, dynamic>.from(m))).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveChatMessages(List<ChatMessageModel> list) async {
+    final data = list.take(300).map((m) => m.toMap()).toList();
+    await prefs.setString(_keyChatMessages, jsonEncode(data));
   }
 }

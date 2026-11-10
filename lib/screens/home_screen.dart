@@ -14,6 +14,7 @@ import 'login_screen.dart';
 import 'nurse_accounts_screen.dart';
 import 'partner_settlement_screen.dart';
 import 'caregivers_screen.dart';
+import 'team_chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -181,6 +182,39 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 4),
 
+            // Team Chat Button with Unread Badge
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+                  tooltip: 'شات وتواصل أفراد الشركة',
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamChatScreen()));
+                  },
+                ),
+                if (provider.unreadChatCount > 0)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        provider.unreadChatCount.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Cairo'),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 4),
+
             // Caregivers Database button
             IconButton(
               icon: const Icon(Icons.badge_outlined, color: Colors.white),
@@ -212,6 +246,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     context: context,
                     builder: (_) => const NotificationsDialog(),
                   );
+                } else if (val == 'chat') {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamChatScreen()));
                 } else if (val == 'caregivers') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
                 } else if (val == 'settlement') {
