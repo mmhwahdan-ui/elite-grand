@@ -359,48 +359,51 @@ class AppProvider extends ChangeNotifier {
     int shiftsCount = 0;
     final Set<String> activeClientIds = {};
 
-    // 1. حساب الإيرادات وتكلفة التمريض من أيام الخدمة المسجلة في الفترة
-    for (final day in _serviceDays) {
-      final dDate = DateTime(day.date.year, day.date.month, day.date.day);
-      if (!dDate.isBefore(DateTime(sDate.year, sDate.month, sDate.day)) &&
-          !dDate.isAfter(DateTime(eDate.year, eDate.month, eDate.day))) {
-        revenues += day.clientPrice;
-        nurseCosts += day.nursePrice;
+    final sDay = DateTime(sDate.year, sDate.month, sDate.day);
+    final eDay = DateTime(eDate.year, eDate.month, eDate.day);
+    final totalDaysInRange = eDay.difference(sDay).inDays + 1;
+
+    // حساب الإيرادات وتكلفة التمريض يوماً بيوم خلال الفترة
+    for (int i = 0; i < totalDaysInRange; i++) {
+      final currentDay = sDay.add(Duration(days: i));
+
+      // 1. فحص الورديات المسجلة فعلياً في جدول _serviceDays لهذا اليوم
+      final daysLoggedForCurrentDay = _serviceDays.where((d) {
+        final dDate = DateTime(d.date.year, d.date.month, d.date.day);
+        return dDate.isAtSameMomentAs(currentDay);
+      }).toList();
+
+      final Set<String> clientsHandledToday = {};
+
+      for (final loggedDay in daysLoggedForCurrentDay) {
+        revenues += loggedDay.clientPrice;
+        nurseCosts += loggedDay.nursePrice;
         shiftsCount++;
-        activeClientIds.add(day.clientId);
-      }
-    }
-
-    // 2. فحص الحالات التي ليس لها أيام مسجلة منفصلة في جدول _serviceDays، واحتسابها من تواريخ التعاقد
-    for (final client in _clients) {
-      final hasLoggedDays = _serviceDays.any((d) => d.clientId == client.id);
-      if (hasLoggedDays) continue;
-
-      if (client.startDate == null || client.dailyPrice <= 0) continue;
-      final cStart = DateTime(client.startDate!.year, client.startDate!.month, client.startDate!.day);
-      final DateTime cEnd;
-      if (client.endDate != null) {
-        cEnd = DateTime(client.endDate!.year, client.endDate!.month, client.endDate!.day);
-      } else {
-        final now = DateTime.now();
-        final today = DateTime(now.year, now.month, now.day);
-        final rEnd = DateTime(eDate.year, eDate.month, eDate.day);
-        cEnd = today.isBefore(rEnd) ? today : rEnd;
+        activeClientIds.add(loggedDay.clientId);
+        clientsHandledToday.add(loggedDay.clientId);
       }
 
-      final rStart = DateTime(sDate.year, sDate.month, sDate.day);
-      final rEnd = DateTime(eDate.year, eDate.month, eDate.day);
+      // 2. فحص الحالات النشطة التي لم تُسجل ورديتها يدوياً لهذا اليوم بعد واحتساب يومية تعاقدها
+      for (final client in _clients) {
+        if (clientsHandledToday.contains(client.id)) continue;
+        if (client.startDate == null || client.dailyPrice <= 0) continue;
 
-      final overlapStart = cStart.isAfter(rStart) ? cStart : rStart;
-      final overlapEnd = cEnd.isBefore(rEnd) ? cEnd : rEnd;
+        final cStart = DateTime(client.startDate!.year, client.startDate!.month, client.startDate!.day);
+        final DateTime cEnd;
+        if (client.endDate != null) {
+          cEnd = DateTime(client.endDate!.year, client.endDate!.month, client.endDate!.day);
+        } else {
+          final now = DateTime.now();
+          cEnd = DateTime(now.year, now.month, now.day);
+        }
 
-      if (!overlapStart.isAfter(overlapEnd)) {
-        final days = overlapEnd.difference(overlapStart).inDays + 1;
-        if (days > 0) {
-          revenues += days * client.dailyPrice;
-          nurseCosts += days * client.nurseDailyPrice;
-          shiftsCount += days;
-          activeClientIds.add(client.id);
+        if (!currentDay.isBefore(cStart) && !currentDay.isAfter(cEnd)) {
+          if (client.status == 'active' || client.status == 'completed') {
+            revenues += client.dailyPrice;
+            nurseCosts += client.nurseDailyPrice;
+            shiftsCount++;
+            activeClientIds.add(client.id);
+          }
         }
       }
     }
