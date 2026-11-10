@@ -1,3 +1,4 @@
+import 'team_chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/client_model.dart';
@@ -57,6 +58,65 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
       child: Scaffold(
         body: Column(
           children: [
+            // Quick Team Chat Banner Bar
+            InkWell(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamChatScreen()));
+              },
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 8, 16, 2),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.accentBright,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.chat_rounded, color: Color(0xFF0F172A), size: 16),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'شات أفراد الشركة (وهدان • شيماء • زيزو)',
+                            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
+                          ),
+                          Text(
+                            'تواصل فوري، تسليم واستلام الورديات وتنبيهات الحالات',
+                            style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Color(0xFF94A3B8)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (provider.unreadChatCount > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(10)),
+                        child: Text(
+                          '${provider.unreadChatCount} جديدة',
+                          style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+                        ),
+                      )
+                    else
+                      const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white54),
+                  ],
+                ),
+              ),
+            ),
+
             // Search and filter area
             Container(
               color: Colors.white,

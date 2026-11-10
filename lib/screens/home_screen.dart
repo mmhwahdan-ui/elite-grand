@@ -32,16 +32,54 @@ class _HomeScreenState extends State<HomeScreen> {
     final currentUser = provider.currentUser;
 
     // Determine available navigation tabs based on user permissions
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    // Determine available navigation tabs based on user permissions
     final List<NavigationDestination> destinations = [
       const NavigationDestination(
         icon: Icon(Icons.people_outline),
         selectedIcon: Icon(Icons.people),
-        label: 'الحالات والمتابعة',
+        label: 'الحالات',
+      ),
+      NavigationDestination(
+        icon: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Icon(Icons.chat_bubble_outline),
+            if (provider.unreadChatCount > 0)
+              Positioned(
+                top: -3,
+                right: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Colors.redAccent,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                  child: Text(
+                    provider.unreadChatCount.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        selectedIcon: const Icon(Icons.chat_bubble),
+        label: 'شات الشركة',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.badge_outlined),
+        selectedIcon: Icon(Icons.badge),
+        label: 'سجل الكوادر',
       ),
     ];
 
     final List<Widget> screens = [
       const ClientsListScreen(),
+      const TeamChatScreen(),
+      const CaregiversScreen(),
     ];
 
     // Revenues tab (الإيرادات ومتابعة الحسابات)
@@ -113,17 +151,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: const Icon(Icons.local_hospital_rounded, color: AppTheme.accentBright, size: 20),
               ),
               const SizedBox(width: 10),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  const Text(
                     'إيليت جراند',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
                   ),
-                  Text(
-                    'تمريض منزلي ورعاية صحية',
-                    style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontFamily: 'Cairo'),
-                  ),
+                  if (!isMobile)
+                    const Text(
+                      'تمريض منزلي ورعاية صحية',
+                      style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontFamily: 'Cairo'),
+                    ),
                 ],
               ),
             ],
@@ -153,11 +193,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 16,
                       color: _getSyncBorderColor(provider.syncStatus),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _getSyncTitle(provider.syncStatus),
-                      style: const TextStyle(fontSize: 11, fontFamily: 'Cairo', color: Colors.white),
-                    ),
+                    if (!isMobile) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        _getSyncTitle(provider.syncStatus),
+                        style: const TextStyle(fontSize: 11, fontFamily: 'Cairo', color: Colors.white),
+                      ),
+                    ],
                   ],
                 ),
               ),
