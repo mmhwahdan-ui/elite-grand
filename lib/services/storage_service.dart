@@ -12,6 +12,7 @@ import '../models/app_notification_model.dart';
 import '../models/caregiver_model.dart';
 import '../models/chat_message_model.dart';
 import '../models/case_offer_model.dart';
+import '../models/management_instruction_model.dart';
 
 class StorageService {
   static const String _keyUsers = 'eg_users_data';
@@ -32,6 +33,7 @@ class StorageService {
   static const String _keyCaregivers = 'eg_caregivers_data';
   static const String _keyChatMessages = 'eg_chat_messages_data';
   static const String _keyCaseOffers = 'eg_case_offers_data';
+  static const String _keyManagementInstructions = 'eg_management_instructions_data';
 
   final SharedPreferences prefs;
 
@@ -344,5 +346,77 @@ class StorageService {
   Future<void> saveCaseOffers(List<CaseOfferModel> list) async {
     final data = list.map((o) => o.toMap()).toList();
     await prefs.setString(_keyCaseOffers, jsonEncode(data));
+  }
+
+  // Management Instructions (لوحة تعليمات وتوجيهات الإدارة لمقدمي الخدمة)
+  List<ManagementInstructionModel> loadManagementInstructions() {
+    final jsonStr = prefs.getString(_keyManagementInstructions);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      return _defaultManagementInstructions();
+    }
+    try {
+      final List decoded = jsonDecode(jsonStr);
+      final list = decoded
+          .map((item) => ManagementInstructionModel.fromMap(Map<String, dynamic>.from(item)))
+          .toList();
+      if (list.isEmpty) {
+        return _defaultManagementInstructions();
+      }
+      return list;
+    } catch (_) {
+      return _defaultManagementInstructions();
+    }
+  }
+
+  Future<void> saveManagementInstructions(List<ManagementInstructionModel> list) async {
+    final data = list.map((i) => i.toMap()).toList();
+    await prefs.setString(_keyManagementInstructions, jsonEncode(data));
+  }
+
+  static List<ManagementInstructionModel> _defaultManagementInstructions() {
+    return [
+      ManagementInstructionModel(
+        id: 'inst_1',
+        title: 'الالتزام التام بمواعيد الوردية والزي الطبي الرسمي',
+        content: '• الحضور في الموعد المحدد بالضبط لمقر الحالة دون أي تأخير.\n'
+            '• الالتزام بارتداء الزي التمريضي النظيف والأنيق طوال فترة التواجد مع المريض.\n'
+            '• تسجيل إثبات الحضور الجغرافي (GPS) فور الوصول للحالة والانصراف عند انتهاء الوردية مباشرة.',
+        authorName: 'أ/ وهدان',
+        authorRole: 'المدير العام',
+        priority: 'urgent',
+        createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      ),
+      ManagementInstructionModel(
+        id: 'inst_2',
+        title: 'السرية التامة ومنع مناقشة أي تعاملات مالية مع العملاء',
+        content: '• يحظر منعاً باتاً التحدث مع المريض أو ذويه في أي حسابات، أسعار، أو أرباح خاصة بالشركة.\n'
+            '• في حال سؤال أهل المريض عن سداد المستحقات أو تجديد فترات الخدمة، يجب توجيههم للتواصل مباشرة مع إدارة الشركة.\n'
+            '• الحفاظ على خصوصية وأسرار المريض الطبية والشخصية أمانة مهنية ملزمة.',
+        authorName: 'أ/ وهدان',
+        authorRole: 'المدير العام',
+        priority: 'urgent',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      ManagementInstructionModel(
+        id: 'inst_3',
+        title: 'حظر الاتفاقات المباشرة خارج نطاق الشركة',
+        content: '• أي اتفاق مباشر يتم بين مقدم الخدمة والعميل خارج مظلة الشركة يعتبر إخلالاً جسيماً بالأمانة والتعاقد ويعرض صاحبه للحظر الفوري والمساءلة القانونية.\n'
+            '• الشركة هي الضامن الوحيد لحقوق ومستحقات الممرض وسلامته المهنية.',
+        authorName: 'أ/ زيزو',
+        authorRole: 'مدير الحسابات والمالية',
+        priority: 'urgent',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      ManagementInstructionModel(
+        id: 'inst_4',
+        title: 'بروتوكول الطوارئ وتبليغ الإدارة والمتابعة',
+        content: '• في حالة حدوث أي طارئ صحي أو تغير مفاجئ في علامات المريض الحيوية، يتم إبلاغ الإدارة الطبية وأ/ شيماء فوراً عبر الشات المباشر أو هاتفياً.\n'
+            '• تدوين أي أدوية وملاحظات علاجية بدقة في سجل الوردية.',
+        authorName: 'أ/ شيماء',
+        authorRole: 'مديرة المتابعة والتشغيل',
+        priority: 'important',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+    ];
   }
 }

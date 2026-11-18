@@ -93,15 +93,15 @@
       document.addEventListener(evt, function() { getEgAudioCtx(); }, { passive: true });
     });
 
-    window.playEliteGrandAlertSound = function() {
+    window.playEliteGrandAlertSound = function(soundType) {
       try {
         const ctx = getEgAudioCtx();
         if (!ctx) return;
 
-        const playTone = (freq, startTime, duration, volume) => {
+        const playTone = (freq, startTime, duration, volume, waveType) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          osc.type = 'sine';
+          osc.type = waveType || 'sine';
           osc.frequency.setValueAtTime(freq, startTime);
           gain.gain.setValueAtTime(volume, startTime);
           gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
@@ -112,10 +112,29 @@
         };
 
         const now = ctx.currentTime + 0.03;
-        // 3-Tone Bright Notification Chime (E5 -> A5 -> C#6)
-        playTone(659.25, now, 0.28, 0.35);
-        playTone(880.00, now + 0.11, 0.35, 0.40);
-        playTone(1108.73, now + 0.22, 0.55, 0.45);
+        const type = (soundType || 'general').toString().toLowerCase();
+
+        if (type === 'admin_chat') {
+          // Loud Punchy Chime for Management Internal Chat (D5 -> A5 -> D6)
+          playTone(587.33, now, 0.22, 0.85, 'triangle');
+          playTone(880.00, now + 0.10, 0.25, 0.90, 'triangle');
+          playTone(1174.66, now + 0.22, 0.45, 0.95, 'sine');
+        } else if (type === 'opportunity') {
+          // Loud Energetic Fanfare for New Case Offer (C5 -> E5 -> G5 -> C6)
+          playTone(523.25, now, 0.20, 0.85, 'triangle');
+          playTone(659.25, now + 0.11, 0.20, 0.85, 'triangle');
+          playTone(783.99, now + 0.22, 0.25, 0.90, 'triangle');
+          playTone(1046.50, now + 0.35, 0.60, 0.95, 'sine');
+        } else if (type === 'admin_message') {
+          // Loud Urgent Attention Alert for Admin message to Nurse (A5 -> E6)
+          playTone(880.00, now, 0.25, 0.90, 'triangle');
+          playTone(1318.51, now + 0.14, 0.55, 0.95, 'sine');
+        } else {
+          // Loud Bright 3-Tone Chime
+          playTone(659.25, now, 0.28, 0.80, 'triangle');
+          playTone(880.00, now + 0.11, 0.35, 0.85, 'triangle');
+          playTone(1108.73, now + 0.22, 0.55, 0.90, 'sine');
+        }
       } catch (err) {
         console.warn("Sound play error:", err);
       }

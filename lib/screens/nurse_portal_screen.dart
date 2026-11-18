@@ -10,6 +10,7 @@ import '../models/service_day_model.dart';
 import '../models/nurse_transaction_model.dart';
 import '../models/case_offer_model.dart';
 import '../services/location_service.dart';
+import '../widgets/management_instructions_dialog.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
@@ -33,11 +34,23 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
     _tabController = TabController(length: 5, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _pingNurseLocation();
+      _checkAndShowManagementInstructions();
     });
     // Periodic light ping every 10 minutes to maintain location without battery drain
     _locationTimer = Timer.periodic(const Duration(minutes: 10), (_) {
       _pingNurseLocation();
     });
+  }
+
+  void _checkAndShowManagementInstructions() {
+    if (!mounted) return;
+    final provider = context.read<AppProvider>();
+    if (provider.activeManagementInstructions.isNotEmpty) {
+      showDialog(
+        context: context,
+        builder: (_) => const ManagementInstructionsDialog(isCaregiverView: true),
+      );
+    }
   }
 
   @override
@@ -868,6 +881,18 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
               const SizedBox(width: 8),
             ],
 
+            // Management Instructions Button
+            IconButton(
+              icon: const Icon(Icons.assignment_outlined, color: Colors.white),
+              tooltip: 'لوحة تعليمات وتوجيهات الإدارة 📋',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => ManagementInstructionsDialog(isCaregiverView: !provider.isAdmin),
+                );
+              },
+            ),
+
             // User Menu: Change password & Logout
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white),
@@ -1014,6 +1039,10 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
               totalReceived: totalReceived,
               remainingBalance: remainingBalance,
             ),
+
+            // Management Instructions Bar / Banner (لوحة تعليمات وتوجيهات الإدارة)
+            if (provider.activeManagementInstructions.isNotEmpty)
+              _buildManagementInstructionsBanner(context, provider),
 
             // Tab Views
             Expanded(
@@ -2565,5 +2594,106 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
       default:
         return status;
     }
+  }
+
+  Widget _buildManagementInstructionsBanner(BuildContext context, AppProvider provider) {
+    final instructions = provider.activeManagementInstructions;
+    final urgentCount = instructions.where((i) => i.priority == 'urgent').length;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: urgentCount > 0
+              ? [const Color(0xFFFEF2F2), const Color(0xFFFFFBEB)]
+              : [const Color(0xFFEEF2FF), const Color(0xFFF0FDF4)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: urgentCount > 0 ? const Color(0xFFFCA5A5) : const Color(0xFFC7D2FE),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: (urgentCount > 0 ? Colors.red : Colors.indigo).withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              urgentCount > 0 ? Icons.gavel_rounded : Icons.assignment_outlined,
+              color: urgentCount > 0 ? Colors.red.shade800 : Colors.indigo.shade800,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      'لوحة تعليمات وتوجيهات الإدارة 📋',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    if (urgentCount > 0) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red.shade300),
+                        ),
+                        child: Text(
+                          'يوجد $urgentCount بنود ملزمة',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red.shade900),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Text(
+                  'أحدث بند: "${instructions.first.title}" - يرجى الالتزام التام بكافة التوجيهات.',
+                  style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey.shade700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (_) => const ManagementInstructionsDialog(isCaregiverView: true),
+              );
+            },
+            icon: const Icon(Icons.menu_book, size: 14),
+            label: Text(
+              'عرض اللائحة (${instructions.length})',
+              style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1E1B4B),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,11 +1,11 @@
 import 'dart:js_interop';
 
 @JS('playEliteGrandAlertSound')
-external void _playEliteGrandAlertSound();
+external void _playEliteGrandAlertSound([JSString? soundType]);
 
-void playNotificationAlert() {
+void playNotificationAlert([String soundType = 'general']) {
   try {
-    _playEliteGrandAlertSound();
+    _playEliteGrandAlertSound(soundType.toJS);
   } catch (_) {
     // Fallback if not ready
   }

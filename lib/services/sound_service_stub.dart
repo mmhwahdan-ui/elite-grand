@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
 
-void playNotificationAlert() {
+void playNotificationAlert([String soundType = 'general']) {
   SystemSound.play(SystemSoundType.alert);
 }

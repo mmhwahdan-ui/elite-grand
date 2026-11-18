@@ -14,6 +14,7 @@ import '../models/app_notification_model.dart';
 import '../models/caregiver_model.dart';
 import '../models/chat_message_model.dart';
 import '../models/case_offer_model.dart';
+import '../models/management_instruction_model.dart';
 
 enum SyncStatus {
   idle,
@@ -38,6 +39,7 @@ class SyncResult {
   final List<ChatMessageModel>? chatMessages;
   final List<CaseOfferModel>? caseOffers;
   final List<AppNotificationModel>? notifications;
+  final List<ManagementInstructionModel>? managementInstructions;
   final List<String>? deletedIds;
   final Map<String, double>? openingBalances;
 
@@ -56,6 +58,7 @@ class SyncResult {
     this.chatMessages,
     this.caseOffers,
     this.notifications,
+    this.managementInstructions,
     this.deletedIds,
     this.openingBalances,
   });
@@ -117,6 +120,7 @@ class CloudSyncService {
     List<ChatMessageModel> chatMessages = const [],
     List<CaseOfferModel> caseOffers = const [],
     List<AppNotificationModel> notifications = const [],
+    List<ManagementInstructionModel> managementInstructions = const [],
     List<String> deletedIds = const [],
     Map<String, double>? openingBalances,
   }) async {
@@ -141,6 +145,7 @@ class CloudSyncService {
         'chatMessages': chatMessages.take(300).map((m) => m.toMap()).toList(),
         'caseOffers': caseOffers.map((o) => o.toMap()).toList(),
         'notifications': notifications.take(150).map((n) => n.toMap()).toList(),
+        'managementInstructions': managementInstructions.map((i) => i.toMap()).toList(),
       };
 
       final uri = Uri.parse(endpoint);
@@ -290,6 +295,13 @@ class CloudSyncService {
               .toList();
         }
 
+        List<ManagementInstructionModel>? remoteInstructions;
+        if (data['managementInstructions'] is List) {
+          remoteInstructions = (data['managementInstructions'] as List)
+              .map((i) => ManagementInstructionModel.fromMap(Map<String, dynamic>.from(i)))
+              .toList();
+        }
+
         status = SyncStatus.success;
         lastSyncTime = DateTime.now();
 
@@ -308,6 +320,7 @@ class CloudSyncService {
           chatMessages: remoteChatMessages,
           caseOffers: remoteCaseOffers,
           notifications: remoteNotifications,
+          managementInstructions: remoteInstructions,
           deletedIds: remoteDeletedIds,
           openingBalances: remoteOpeningBalances,
         );

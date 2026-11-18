@@ -124,6 +124,7 @@ class CaseOfferModel {
   bool get isOpen => status == 'open';
   bool get isAssigned => status == 'assigned';
   bool get isUnderReview => status == 'under_review';
+  String get cityRegion => area.isNotEmpty ? '$city - $area' : city;
 
   String get shiftTypeArabic {
     switch (shiftType) {

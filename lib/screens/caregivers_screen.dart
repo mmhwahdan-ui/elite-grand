@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/add_edit_caregiver_dialog.dart';
 import '../widgets/caregiver_detail_dialog.dart';
 import '../widgets/nurse_account_dialog.dart';
+import '../widgets/management_instructions_dialog.dart';
 import '../services/location_service.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'nurse_portal_screen.dart';
@@ -101,6 +102,22 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
             ],
           ),
           actions: [
+            OutlinedButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => const ManagementInstructionsDialog(isCaregiverView: false),
+                );
+              },
+              icon: const Icon(Icons.gavel_rounded, size: 16, color: Colors.white),
+              label: const Text('لوحة تعليمات الإدارة 📋', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.white54),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+            ),
+            const SizedBox(width: 8),
             if (canManage && !isZezo)
               ElevatedButton.icon(
                 onPressed: () {

@@ -17,6 +17,7 @@ import '../models/partner_settlement_model.dart';
 import '../models/caregiver_model.dart';
 import '../models/chat_message_model.dart';
 import '../models/case_offer_model.dart';
+import '../models/management_instruction_model.dart';
 import '../services/storage_service.dart';
 import '../services/cloud_sync_service.dart';
 
@@ -41,6 +42,8 @@ class AppProvider extends ChangeNotifier {
   int _unreadChatCount = 0;
   List<CaseOfferModel> _caseOffers = [];
   final Set<String> _knownCaseOfferIds = {};
+  List<ManagementInstructionModel> _managementInstructions = [];
+  final Set<String> _knownInstructionIds = {};
   List<String> _deletedIds = [];
   Map<String, double> _openingBalances = {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0};
 
@@ -78,6 +81,8 @@ class AppProvider extends ChangeNotifier {
   List<CaseOfferModel> get caseOffers => List.unmodifiable(_caseOffers);
   List<CaseOfferModel> get openCaseOffers => _caseOffers.where((o) => o.isOpen).toList();
   int get openCaseOffersCount => openCaseOffers.length;
+  List<ManagementInstructionModel> get managementInstructions => List.unmodifiable(_managementInstructions);
+  List<ManagementInstructionModel> get activeManagementInstructions => _managementInstructions.where((i) => i.isActive).toList();
   List<String> get deletedIds => List.unmodifiable(_deletedIds);
   Map<String, double> get openingBalances => Map.unmodifiable(_openingBalances);
   bool get isLoading => _isLoading;
@@ -142,6 +147,7 @@ class AppProvider extends ChangeNotifier {
   bool get isManager => _currentUser?.roleType == 'manager' || _currentUser?.username == 'wahdan';
   bool get isAccountant => _currentUser?.roleType == 'accountant' || _currentUser?.username == 'zezo';
   bool get isFollowup => _currentUser?.roleType == 'followup' || _currentUser?.username == 'shimaa';
+  bool get isAdmin => isManager || isFollowup || isAccountant || canManageCaregivers;
 
   // Permission checks
   bool get canAddClient => isManager || (_currentUser?.permissions.canAddClient ?? false);
@@ -614,6 +620,10 @@ class AppProvider extends ChangeNotifier {
     _notifications = storageService.loadNotifications();
     for (final n in _notifications) {
       _knownNotificationIds.add(n.id);
+    }
+    _managementInstructions = storageService.loadManagementInstructions();
+    for (final i in _managementInstructions) {
+      _knownInstructionIds.add(i.id);
     }
 
     // Ensure all default users have 123 as password
@@ -1779,11 +1789,31 @@ class AppProvider extends ChangeNotifier {
           await storageService.saveCaregivers(_caregivers);
         }
         if (result.caseOffers != null) {
-          _caseOffers = result.caseOffers!.where((o) => !deletedSet.contains(o.id)).toList();
-          for (final o in _caseOffers) {
-            _knownCaseOfferIds.add(o.id);
+          final incomingOffers = result.caseOffers!.where((o) => !deletedSet.contains(o.id)).toList();
+          bool hasNewOpenOffer = false;
+          CaseOfferModel? latestNewOffer;
+
+          for (final o in incomingOffers) {
+            if (!_knownCaseOfferIds.contains(o.id)) {
+              _knownCaseOfferIds.add(o.id);
+              if (o.isOpen) {
+                hasNewOpenOffer = true;
+                latestNewOffer = o;
+              }
+            }
           }
+
+          _caseOffers = incomingOffers;
           await storageService.saveCaseOffers(_caseOffers);
+
+          // إشعار بصوت عالي لمقدمي الخدمة في حالة وجود فرصة جديدة
+          if (hasNewOpenOffer && latestNewOffer != null && _currentUser?.roleType == 'nurse') {
+            _triggerNewCaseOfferAlert(latestNewOffer);
+          }
+        }
+        if (result.managementInstructions != null && result.managementInstructions!.isNotEmpty) {
+          _managementInstructions = result.managementInstructions!;
+          await storageService.saveManagementInstructions(_managementInstructions);
         }
         if (result.chatMessages != null && result.chatMessages!.isNotEmpty) {
           final incoming = result.chatMessages!;
@@ -1796,9 +1826,11 @@ class AppProvider extends ChangeNotifier {
               final isFromOtherUser = _currentUser == null ||
                   (msg.senderId != _currentUser!.id &&
                    msg.senderUsername.trim() != _currentUser!.username.trim());
-              final isForMe = msg.recipientId == 'all' ||
-                  msg.recipientId == _currentUser?.id ||
-                  msg.recipientId == _currentUser?.username;
+              final isForMe = msg.recipientId == _currentUser?.id ||
+                  msg.recipientId == _currentUser?.username ||
+                  (msg.threadId != null && _currentUser != null && msg.threadId == 'thread_${_currentUser!.id}') ||
+                  (_currentUser?.roleType != 'nurse' && msg.recipientId == 'all') ||
+                  (_currentUser?.roleType == 'nurse' && msg.recipientId == 'cases_group');
 
               if (isFromOtherUser && isForMe) {
                 hasNewIncomingChatMessage = true;
@@ -1921,6 +1953,7 @@ class AppProvider extends ChangeNotifier {
     await storageService.saveCaseOffers(_caseOffers);
     await storageService.saveOpeningBalances(_openingBalances);
     await storageService.saveNotifications(_notifications);
+    await storageService.saveManagementInstructions(_managementInstructions);
     notifyListeners();
 
     // Push changes asynchronously
@@ -1937,6 +1970,7 @@ class AppProvider extends ChangeNotifier {
       chatMessages: _chatMessages,
       caseOffers: _caseOffers,
       notifications: _notifications,
+      managementInstructions: _managementInstructions,
       deletedIds: _deletedIds,
       openingBalances: _openingBalances,
     );
@@ -2586,8 +2620,16 @@ class AppProvider extends ChangeNotifier {
   // ==========================================
 
   void _triggerChatMessageAlert(ChatMessageModel msg) {
+    final isNurse = _currentUser?.roleType == 'nurse';
+
     if (_soundAlertsEnabled) {
-      SoundService.playNotificationSound();
+      if (isNurse) {
+        // صوت عالي مميز لرسالة الإدارة لمقدم الخدمة
+        SoundService.playAdminMessageSound();
+      } else {
+        // صوت عالي مخصص للشات الداخلي لحسابات الإدارة
+        SoundService.playAdminChatSound();
+      }
     }
 
     final messenger = scaffoldMessengerKey.currentState;
@@ -2596,28 +2638,31 @@ class AppProvider extends ChangeNotifier {
       messenger.showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF0F172A),
+          backgroundColor: isNurse ? const Color(0xFF0F172A) : const Color(0xFF1E1B4B),
           elevation: 10,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFF38BDF8), width: 1.5),
+            side: BorderSide(
+              color: isNurse ? const Color(0xFF10B981) : const Color(0xFF818CF8),
+              width: 1.5,
+            ),
           ),
-          duration: const Duration(seconds: 4),
+          duration: const Duration(seconds: 5),
           content: Directionality(
             textDirection: TextDirection.rtl,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF38BDF8).withValues(alpha: 0.2),
+                    color: (isNurse ? const Color(0xFF10B981) : const Color(0xFF818CF8)).withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.chat_bubble_rounded,
-                    color: Color(0xFF38BDF8),
+                  child: Icon(
+                    isNurse ? Icons.lock_outline_rounded : Icons.mark_chat_unread_rounded,
+                    color: isNurse ? const Color(0xFF34D399) : const Color(0xFFA5B4FC),
                     size: 20,
                   ),
                 ),
@@ -2630,7 +2675,9 @@ class AppProvider extends ChangeNotifier {
                       Row(
                         children: [
                           Text(
-                            msg.isGroupMessage ? 'رسالة في شات الفريق' : 'رسالة خاصة جديدة',
+                            isNurse
+                                ? '✉️ رسالة خاصة جديدة من الإدارة'
+                                : (msg.isGroupMessage ? '💬 رسالة في شات الإدارة الداخلي' : '💬 رسالة خاصة جديدة'),
                             style: const TextStyle(
                               fontFamily: 'Cairo',
                               fontWeight: FontWeight.bold,
@@ -2641,24 +2688,96 @@ class AppProvider extends ChangeNotifier {
                           const SizedBox(width: 8),
                           Text(
                             'من: ${msg.senderDisplayName}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Cairo',
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF38BDF8),
+                              color: isNurse ? const Color(0xFF34D399) : const Color(0xFFA5B4FC),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 3),
+                      // لا تظهر محتويات الرسالة في الإشعار إلا في حالة فتحها (حماية الخصوصية)
                       Text(
-                        msg.text,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        isNurse
+                            ? '🔒 محتوى الرسالة محمي بالخصوصية • اضغط هنا لفتح المحادثة وقراءتها'
+                            : 'اضغط لفتح الشات الداخلي وقراءة الرسالة 💬',
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 11,
+                          color: isNurse ? Colors.amber.shade200 : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  /// إشعار بصوت عالي لمقدمي الخدمة عند نزول فرصة حالة جديدة
+  void _triggerNewCaseOfferAlert(CaseOfferModel offer) {
+    if (_soundAlertsEnabled) {
+      // صوت عالي احتفالي لفرصة حالة تمريض جديدة
+      SoundService.playOpportunitySound();
+    }
+
+    final messenger = scaffoldMessengerKey.currentState;
+    if (messenger != null) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF064E3B),
+          elevation: 10,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF34D399), width: 1.5),
+          ),
+          duration: const Duration(seconds: 6),
+          content: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.campaign_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '📢 فرصة وحالة تمريض جديدة متاحة لدى الشركة!',
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'حالة: ${offer.title} (${offer.code}) • يومية: ${offer.nurseDailyPrice.toStringAsFixed(0)} ج • ${offer.cityRegion}',
                         style: const TextStyle(
                           fontFamily: 'Cairo',
-                          fontSize: 12,
-                          color: Color(0xFFE2E8F0),
+                          fontSize: 11,
+                          color: Color(0xFFA7F3D0),
                         ),
                       ),
                     ],
@@ -3152,6 +3271,83 @@ class AppProvider extends ChangeNotifier {
     );
 
     await _persistAndSync();
+  }
+
+  // ==========================================
+  // --- Management Instructions (لوحة تعليمات وتوجيهات الإدارة لمقدمي الخدمة) ---
+  // ==========================================
+
+  /// إضافة لائحة تعليمات وتوجيهات جديدة من الإدارة
+  Future<void> addManagementInstruction({
+    required String title,
+    required String content,
+    String priority = 'important',
+  }) async {
+    final author = _currentUser?.displayName ?? 'الإدارة';
+    final role = _currentUser?.roleTitle ?? 'المدير العام';
+    final newInst = ManagementInstructionModel(
+      id: 'inst_${_uuid.v4().substring(0, 8)}',
+      title: title.trim(),
+      content: content.trim(),
+      authorName: author,
+      authorRole: role,
+      priority: priority,
+      createdAt: DateTime.now(),
+    );
+
+    _knownInstructionIds.add(newInst.id);
+    _managementInstructions.insert(0, newInst);
+    await storageService.saveManagementInstructions(_managementInstructions);
+
+    await _logAction(
+      title: 'إصدار لائحة تعليمات إدارية',
+      description: '$author قام بنشر لائحة تعليمات جديدة: $title',
+      actionType: 'instruction_publish',
+      metadata: {'instructionId': newInst.id, 'title': title},
+    );
+
+    await _persistAndSync();
+  }
+
+  /// تعديل لائحة تعليمات
+  Future<void> updateManagementInstruction(ManagementInstructionModel updated) async {
+    final idx = _managementInstructions.indexWhere((i) => i.id == updated.id);
+    if (idx != -1) {
+      _managementInstructions[idx] = updated.copyWith(updatedAt: DateTime.now());
+      await storageService.saveManagementInstructions(_managementInstructions);
+      await _persistAndSync();
+    }
+  }
+
+  /// تفعيل أو تعطيل لائحة تعليمات
+  Future<void> toggleManagementInstructionActive(String id, bool isActive) async {
+    final idx = _managementInstructions.indexWhere((i) => i.id == id);
+    if (idx != -1) {
+      _managementInstructions[idx] = _managementInstructions[idx].copyWith(
+        isActive: isActive,
+        updatedAt: DateTime.now(),
+      );
+      await storageService.saveManagementInstructions(_managementInstructions);
+      await _persistAndSync();
+    }
+  }
+
+  /// حذف لائحة تعليمات
+  Future<void> deleteManagementInstruction(String id) async {
+    final removed = _managementInstructions.where((i) => i.id == id).firstOrNull;
+    if (removed != null) {
+      _managementInstructions.removeWhere((i) => i.id == id);
+      _deletedIds.add(id);
+      await storageService.saveDeletedIds(_deletedIds);
+      await storageService.saveManagementInstructions(_managementInstructions);
+      await _logAction(
+        title: 'حذف لائحة تعليمات',
+        description: '${_currentUser?.displayName ?? "الإدارة"} قام بحذف لائحة: ${removed.title}',
+        actionType: 'instruction_delete',
+        metadata: {'instructionId': id},
+      );
+      await _persistAndSync();
+    }
   }
 
   // ==========================================

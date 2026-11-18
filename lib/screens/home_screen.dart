@@ -18,6 +18,7 @@ import 'caregivers_screen.dart';
 import 'team_chat_screen.dart';
 import 'nurse_portal_screen.dart';
 import 'case_offers_screen.dart';
+import '../widgets/management_instructions_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -322,6 +323,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
               ],
+            ),
+            const SizedBox(width: 4),
+
+            // Management Instructions Board button
+            IconButton(
+              icon: const Icon(Icons.assignment_outlined, color: Colors.white),
+              tooltip: 'لوحة تعليمات وتوجيهات الإدارة لمقدمي الخدمة 📋',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => const ManagementInstructionsDialog(isCaregiverView: false),
+                );
+              },
             ),
             const SizedBox(width: 4),
 
