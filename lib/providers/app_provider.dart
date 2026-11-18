@@ -706,22 +706,21 @@ class AppProvider extends ChangeNotifier {
       return false;
     }
 
-    // Check password: accept 123, 123456, or actual password
-    final isPasswordCorrect = cleanPass == foundUser.password ||
-        cleanPass == '123' ||
-        cleanPass == '123456' ||
-        cleanPass.isEmpty;
+    // Check password: match actual password, or if still default '123' accept 123/123456
+    final isDefault = foundUser.password.trim() == '123' || foundUser.password.trim().isEmpty;
+    final isPasswordCorrect = cleanPass == foundUser.password.trim() ||
+        (isDefault && (cleanPass == '123' || cleanPass == '123456'));
 
     if (!isPasswordCorrect) {
-      loginError = 'كلمة المرور غير صحيحة، كلمة المرور الافتراضية هي: 123';
+      loginError = isDefault
+          ? 'كلمة المرور غير صحيحة، كلمة المرور الافتراضية هي: 123'
+          : 'كلمة المرور غير صحيحة، يرجى كتابة كلمة المرور المعتمدة لحسابك';
       notifyListeners();
       return false;
     }
 
-    foundUser.password = cleanPass.isNotEmpty ? cleanPass : '123';
     _currentUser = foundUser;
     await storageService.setCurrentUserId(foundUser.id);
-    await storageService.saveUsers(_users);
     notifyListeners();
     return true;
   }
@@ -741,20 +740,12 @@ class AppProvider extends ChangeNotifier {
       }
       await storageService.saveUsers(_users);
       await _logAction(
-        title: 'تعديل صلاحيات مستخدم',
-        description: 'تم تعديل صلاحيات المستخدم: ${_users[index].displayName}',
-        actionType: 'user_permissions',
+        title: 'تغيير كلمة المرور',
+        description: 'تم تحديث كلمة المرور للمستخدم: ${_users[index].displayName}',
+        actionType: 'change_password',
+        metadata: {'userId': userId, 'username': _users[index].username},
       );
-      await cloudSyncService.pushData(
-        clients: _clients,
-        payments: _payments,
-        expenses: _expenses,
-        serviceDays: _serviceDays,
-        users: _users,
-        notifications: _notifications,
-        deletedIds: _deletedIds,
-        openingBalances: _openingBalances,
-      );
+      await _persistAndSync();
       notifyListeners();
     }
   }

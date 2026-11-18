@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/user_model.dart';
 import '../providers/app_provider.dart';
 import '../services/cloud_sync_service.dart';
 import '../theme/app_theme.dart';
@@ -284,11 +285,16 @@ class _HomeScreenState extends State<HomeScreen> {
             // User Profile / Switch Account
             PopupMenuButton<String>(
               onSelected: (val) async {
-                if (val == 'switch') { await provider.logout();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  );
+                if (val == 'password') {
+                  _showChangePasswordDialog(context, provider, currentUser);
+                } else if (val == 'switch') {
+                  await provider.logout();
+                  if (context.mounted) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  }
                 } else if (val == 'cloud') {
                   showDialog(
                     context: context,
@@ -349,6 +355,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: 'password',
+                  child: Row(
+                    children: [
+                      Icon(Icons.lock_reset, color: AppTheme.primary, size: 20),
+                      SizedBox(width: 8),
+                      Text('تغيير كلمة المرور', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                    ],
+                  ),
+                ),
                 const PopupMenuItem(
                   value: 'switch',
                   child: Row(
@@ -479,5 +495,201 @@ class _HomeScreenState extends State<HomeScreen> {
       default:
         return 'السحابة';
     }
+  }
+
+  void _showChangePasswordDialog(BuildContext context, AppProvider provider, UserModel? user) {
+    if (user == null) return;
+    final currentPassCtrl = TextEditingController();
+    final newPassCtrl = TextEditingController();
+    final confirmPassCtrl = TextEditingController();
+    bool obscureCurrent = true;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.lock_reset, color: AppTheme.primary, size: 24),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'تغيير كلمة المرور',
+                        style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      Text(
+                        'للحساب: ${user.displayName} (@${user.username})',
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Current Password
+                  TextField(
+                    controller: currentPassCtrl,
+                    obscureText: obscureCurrent,
+                    decoration: InputDecoration(
+                      labelText: 'كلمة المرور الحالية',
+                      hintText: 'أدخل كلمة المرور الحالية',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      suffixIcon: IconButton(
+                        icon: Icon(obscureCurrent ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setDlgState(() => obscureCurrent = !obscureCurrent),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // New Password
+                  TextField(
+                    controller: newPassCtrl,
+                    obscureText: obscureNew,
+                    decoration: InputDecoration(
+                      labelText: 'كلمة المرور الجديدة *',
+                      hintText: '••••••••',
+                      prefixIcon: const Icon(Icons.vpn_key_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      suffixIcon: IconButton(
+                        icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setDlgState(() => obscureNew = !obscureNew),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Confirm New Password
+                  TextField(
+                    controller: confirmPassCtrl,
+                    obscureText: obscureConfirm,
+                    decoration: InputDecoration(
+                      labelText: 'تأكيد كلمة المرور الجديدة *',
+                      hintText: '••••••••',
+                      prefixIcon: const Icon(Icons.check_circle_outline),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      suffixIcon: IconButton(
+                        icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setDlgState(() => obscureConfirm = !obscureConfirm),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'سيتم تطبيق كلمة المرور ومزامنتها سحابياً فوراً مع باقي الأجهزة.',
+                            style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.blueGrey),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: Colors.grey)),
+              ),
+              ElevatedButton.icon(
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final currentInput = currentPassCtrl.text.trim();
+                        final newPass = newPassCtrl.text.trim();
+                        final confirmPass = confirmPassCtrl.text.trim();
+
+                        if (newPass.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('يرجى إدخال كلمة المرور الجديدة', style: TextStyle(fontFamily: 'Cairo'))),
+                          );
+                          return;
+                        }
+
+                        // Validate current password (accept actual password, or 123 if default)
+                        final isCurrentValid = currentInput == user.password ||
+                            (user.password == '123' && (currentInput == '123' || currentInput == '123456'));
+                        if (!isCurrentValid) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('كلمة المرور الحالية غير صحيحة!', style: TextStyle(fontFamily: 'Cairo')),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (newPass != confirmPass) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('كلمتا المرور غير متطابقتين!', style: TextStyle(fontFamily: 'Cairo')),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+
+                        setDlgState(() => isSaving = true);
+                        await provider.changePassword(user.id, newPass);
+                        if (context.mounted) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('تم تغيير كلمة المرور بنجاح وحفظها سحابياً', style: TextStyle(fontFamily: 'Cairo')),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      },
+                icon: isSaving
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.save, size: 18),
+                label: const Text('حفظ كلمة المرور', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

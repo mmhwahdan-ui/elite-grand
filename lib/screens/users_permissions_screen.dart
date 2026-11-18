@@ -239,49 +239,67 @@ class UsersPermissionsScreen extends StatelessWidget {
 
   void _showChangePasswordDialog(BuildContext context, AppProvider provider, UserModel user) {
     final passController = TextEditingController(text: user.password);
+    bool obscure = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('تغيير كلمة مرور @${user.username}', style: const TextStyle(fontFamily: 'Cairo')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('الحساب: ${user.displayName} (${user.roleTitle})', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo')),
-              const SizedBox(height: 14),
-              TextField(
-                controller: passController,
-                decoration: const InputDecoration(
-                  labelText: 'كلمة المرور الجديدة *',
-                  prefixIcon: Icon(Icons.lock_outline),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                const Icon(Icons.lock_reset, color: AppTheme.primary),
+                const SizedBox(width: 8),
+                Text('تغيير كلمة مرور @${user.username}', style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('الحساب: ${user.displayName} (${user.roleTitle})', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: AppTheme.primary)),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: passController,
+                  obscureText: obscure,
+                  decoration: InputDecoration(
+                    labelText: 'كلمة المرور الجديدة *',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () => setDlgState(() => obscure = !obscure),
+                    ),
+                  ),
                 ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo'))),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final newPass = passController.text.trim();
+                  if (newPass.isNotEmpty) {
+                    await provider.changePassword(user.id, newPass);
+                    if (ctx.mounted) {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('تم تحديث كلمة المرور لحساب @${user.username} بنجاح ومزامنتها سحابياً', style: const TextStyle(fontFamily: 'Cairo')),
+                          backgroundColor: Colors.teal,
+                        ),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.save, size: 18),
+                label: const Text('حفظ كلمة المرور', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
               ),
             ],
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء')),
-            ElevatedButton(
-              onPressed: () async {
-                if (passController.text.trim().isNotEmpty) {
-                  await provider.changePassword(user.id, passController.text.trim());
-                  if (ctx.mounted) {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('تم تحديث كلمة المرور لحساب @${user.username} بنجاح', style: const TextStyle(fontFamily: 'Cairo')),
-                        backgroundColor: AppTheme.accent,
-                      ),
-                    );
-                  }
-                }
-              },
-              child: const Text('حفظ كلمة المرور'),
-            ),
-          ],
         ),
       ),
     );

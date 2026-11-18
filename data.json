@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-18T08:33:24.422Z",
+  "lastUpdated": "2026-11-18T13:11:15.761Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -1147,7 +1147,7 @@
       "createdAt": "2026-11-10T15:45:01.110",
       "date": "2026-11-05T00:00:00.000",
       "id": "day_29a5c04e",
-      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم)",
+      "notes": "تسجيل آلي للمدة المحددة للت��اقد (8 يوم)",
       "nurseName": "نورهان",
       "nursePrice": 350,
       "recordedBy": "wahdan",
@@ -1780,6 +1780,28 @@
         "canManagePermissions": false,
         "canEditAnyData": false
       }
+    },
+    {
+      "caregiverId": "cg_1794991670881",
+      "displayName": "شيماء حسن الحاكم",
+      "id": "usr_cg_cg_1794991670881",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
+      "phone": "01033408925",
+      "roleTitle": "طاقم تمريض / مقدم خدمة",
+      "roleType": "nurse",
+      "username": "01033408925"
     }
   ],
   "notifications": [
@@ -2359,7 +2381,7 @@
       "metadata": {
         "amount": 1926,
         "clientId": "cli_3ba3dbe3",
-        "clientName": "امير��"
+        "clientName": "اميره"
       },
       "timestamp": "2026-11-10T14:55:04.887",
       "title": "تسجيل تحصيل نقدية",
@@ -2480,7 +2502,7 @@
     },
     {
       "actionType": "nurse_trans",
-      "description": "تم حذف معاملة ل��ممرض: سحر بقيمة 1400 ج.م",
+      "description": "تم حذف معاملة للممرض: سحر بقيمة 1400 ج.م",
       "id": "ntf_9c38ae3b",
       "timestamp": "2026-11-11T08:56:27.817",
       "title": "حذف معاملة تمريض",
@@ -2926,7 +2948,7 @@
         "clientName": "ابتسام"
       },
       "timestamp": "2026-11-14T13:40:55.931",
-      "title": "تسجيل تحصيل نقدية",
+      "title": "ت��جيل تحصيل نقدية",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
       "userRole": "مدير الحسابات والمالية"
@@ -3014,6 +3036,54 @@
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
       "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "add_caregiver",
+      "description": "أ/ وهدان قام بإضافة: شيماء حسن الحاكم (كود: CG-001) - السعر: 400 ج",
+      "id": "ntf_1671f3d5",
+      "metadata": {
+        "caregiverId": "cg_1794991670881",
+        "name": "شيماء حسن الحاكم"
+      },
+      "timestamp": "2026-11-18T10:47:50.883",
+      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: شيماء حسن الحاكم (اسم المستخدم: +010334089252) وإرسال رسالة SMS",
+      "id": "ntf_16c370c4",
+      "timestamp": "2026-11-18T10:47:51.060",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: شيماء حسن الحاكم (اسم المستخدم: 01033408925) وإرسال رسالة SMS",
+      "id": "ntf_629877cf",
+      "timestamp": "2026-11-18T10:56:37.342",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "edit_caregiver",
+      "description": "أ/ وهدان قام بتعديل بيانات: شيماء حسن الحاكم (كود: CG-001)",
+      "id": "ntf_3d12f0be",
+      "metadata": {
+        "caregiverId": "cg_1794991670881",
+        "name": "شيماء حسن الحاكم"
+      },
+      "timestamp": "2026-11-18T10:56:37.184",
+      "title": "تعديل ملف مقدم خدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
     }
   ]
 }
