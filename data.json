@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-18T17:00:53.504Z",
+  "lastUpdated": "2026-11-18T17:54:50.132Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -193,7 +193,7 @@
       "id": "cli_2a197e89",
       "isExistingClient": true,
       "name": "ابتسام",
-      "notes": "",
+      "notes": "[2026/11/18] تم تمديد/تعديل مدة الخدمة",
       "nurseAssigned": "شيماء 1",
       "nurseDailyPrice": 307.5,
       "openingBalance": -2800,
@@ -201,7 +201,7 @@
       "serviceType": "hours24",
       "startDate": "2026-11-07T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-10T11:23:51.960"
+      "updatedAt": "2026-11-18T19:15:03.019"
     },
     {
       "address": "مدينتي",
@@ -320,7 +320,7 @@
       "updatedAt": "2026-11-10T16:04:03.882"
     },
     {
-      "address": "رابعه العدويه مدينه نصر",
+      "address": "عماره 18 شارع النزهه مصر الجديده",
       "createdAt": "2026-11-10T15:50:49.543",
       "createdBy": "wahdan",
       "dailyPrice": 450,
@@ -336,7 +336,7 @@
       "serviceType": "hours24",
       "startDate": "2026-11-07T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-10T15:52:14.319"
+      "updatedAt": "2026-11-18T19:29:45.386"
     },
     {
       "address": "عمار ابن ياسر",
@@ -1893,6 +1893,28 @@
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
       "username": "cg003"
+    },
+    {
+      "caregiverId": "cg_1795021381593",
+      "displayName": "شيماء ايمن محمد سعيد الامير",
+      "id": "usr_cg_cg_1795021381593",
+      "password": "654321",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
+      "phone": "01068561497",
+      "roleTitle": "طاقم تمريض / مقدم خدمة",
+      "roleType": "nurse",
+      "username": "01068561497"
     }
   ],
   "notifications": [
@@ -3084,7 +3106,7 @@
       "title": "تسجيل سلفة تمريض",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
-      "userRole": "مدير الحسابات والمالية"
+      "userRole": "مدير الحس��بات والمالية"
     },
     {
       "actionType": "nurse_payout",
@@ -3244,7 +3266,7 @@
       "id": "ntf_54a236fc",
       "metadata": {
         "amount": 1200,
-        "nurseName": "م��مود"
+        "nurseName": "محمود"
       },
       "timestamp": "2026-11-18T17:34:58.254",
       "title": "صرف مستحقات تمريض",
@@ -3354,6 +3376,144 @@
       "id": "ntf_3347eae2",
       "timestamp": "2026-11-18T18:54:42.133",
       "title": "حذف عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: شيماء ايمن محمد سعيد الامير (اسم المستخدم: 01068561497) وإرسال رسالة SMS",
+      "id": "ntf_cec026cc",
+      "timestamp": "2026-11-18T19:03:02.501",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_caregiver",
+      "description": "أ/ وهدان قام بإضافة: شيماء ايمن محمد سعيد الامير (كود: CG-004) - السعر: 400 ج",
+      "id": "ntf_a484ff6e",
+      "metadata": {
+        "caregiverId": "cg_1795021381593",
+        "name": "شيماء ايمن محمد سعيد الامير"
+      },
+      "timestamp": "2026-11-18T19:03:01.594",
+      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: شيماء ايمن محمد سعيد الامير (اسم المستخدم: 01068561497) وإرسال رسالة SMS",
+      "id": "ntf_fc3695d3",
+      "timestamp": "2026-11-18T19:06:42.067",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "edit_caregiver",
+      "description": "أ/ وهدان قام بتعديل بيانات: شيماء ايمن محمد سعيد الامير (كود: CG-004)",
+      "id": "ntf_af3d99eb",
+      "metadata": {
+        "caregiverId": "cg_1795021381593",
+        "name": "شيماء ايمن محمد سعيد الامير"
+      },
+      "timestamp": "2026-11-18T19:06:41.170",
+      "title": "تعديل ملف مقدم خدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "edit_client",
+      "description": "تم تعديل بيانات العميل: ابتسام",
+      "id": "ntf_2f534b48",
+      "metadata": {
+        "clientId": "cli_2a197e89",
+        "clientName": "ابتسام"
+      },
+      "timestamp": "2026-11-18T19:09:46.825",
+      "title": "تعديل بيانات عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "extend_service",
+      "description": "تم تعديل/تمديد مدة خدمة العميل: ابتسام (مدة مفتوحة)",
+      "id": "ntf_81621c43",
+      "metadata": {
+        "clientId": "cli_2a197e89",
+        "clientName": "ابتسام"
+      },
+      "timestamp": "2026-11-18T19:15:03.019",
+      "title": "تمديد / تعديل مدة الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: شيماء ايمن محمد سعيد الامير (اسم المستخدم: 01068561497) وإرسال رسالة SMS",
+      "id": "ntf_33e6aba4",
+      "timestamp": "2026-11-18T19:18:20.667",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "edit_caregiver",
+      "description": "أ/ وهدان قام بتعديل بيانات: شيماء ايمن محمد سعيد الامير (كود: CG-004)",
+      "id": "ntf_60dc1338",
+      "metadata": {
+        "caregiverId": "cg_1795021381593",
+        "name": "شيماء ايمن محمد سعيد الامير"
+      },
+      "timestamp": "2026-11-18T19:18:19.946",
+      "title": "تعديل ملف مقدم خدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "edit_caregiver",
+      "description": "أ/ وهدان قام بتعديل بيانات: شيماء ايمن محمد سعيد الامير (كود: CG-004)",
+      "id": "ntf_0b014a63",
+      "metadata": {
+        "caregiverId": "cg_1795021381593",
+        "name": "شيماء ايمن محمد سعيد الامير"
+      },
+      "timestamp": "2026-11-18T19:20:34.619",
+      "title": "تعديل ملف مقدم خدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: شيماء ايمن محمد سعيد الامير (اسم المستخدم: 01068561497) وإرسال رسالة SMS",
+      "id": "ntf_deecc31e",
+      "timestamp": "2026-11-18T19:20:35.313",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "edit_client",
+      "description": "تم تعديل بيانات العميل: ناديه",
+      "id": "ntf_c399b71d",
+      "metadata": {
+        "clientId": "cli_678010eb",
+        "clientName": "ناديه"
+      },
+      "timestamp": "2026-11-18T19:29:45.386",
+      "title": "تعديل بيانات عميل",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"

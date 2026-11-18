@@ -304,46 +304,48 @@ class CaregiverDetailDialog extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDFA),
+                          color: const Color(0xFFFFFBEB),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF99F6E4)),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.location_on, color: Color(0xFF0F766E), size: 22),
+                            const Icon(Icons.location_off_outlined, color: Color(0xFFB45309), size: 22),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    'وسم موقع GPS 📍',
-                                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F766E)),
+                                    'لم يسجل حضور بالـ GPS من هاتفه بعد ⏳',
+                                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
                                   ),
                                   Text(
-                                    'المنطقة: ${caregiver.residenceArea.isNotEmpty ? caregiver.residenceArea : "موقع السكن مسجل"} (بانتظار التقاط GPS مباشر عبر هاتف الممرض بالبوابة)',
-                                    style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Color(0xFF115E59)),
+                                    caregiver.currentClientName != null
+                                        ? 'الحالة المسكن عليها: ${caregiver.currentClientName}'
+                                        : 'المنطقة السكنية: ${caregiver.residenceArea.isNotEmpty ? caregiver.residenceArea : "غير محددة"}',
+                                    style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Color(0xFFB45309)),
                                   ),
                                 ],
                               ),
                             ),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                final query = caregiver.residenceArea.isNotEmpty
-                                    ? caregiver.residenceArea
-                                    : (caregiver.address.isNotEmpty ? caregiver.address : caregiver.name);
-                                final mapUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}';
-                                LocationService.openMapUrl(mapUrl);
-                              },
-                              icon: const Icon(Icons.map, size: 16),
-                              label: const Text('فتح الخريطة', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0F766E),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            if (caregiver.currentClientName != null)
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  final provider = context.read<AppProvider>();
+                                  final client = provider.clients.where((c) => provider.isNurseNameMatch(c.name, caregiver.currentClientName!)).firstOrNull;
+                                  final query = client != null && client.address.isNotEmpty ? client.address : caregiver.currentClientName!;
+                                  LocationService.openMapUrl('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}');
+                                },
+                                icon: const Icon(Icons.local_hospital_outlined, size: 14),
+                                label: const Text('مقر الحالة 🏥', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.indigo.shade700,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),

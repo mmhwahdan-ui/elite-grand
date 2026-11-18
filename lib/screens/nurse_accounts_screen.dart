@@ -887,8 +887,15 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                                         if (cgItem.hasLocation) {
                                                           LocationService.openMapUrl(cgItem.locationMapsUrl!);
                                                         } else {
-                                                          final query = cgItem.residenceArea.isNotEmpty ? cgItem.residenceArea : (cgItem.address.isNotEmpty ? cgItem.address : cgItem.name);
-                                                          LocationService.openMapUrl('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}');
+                                                           ScaffoldMessenger.of(context).showSnackBar(
+                                                             SnackBar(
+                                                               content: Text(
+                                                                 'لم يقم مقدم الخدمة (${cgItem.name}) بتسجيل حضوره بالـ GPS عبر هاتفه حتى الآن',
+                                                                 style: const TextStyle(fontFamily: 'Cairo'),
+                                                               ),
+                                                               backgroundColor: Colors.blueGrey,
+                                                             ),
+                                                           );
                                                         }
                                                       },
                                                       child: Container(

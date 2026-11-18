@@ -30,6 +30,7 @@ class CaregiverModel {
   final double? lastLongitude; // آخر خط طول للموقع الجغرافي
   final double? lastLocationAccuracy; // دقة تحديد الموقع بالأمتار
   final DateTime? lastLocationUpdate; // وقت آخر تحديث للموقع
+  final String? lastLocationSource; // مصدر رصد الموقع (nurse_phone | shift_checkin | shift_checkout | admin_manual)
 
   CaregiverModel({
     required this.id,
@@ -63,11 +64,30 @@ class CaregiverModel {
     this.lastLongitude,
     this.lastLocationAccuracy,
     this.lastLocationUpdate,
+    this.lastLocationSource,
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
   bool get hasLocation => lastLatitude != null && lastLongitude != null;
   String? get locationMapsUrl => hasLocation ? 'https://www.google.com/maps?q=$lastLatitude,$lastLongitude' : null;
+
+  bool get hasVerifiedNurseLocation =>
+      hasLocation && (lastLocationSource == 'nurse_phone' || lastLocationSource == 'shift_checkin' || lastLocationSource == 'shift_checkout');
+
+  String get locationSourceArabic {
+    switch (lastLocationSource) {
+      case 'shift_checkin':
+        return 'إثبات حضور وردية من هاتف الممرض 📱';
+      case 'shift_checkout':
+        return 'إثبات انصراف وردية من هاتف الممرض 🏁';
+      case 'nurse_phone':
+        return 'تحديث مباشر من هاتف الممرض 📲';
+      case 'admin_manual':
+        return 'تعيين يدوي من الإدارة 🏢';
+      default:
+        return 'إثبات حضور وردية 📍';
+    }
+  }
 
   String get shiftPreferenceArabic {
     switch (shiftPreference) {
@@ -121,6 +141,7 @@ class CaregiverModel {
     double? lastLongitude,
     double? lastLocationAccuracy,
     DateTime? lastLocationUpdate,
+    String? lastLocationSource,
   }) {
     return CaregiverModel(
       id: id ?? this.id,
@@ -154,6 +175,7 @@ class CaregiverModel {
       lastLongitude: lastLongitude ?? this.lastLongitude,
       lastLocationAccuracy: lastLocationAccuracy ?? this.lastLocationAccuracy,
       lastLocationUpdate: lastLocationUpdate ?? this.lastLocationUpdate,
+      lastLocationSource: lastLocationSource ?? this.lastLocationSource,
     );
   }
 
@@ -190,6 +212,7 @@ class CaregiverModel {
       lastLongitude: null,
       lastLocationAccuracy: null,
       lastLocationUpdate: null,
+      lastLocationSource: null,
     );
   }
 
@@ -226,6 +249,7 @@ class CaregiverModel {
       if (lastLongitude != null) 'lastLongitude': lastLongitude,
       if (lastLocationAccuracy != null) 'lastLocationAccuracy': lastLocationAccuracy,
       if (lastLocationUpdate != null) 'lastLocationUpdate': lastLocationUpdate!.toIso8601String(),
+      if (lastLocationSource != null) 'lastLocationSource': lastLocationSource,
     };
   }
 
@@ -262,6 +286,7 @@ class CaregiverModel {
       lastLongitude: (map['lastLongitude'] as num?)?.toDouble(),
       lastLocationAccuracy: (map['lastLocationAccuracy'] as num?)?.toDouble(),
       lastLocationUpdate: map['lastLocationUpdate'] != null ? DateTime.tryParse(map['lastLocationUpdate']) : null,
+      lastLocationSource: map['lastLocationSource'],
     );
   }
 }

@@ -626,7 +626,20 @@ class AppProvider extends ChangeNotifier {
       _knownInstructionIds.add(i.id);
     }
 
-    // مزامنة إحداثيات الـ GPS لمقدمي الخدمة من آخر وردية تم تسجيلها جغرافياً في حال عدم تسجيلها مسبقاً
+    // تنظيف أي إحداثيات موقع قديمة التُقطت بالخطأ من أجهزة الإدارة أثناء المعاينة والتجارب
+    for (var i = 0; i < _caregivers.length; i++) {
+      if (_caregivers[i].lastLatitude != null && _caregivers[i].lastLocationSource == null) {
+        final hasRealShiftGps = _serviceDays.any((d) =>
+            isNurseNameMatch(d.nurseName, _caregivers[i].name) &&
+            d.checkInLatitude != null &&
+            d.checkInLatitude == _caregivers[i].lastLatitude);
+        if (!hasRealShiftGps) {
+          _caregivers[i] = _caregivers[i].clearLocation();
+        }
+      }
+    }
+
+    // مزامنة إحداثيات الـ GPS لمقدمي الخدمة من آخر وردية تم تسجيلها جغرافياً من هاتف الممرض
     for (var i = 0; i < _caregivers.length; i++) {
       if (_caregivers[i].lastLatitude == null) {
         final withLoc = _serviceDays.where((d) => isNurseNameMatch(d.nurseName, _caregivers[i].name) && d.checkInLatitude != null).toList();
@@ -637,10 +650,12 @@ class AppProvider extends ChangeNotifier {
             lastLongitude: latest.checkInLongitude,
             lastLocationAccuracy: latest.checkInAccuracy,
             lastLocationUpdate: latest.checkInAt ?? latest.createdAt,
+            lastLocationSource: 'shift_checkin',
           );
         }
       }
     }
+    storageService.saveCaregivers(_caregivers);
 
     // Ensure all default users have 123 as password
     for (var u in _users) {
@@ -1335,6 +1350,7 @@ class AppProvider extends ChangeNotifier {
             lastLatitude: checkOutLatitude,
             lastLongitude: checkOutLongitude,
             lastLocationUpdate: checkOutAt ?? DateTime.now(),
+            lastLocationSource: 'shift_checkout',
           );
           await storageService.saveCaregivers(_caregivers);
         }
@@ -3564,6 +3580,7 @@ class AppProvider extends ChangeNotifier {
     required double latitude,
     required double longitude,
     double? accuracy,
+    String source = 'nurse_phone',
   }) async {
     final idx = _caregivers.indexWhere((c) => c.id == caregiverId);
     if (idx != -1) {
@@ -3572,7 +3589,23 @@ class AppProvider extends ChangeNotifier {
         lastLongitude: longitude,
         lastLocationAccuracy: accuracy,
         lastLocationUpdate: DateTime.now(),
+        lastLocationSource: source,
       );
+      await storageService.saveCaregivers(_caregivers);
+      notifyListeners();
+    }
+  }
+
+  /// مسح جميع إحداثيات المواقع القديمة التي قد تكون سُجلت من أجهزة الإدارة لجميع الممرضين
+  Future<void> clearAllUnverifiedCaregiverLocations() async {
+    bool changed = false;
+    for (var i = 0; i < _caregivers.length; i++) {
+      if (_caregivers[i].hasLocation && _caregivers[i].lastLocationSource != 'shift_checkin' && _caregivers[i].lastLocationSource != 'shift_checkout') {
+        _caregivers[i] = _caregivers[i].clearLocation();
+        changed = true;
+      }
+    }
+    if (changed) {
       await storageService.saveCaregivers(_caregivers);
       notifyListeners();
     }
@@ -3906,6 +3939,7 @@ class AppProvider extends ChangeNotifier {
         latitude: checkInLatitude,
         longitude: checkInLongitude,
         accuracy: checkInAccuracy,
+        source: 'shift_checkin',
       );
     }
   }
