@@ -2,9 +2,11 @@ import 'caregivers_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import '../models/client_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/export_service.dart';
+import '../widgets/edit_service_day_dialog.dart';
 
 class NurseAccountsScreen extends StatefulWidget {
   const NurseAccountsScreen({super.key});
@@ -271,6 +273,7 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
           final transactions = provider.getNurseTransactions(nurseName);
 
           final dateFormat = DateFormat('yyyy/MM/dd');
+          final caregiver = provider.findCaregiverByName(nurseName);
 
           return Directionality(
             textDirection: TextDirection.rtl,
@@ -299,13 +302,34 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  nurseName,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+                                Row(
+                                  children: [
+                                    Text(
+                                      nurseName,
+                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+                                    ),
+                                    if (caregiver != null) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade50,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: Colors.blue.shade200),
+                                        ),
+                                        child: Text(
+                                          caregiver.code,
+                                          style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
-                                const Text(
-                                  'كشف حساب تفصيلي - ورديات وسلف ومستحقات',
-                                  style: TextStyle(fontSize: 11, color: Colors.grey, fontFamily: 'Cairo'),
+                                Text(
+                                  caregiver != null && caregiver.phone.isNotEmpty
+                                      ? 'تليفون: ${caregiver.phone}${caregiver.currentClientName != null ? " • الحالة المكلف بها: " + caregiver.currentClientName! : ""}'
+                                      : 'كشف حساب تفصيلي - ورديات وسلف ومستحقات',
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey, fontFamily: 'Cairo'),
                                 ),
                               ],
                             ),
@@ -420,7 +444,44 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                                 ),
                                                 title: Text('${s.clientName} (${s.shiftTypeArabic})', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', fontSize: 13)),
                                                 subtitle: Text('التاريخ: ${dateFormat.format(s.date)}${s.timeRangeDisplay.isNotEmpty ? " • " + s.timeRangeDisplay : ""}${s.notes.isNotEmpty ? " • " + s.notes : ""}', style: const TextStyle(fontSize: 11, fontFamily: 'Cairo')),
-                                                trailing: Text('${s.nursePrice.toStringAsFixed(0)} ج.م', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.teal, fontFamily: 'Cairo')),
+                                                trailing: Row(
+                                                   mainAxisSize: MainAxisSize.min,
+                                                   children: [
+                                                     Text(
+                                                       '${s.nursePrice.toStringAsFixed(0)} ج.م',
+                                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.teal, fontFamily: 'Cairo'),
+                                                     ),
+                                                     if (provider.isManager || provider.isAccountant || provider.canEditAnyData) ...[
+                                                       const SizedBox(width: 4),
+                                                       IconButton(
+                                                         icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                                                         tooltip: 'تعديل الوردية أو اليومية',
+                                                         onPressed: () {
+                                                           final targetClient = provider.clients.where((c) => c.id == s.clientId).firstOrNull ??
+                                                               ClientModel(
+                                                                 id: s.clientId,
+                                                                 name: s.clientName,
+                                                                 phone: '',
+                                                                 address: '',
+                                                                 healthCondition: '',
+                                                                 dailyPrice: s.clientPrice,
+                                                                 nurseDailyPrice: s.nursePrice,
+                                                                 createdBy: s.recordedBy,
+                                                                 createdAt: s.createdAt,
+                                                                 updatedAt: s.createdAt,
+                                                               );
+                                                           showDialog(
+                                                             context: context,
+                                                             builder: (_) => EditServiceDayDialog(
+                                                               serviceDay: s,
+                                                               client: targetClient,
+                                                             ),
+                                                           );
+                                                         },
+                                                       ),
+                                                     ],
+                                                   ],
+                                                 ),
                                               ),
                                             );
                                           },

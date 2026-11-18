@@ -237,7 +237,8 @@ class AppProvider extends ChangeNotifier {
     final map = <String, int>{};
     final days = _serviceDays.where((d) => d.clientId == clientId);
     for (var d in days) {
-      final name = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final raw = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final name = getCanonicalNurseName(raw);
       map[name] = (map[name] ?? 0) + 1;
     }
     return map;
@@ -248,7 +249,8 @@ class AppProvider extends ChangeNotifier {
     final map = <String, double>{};
     final days = _serviceDays.where((d) => d.clientId == clientId);
     for (var d in days) {
-      final name = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final raw = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final name = getCanonicalNurseName(raw);
       map[name] = (map[name] ?? 0) + d.nursePrice;
     }
     return map;
@@ -258,7 +260,8 @@ class AppProvider extends ChangeNotifier {
   Map<String, int> get allNursesDaysCount {
     final map = <String, int>{};
     for (var d in _serviceDays) {
-      final name = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final raw = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final name = getCanonicalNurseName(raw);
       map[name] = (map[name] ?? 0) + 1;
     }
     return map;
@@ -268,7 +271,8 @@ class AppProvider extends ChangeNotifier {
   Map<String, double> get allNursesAccruedDues {
     final map = <String, double>{};
     for (var d in _serviceDays) {
-      final name = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final raw = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final name = getCanonicalNurseName(raw);
       map[name] = (map[name] ?? 0) + d.nursePrice;
     }
     return map;
@@ -278,7 +282,8 @@ class AppProvider extends ChangeNotifier {
   Map<String, List<ServiceDayModel>> get allNursesServiceDays {
     final map = <String, List<ServiceDayModel>>{};
     for (var d in _serviceDays) {
-      final name = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final raw = d.nurseName.trim().isEmpty ? 'ممرض غير محدد' : d.nurseName.trim();
+      final name = getCanonicalNurseName(raw);
       map.putIfAbsent(name, () => []).add(d);
     }
     return map;
@@ -1019,6 +1024,91 @@ class AppProvider extends ChangeNotifier {
     );
   }
 
+  /// تبديل مقدم الخدمة لحالة عميل (متاح لـ أ/ وهدان و أ/ زيزو)
+  /// يتيح تغيير الممرض المسند، وسعر اليومية الجديد، ونقل الورديات القادمة تلقائياً
+  Future<void> swapClientCaregiver({
+    required String clientId,
+    required String newNurseName,
+    required double newNurseDailyPrice,
+    required DateTime effectiveDate,
+    bool updateUpcomingShifts = true,
+    String? reason,
+  }) async {
+    final clientIdx = _clients.indexWhere((c) => c.id == clientId);
+    if (clientIdx == -1) return;
+    final client = _clients[clientIdx];
+    final oldNurseName = (client.nurseAssigned ?? '').trim().isEmpty ? 'غير محدد' : client.nurseAssigned!.trim();
+    final effectiveNorm = DateTime(effectiveDate.year, effectiveDate.month, effectiveDate.day);
+    final cleanNewNurse = newNurseName.trim();
+
+    // 1. تحديث بيانات العميل وملاحظات التبديل
+    final swapAudit = '[تبديل ممرض ${DateFormat('yyyy/MM/dd').format(effectiveDate)}: من ($oldNurseName) إلى ($cleanNewNurse) بيومية ${newNurseDailyPrice.toStringAsFixed(0)} ج.م${reason != null && reason.trim().isNotEmpty ? " - السبب: ${reason.trim()}" : ""}]';
+    _clients[clientIdx] = client.copyWith(
+      nurseAssigned: cleanNewNurse,
+      nurseDailyPrice: newNurseDailyPrice,
+      notes: client.notes.isEmpty ? swapAudit : '${client.notes}\n$swapAudit',
+      updatedAt: DateTime.now(),
+    );
+
+    int updatedShiftsCount = 0;
+    // 2. تحديث الورديات المستقبلية من تاريخ السريان فصاعداً
+    if (updateUpcomingShifts) {
+      for (int i = 0; i < _serviceDays.length; i++) {
+        final d = _serviceDays[i];
+        if (d.clientId == clientId) {
+          final dayNorm = DateTime(d.date.year, d.date.month, d.date.day);
+          if (!dayNorm.isBefore(effectiveNorm)) {
+            _serviceDays[i] = d.copyWith(
+              nurseName: cleanNewNurse,
+              nursePrice: newNurseDailyPrice,
+              notes: d.notes.isNotEmpty ? '${d.notes} (تم التبديل من $oldNurseName)' : 'تم التبديل من $oldNurseName',
+            );
+            updatedShiftsCount++;
+          }
+        }
+      }
+    }
+
+    // 3. تحديث حالات مقدمي الخدمة بقاعدة البيانات
+    final oldCgIdx = _caregivers.indexWhere((c) => isNurseNameMatch(c.name, oldNurseName) || isNurseNameMatch(c.code, oldNurseName));
+    if (oldCgIdx != -1) {
+      final otherClients = _clients.where((c) => c.id != clientId && (c.status == 'active' || c.status == 'ready_to_start') && isNurseNameMatch(c.nurseAssigned, _caregivers[oldCgIdx].name));
+      if (otherClients.isEmpty) {
+        _caregivers[oldCgIdx] = _caregivers[oldCgIdx].copyWith(
+          isCurrentlyWorking: false,
+          currentClientName: null,
+        );
+      }
+    }
+
+    final newCgIdx = _caregivers.indexWhere((c) => isNurseNameMatch(c.name, cleanNewNurse) || isNurseNameMatch(c.code, cleanNewNurse));
+    if (newCgIdx != -1) {
+      _caregivers[newCgIdx] = _caregivers[newCgIdx].copyWith(
+        isCurrentlyWorking: true,
+        currentClientName: client.name,
+      );
+    }
+
+    // 4. تسجيل الإشعار والعملية في سجل النظام
+    await _logAction(
+      title: 'تبديل مقدم خدمة للحالة',
+      description: 'قام ${_currentUser?.displayName ?? "الإدارة"} بتبديل مقدم الخدمة للعميل: ${client.name} من ($oldNurseName) إلى ($cleanNewNurse) بيومية ${newNurseDailyPrice.toStringAsFixed(0)} ج.م (تاريخ السريان: ${DateFormat('yyyy/MM/dd').format(effectiveDate)} - تم تحديث $updatedShiftsCount وردية)',
+      actionType: 'swap_caregiver',
+      metadata: {
+        'clientId': clientId,
+        'clientName': client.name,
+        'oldNurse': oldNurseName,
+        'newNurse': cleanNewNurse,
+        'effectiveDate': effectiveDate.toIso8601String(),
+        'updatedShifts': updatedShiftsCount,
+      },
+    );
+
+    await storageService.saveCaregivers(_caregivers);
+    await _persistAndSync();
+    notifyListeners();
+  }
+
   /// حذف عميل نهائياً مع تتبع الحذف بسجل Tombstones
   Future<void> deleteClient(String clientId) async {
     if (!canEditAnyData) return;
@@ -1068,15 +1158,22 @@ class AppProvider extends ChangeNotifier {
     final index = _serviceDays.indexWhere((d) => d.id == updatedDay.id);
     if (index != -1) {
       _serviceDays[index] = updatedDay;
-      final timeStr = updatedDay.timeRangeDisplay.isNotEmpty ? ' (${updatedDay.timeRangeDisplay})' : '';
-      await _logAction(
-        title: 'تعديل وردية / تبديل ممرض',
-        description: 'تم تعديل وردية العميل: ${updatedDay.clientName} - الممرض: ${updatedDay.nurseName} - ${updatedDay.shiftTypeArabic}$timeStr',
-        actionType: 'service_days',
-        metadata: {'clientId': updatedDay.clientId, 'nurseName': updatedDay.nurseName},
+    } else {
+      // إذا كانت الوردية محسوبة آلياً من مدة التعاقد (calc_)، يتم تحويلها إلى يوم خدمة مسجل فعلياً
+      final concreteDay = updatedDay.copyWith(
+        id: updatedDay.id.startsWith('calc_') ? 'day_${_uuid.v4().substring(0, 8)}' : updatedDay.id,
       );
-      await _persistAndSync();
+      _serviceDays.insert(0, concreteDay);
     }
+    final timeStr = updatedDay.timeRangeDisplay.isNotEmpty ? ' (${updatedDay.timeRangeDisplay})' : '';
+    await _logAction(
+      title: 'تعديل وردية / تبديل ممرض',
+      description: 'تم تعديل وردية العميل: ${updatedDay.clientName} - الممرض: ${updatedDay.nurseName} - ${updatedDay.shiftTypeArabic}$timeStr',
+      actionType: 'service_days',
+      metadata: {'clientId': updatedDay.clientId, 'nurseName': updatedDay.nurseName},
+    );
+    await _persistAndSync();
+    notifyListeners();
   }
 
   /// تسجيل يوم خدمة فردي
@@ -1753,24 +1850,117 @@ class AppProvider extends ChangeNotifier {
   // --- Nurse Accounts & Advances (حسابات وسلف التمريض) ---
   // ==========================================
 
+  /// تنظيف وتوحيد النصوص العربية للبحث والمطابقة الذكية
+  static String _normalizeArabic(String text) {
+    var s = text.trim().toLowerCase();
+    s = s.replaceAll(RegExp(r'[\u064B-\u0652]'), ''); // تشكيل
+    s = s.replaceAll(RegExp(r'[إأآا]'), 'ا'); // همزات الألف
+    s = s.replaceAll('ة', 'ه'); // تاء مربوطة
+    s = s.replaceAll('ى', 'ي'); // ألف مقصورة وياء
+    s = s.replaceAll(RegExp(r'\s+'), ' '); // مسافات زائدة
+    return s.trim();
+  }
+
+  /// مطابقة ذكية بين أسماء وأكواد الممرضين
+  /// تضمن ربط الاسم المختصر (مثل: "زينب") بالاسم الرباعي (مثل: "زينب محمد عبد الحميد احمد خير الله") أو الكود (مثل: CG-002)
+  bool isNurseNameMatch(String? a, String? b) {
+    if (a == null || b == null) return false;
+    final s1 = _normalizeArabic(a);
+    final s2 = _normalizeArabic(b);
+    if (s1.isEmpty || s2.isEmpty) return false;
+    if (s1 == s2) return true;
+
+    // 1. فحص سجلات مقدمي الخدمة المسجلين بقاعدة البيانات
+    for (var c in _caregivers) {
+      final cName = _normalizeArabic(c.name);
+      final cCode = _normalizeArabic(c.code);
+      final cUser = _normalizeArabic(c.loginUsername ?? '');
+
+      final m1 = (s1 == cCode || s1 == cName || (cUser.isNotEmpty && s1 == cUser));
+      final m2 = (s2 == cCode || s2 == cName || (cUser.isNotEmpty && s2 == cUser));
+      if (m1 && m2) return true;
+
+      if (m1 || m2) {
+        final other = m1 ? s2 : s1;
+        if (cName.contains(other) || (other.length >= 3 && cName.startsWith(other))) {
+          return true;
+        }
+      }
+    }
+
+    // 2. فحص حسابات المستخدمين التمريض
+    for (var u in _users.where((u) => u.isNurse)) {
+      final uName = _normalizeArabic(u.displayName);
+      final uUser = _normalizeArabic(u.username);
+      final m1 = (s1 == uName || s1 == uUser);
+      final m2 = (s2 == uName || s2 == uUser);
+      if (m1 && m2) return true;
+      if (m1 || m2) {
+        final other = m1 ? s2 : s1;
+        if (uName.contains(other) || (other.length >= 3 && uName.startsWith(other))) {
+          return true;
+        }
+      }
+    }
+
+    // 3. تطابق احتواء مباشر للكلمات المركبة (أكبر من حرفين)
+    if (s1.length >= 3 && s2.length >= 3) {
+      if (s1.contains(s2) || s2.contains(s1)) return true;
+    }
+
+    // 4. تطابق الاسم الأول إذا كان أحدهما اسماً مفرداً (مثل: "زينب")
+    final w1 = s1.split(' ');
+    final w2 = s2.split(' ');
+    if (w1.isNotEmpty && w2.isNotEmpty) {
+      if (w1.first == w2.first && w1.first.length >= 3) {
+        if (w1.length == 1 || w2.length == 1) return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// جلب الاسم الرسمي المعتمد للممرض المسجل بقاعدة البيانات
+  String getCanonicalNurseName(String rawName) {
+    final clean = rawName.trim();
+    if (clean.isEmpty || clean == 'ممرض غير محدد' || clean == 'غير محدد') return clean;
+    for (var c in _caregivers) {
+      if (isNurseNameMatch(clean, c.name) || isNurseNameMatch(clean, c.code)) {
+        return c.name;
+      }
+    }
+    for (var u in _users.where((u) => u.isNurse)) {
+      if (isNurseNameMatch(clean, u.displayName) || isNurseNameMatch(clean, u.username)) {
+        return u.displayName;
+      }
+    }
+    return clean;
+  }
+
   /// قائمة بأسماء كافة الممرضين والممرضات المسجلين في النظام
   List<String> get allNurseNames {
     final set = <String>{};
-    for (var d in _serviceDays) {
-      final n = d.nurseName.trim();
-      if (n.isNotEmpty && n != 'ممرض غير محدد') set.add(n);
-    }
-    for (var c in _clients) {
-      final n = (c.nurseAssigned ?? '').trim();
-      if (n.isNotEmpty && n != 'غير محدد') set.add(n);
-    }
-    for (var t in _nurseTransactions) {
-      final n = t.nurseName.trim();
-      if (n.isNotEmpty) set.add(n);
-    }
     for (var c in _caregivers) {
       final n = c.name.trim();
       if (n.isNotEmpty) set.add(n);
+    }
+    for (var d in _serviceDays) {
+      final n = d.nurseName.trim();
+      if (n.isNotEmpty && n != 'ممرض غير محدد') {
+        set.add(getCanonicalNurseName(n));
+      }
+    }
+    for (var c in _clients) {
+      final n = (c.nurseAssigned ?? '').trim();
+      if (n.isNotEmpty && n != 'غير محدد') {
+        set.add(getCanonicalNurseName(n));
+      }
+    }
+    for (var t in _nurseTransactions) {
+      final n = t.nurseName.trim();
+      if (n.isNotEmpty) {
+        set.add(getCanonicalNurseName(n));
+      }
     }
     final list = set.toList();
     list.sort((a, b) => a.compareTo(b));
@@ -1779,12 +1969,11 @@ class AppProvider extends ChangeNotifier {
 
   /// كشف ورديات ممرض معين مرتبة من الأحدث للأقدم
   List<ServiceDayModel> getNurseShifts(String nurseName) {
-    final n = nurseName.trim();
-    final list = _serviceDays.where((d) => d.nurseName.trim() == n).toList();
+    final list = _serviceDays.where((d) => isNurseNameMatch(d.nurseName, nurseName)).toList();
 
     // If client is assigned to this nurse but has no logged days, construct shifts from determined duration
     for (var c in _clients) {
-      if ((c.nurseAssigned ?? '').trim() == n) {
+      if (isNurseNameMatch(c.nurseAssigned, nurseName)) {
         final clientLogged = _serviceDays.where((d) => d.clientId == c.id);
         if (clientLogged.isEmpty && c.startDate != null) {
           final int days = getClientServedDaysCount(c);
@@ -1795,7 +1984,7 @@ class AppProvider extends ChangeNotifier {
               clientId: c.id,
               clientName: c.name,
               date: startNorm.add(Duration(days: i)),
-              nurseName: n,
+              nurseName: c.nurseAssigned ?? nurseName,
               shiftType: c.serviceType,
               clientPrice: c.dailyPrice,
               nursePrice: c.nurseDailyPrice,
@@ -1814,10 +2003,9 @@ class AppProvider extends ChangeNotifier {
 
   /// عدد أيام العمل المنفذة لهذا الممرض (سواء مسجلة في الشفتات أو من واقع المدة المحددة للعميل)
   int getNurseDaysCount(String nurseName) {
-    final n = nurseName.trim();
-    int count = _serviceDays.where((d) => d.nurseName.trim() == n).length;
+    int count = _serviceDays.where((d) => isNurseNameMatch(d.nurseName, nurseName)).length;
     for (var c in _clients) {
-      if ((c.nurseAssigned ?? '').trim() == n) {
+      if (isNurseNameMatch(c.nurseAssigned, nurseName)) {
         final clientLogged = _serviceDays.where((d) => d.clientId == c.id);
         if (clientLogged.isEmpty) {
           count += getClientServedDaysCount(c);
@@ -1829,13 +2017,12 @@ class AppProvider extends ChangeNotifier {
 
   /// إجمالي مستحقات الممرض من واقع أسعار الأيام والورديات والمدة المحددة للعملاء
   double getNurseTotalEarned(String nurseName) {
-    final n = nurseName.trim();
     double earned = _serviceDays
-        .where((d) => d.nurseName.trim() == n)
+        .where((d) => isNurseNameMatch(d.nurseName, nurseName))
         .fold(0.0, (sum, d) => sum + d.nursePrice);
 
     for (var c in _clients) {
-      if ((c.nurseAssigned ?? '').trim() == n) {
+      if (isNurseNameMatch(c.nurseAssigned, nurseName)) {
         final clientLogged = _serviceDays.where((d) => d.clientId == c.id);
         if (clientLogged.isEmpty) {
           earned += getClientNurseCost(c);
@@ -1847,7 +2034,7 @@ class AppProvider extends ChangeNotifier {
 
   /// كشف المعاملات المالية والسلف والمدفوعات الخاصة بالممرض
   List<NurseTransactionModel> getNurseTransactions(String nurseName) {
-    final list = _nurseTransactions.where((t) => t.nurseName.trim() == nurseName.trim()).toList();
+    final list = _nurseTransactions.where((t) => isNurseNameMatch(t.nurseName, nurseName)).toList();
     list.sort((a, b) => b.date.compareTo(a.date));
     return list;
   }
@@ -1855,14 +2042,14 @@ class AppProvider extends ChangeNotifier {
   /// إجمالي السلف التي أخذها الممرض
   double getNurseTotalAdvances(String nurseName) {
     return _nurseTransactions
-        .where((t) => t.nurseName.trim() == nurseName.trim() && t.type == 'advance')
+        .where((t) => isNurseNameMatch(t.nurseName, nurseName) && t.type == 'advance')
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
   /// إجمالي صرف المستحقات / الأجور التي استلمها الممرض
   double getNurseTotalPayouts(String nurseName) {
     return _nurseTransactions
-        .where((t) => t.nurseName.trim() == nurseName.trim() && t.type == 'payout')
+        .where((t) => isNurseNameMatch(t.nurseName, nurseName) && t.type == 'payout')
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
@@ -2888,13 +3075,13 @@ class AppProvider extends ChangeNotifier {
     return 'CG-${nextNum.toString().padLeft(3, '0')}';
   }
 
-  /// البحث عن مقدم خدمة بالاسم
+  /// البحث عن مقدم خدمة بالاسم (مع دعم البحث الذكي والتطابق الجزئي والكود)
   CaregiverModel? findCaregiverByName(String name) {
-    final clean = name.trim().toLowerCase();
+    final clean = name.trim();
     if (clean.isEmpty) return null;
     try {
       return _caregivers.firstWhere(
-        (c) => c.name.trim().toLowerCase() == clean,
+        (c) => isNurseNameMatch(c.name, clean) || isNurseNameMatch(c.code, clean),
       );
     } catch (_) {
       return null;
@@ -2907,7 +3094,7 @@ class AppProvider extends ChangeNotifier {
     if (clean.isEmpty) return null;
     try {
       return _caregivers.firstWhere(
-        (c) => c.code.trim().toLowerCase() == clean,
+        (c) => c.code.trim().toLowerCase() == clean || isNurseNameMatch(c.name, clean),
       );
     } catch (_) {
       return null;
@@ -2916,13 +3103,13 @@ class AppProvider extends ChangeNotifier {
 
   /// الحالة الحالية التي يعمل بها مقدم الخدمة الآن
   String? getCaregiverCurrentCase(String caregiverName) {
-    final clean = caregiverName.trim().toLowerCase();
+    final clean = caregiverName.trim();
     if (clean.isEmpty) return null;
 
-    // 1. أولاً نبحث في العملاء النشطين (active)
+    // 1. أولاً نبحث في العملاء النشطين (active أو ready_to_start)
     for (var client in _clients) {
-      if (client.status == 'active' &&
-          (client.nurseAssigned ?? '').trim().toLowerCase() == clean) {
+      if ((client.status == 'active' || client.status == 'ready_to_start') &&
+          isNurseNameMatch(client.nurseAssigned, clean)) {
         return client.name;
       }
     }
@@ -2932,7 +3119,7 @@ class AppProvider extends ChangeNotifier {
       final shifts = getClientServiceDays(client.id);
       if (shifts.isNotEmpty) {
         final recentShift = shifts.first;
-        if (recentShift.nurseName.trim().toLowerCase() == clean &&
+        if (isNurseNameMatch(recentShift.nurseName, clean) &&
             DateTime.now().difference(recentShift.date).inDays.abs() <= 3) {
           return client.name;
         }
@@ -2954,12 +3141,12 @@ class AppProvider extends ChangeNotifier {
   /// جلب قائمة بكافة العملاء الذين اشتغل معهم مقدم الخدمة
   List<String> getCaregiverPastClients(String caregiverName) {
     final set = <String>{};
-    final clean = caregiverName.trim().toLowerCase();
+    final clean = caregiverName.trim();
     if (clean.isEmpty) return [];
 
     // من الورديات المسجلة فعلياً في النظام
     for (var d in _serviceDays) {
-      if (d.nurseName.trim().toLowerCase() == clean) {
+      if (isNurseNameMatch(d.nurseName, clean)) {
         try {
           final client = _clients.firstWhere((c) => c.id == d.clientId);
           if (client.name.trim().isNotEmpty) {
@@ -3066,9 +3253,20 @@ class AppProvider extends ChangeNotifier {
       final cg = _caregivers.where((c) => c.id == _currentUser!.caregiverId).toList();
       if (cg.isNotEmpty) return cg.first;
     }
-    final byName = _caregivers.where((c) => c.name.trim() == _currentUser!.displayName.trim()).toList();
+    final byName = _caregivers.where((c) => isNurseNameMatch(c.name, _currentUser!.displayName)).toList();
     if (byName.isNotEmpty) return byName.first;
-    return null;
+
+    // Fallback ديناميكي لضمان عمل البوابة بسلاسة حتى لو لم يتم تحميل قائمة الكوادر بعد
+    return CaregiverModel(
+      id: _currentUser!.caregiverId ?? 'cg_${_currentUser!.id}',
+      code: _currentUser!.username.toUpperCase(),
+      name: _currentUser!.displayName,
+      phone: _currentUser!.phone ?? '',
+      dailyPrice: 700.0,
+      hasLoginAccount: true,
+      loginUsername: _currentUser!.username,
+      isCurrentlyWorking: true,
+    );
   }
 
   /// الحالة النشطة المكلف بها الممرض حالياً
@@ -3076,8 +3274,8 @@ class AppProvider extends ChangeNotifier {
     final cg = currentNurseCaregiver;
     if (cg == null) return null;
     final assigned = _clients.where((c) {
-      final isAssigned = (c.nurseAssigned ?? '').trim() == cg.name.trim() ||
-          (c.nurseAssigned ?? '').trim() == cg.code.trim();
+      final isAssigned = isNurseNameMatch(c.nurseAssigned, cg.name) ||
+          isNurseNameMatch(c.nurseAssigned, cg.code);
       final isActive = c.status == 'active' || c.status == 'ready_to_start';
       return isAssigned && isActive;
     }).toList();
@@ -3090,8 +3288,8 @@ class AppProvider extends ChangeNotifier {
     final cg = currentNurseCaregiver;
     if (cg == null) return [];
     return _clients.where((c) {
-      return (c.nurseAssigned ?? '').trim() == cg.name.trim() ||
-          (c.nurseAssigned ?? '').trim() == cg.code.trim();
+      return isNurseNameMatch(c.nurseAssigned, cg.name) ||
+          isNurseNameMatch(c.nurseAssigned, cg.code);
     }).toList();
   }
 

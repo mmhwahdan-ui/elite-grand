@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-18T13:56:13.504Z",
+  "lastUpdated": "2026-11-18T14:49:44.053Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -1802,6 +1802,28 @@
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
       "username": "01033408925"
+    },
+    {
+      "caregiverId": "cg_1795011214381",
+      "displayName": "زينب محمد عبد الحميد احمد خير الله",
+      "id": "usr_cg_cg_1795011214381",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
+      "phone": "01014703959",
+      "roleTitle": "طاقم تمريض / مقدم خدمة",
+      "roleType": "nurse",
+      "username": "cg002"
     }
   ],
   "notifications": [
@@ -3105,6 +3127,30 @@
       "id": "ntf_4b607520",
       "timestamp": "2026-11-18T14:58:59.249",
       "title": "إرسال SMS للممرض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: زينب محمد عبد الحميد احمد خير الله (اسم المستخدم: cg002) وإرسال رسالة SMS",
+      "id": "ntf_e9ab589b",
+      "timestamp": "2026-11-18T16:13:34.928",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_caregiver",
+      "description": "أ/ وهدان قام بإضافة: زينب محمد عبد الحميد احمد خير الله (كود: CG-002) - السعر: 700 ج",
+      "id": "ntf_782107e4",
+      "metadata": {
+        "caregiverId": "cg_1795011214381",
+        "name": "زينب محمد عبد الحميد احمد خير الله"
+      },
+      "timestamp": "2026-11-18T16:13:34.383",
+      "title": "إضافة مقدم خدمة بقاعدة البيانات",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"

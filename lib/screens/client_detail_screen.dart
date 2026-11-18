@@ -11,6 +11,7 @@ import '../widgets/stop_service_dialog.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/add_service_day_dialog.dart';
 import '../widgets/edit_service_day_dialog.dart';
+import '../widgets/swap_caregiver_dialog.dart';
 
 class ClientDetailScreen extends StatelessWidget {
   final String clientId;
@@ -49,6 +50,17 @@ class ClientDetailScreen extends StatelessWidget {
         appBar: AppBar(
           title: Text(client.name, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo')),
           actions: [
+            if (provider.isManager || provider.isAccountant || provider.canEditAnyData)
+              IconButton(
+                icon: const Icon(Icons.swap_horiz_rounded),
+                tooltip: 'تبديل مقدم الخدمة / الممرض',
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => SwapCaregiverDialog(client: client),
+                  );
+                },
+              ),
             if (provider.canEditClient || provider.canEditAnyData)
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
@@ -231,19 +243,85 @@ class ClientDetailScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (client.nurseAssigned != null && client.nurseAssigned!.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            const Icon(Icons.badge_outlined, size: 20, color: AppTheme.primaryLight),
-                            const SizedBox(width: 8),
-                            Text(
-                              'الممرض المسند: ${client.nurseAssigned}',
-                              style: const TextStyle(fontSize: 13, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            client.nurseAssigned != null && client.nurseAssigned!.isNotEmpty
+                                ? Icons.badge_outlined
+                                : Icons.person_off_outlined,
+                            size: 20,
+                            color: client.nurseAssigned != null && client.nurseAssigned!.isNotEmpty
+                                ? AppTheme.primaryLight
+                                : Colors.grey,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                Text(
+                                  client.nurseAssigned != null && client.nurseAssigned!.isNotEmpty
+                                      ? 'الممرض المسند: ${client.nurseAssigned}'
+                                      : 'الممرض المسند: لم يتم تعيين ممرض بعد',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontFamily: 'Cairo',
+                                    fontWeight: FontWeight.bold,
+                                    color: client.nurseAssigned != null && client.nurseAssigned!.isNotEmpty
+                                        ? const Color(0xFF1E293B)
+                                        : Colors.grey.shade600,
+                                  ),
+                                ),
+                                if (client.nurseDailyPrice > 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.orange.shade200),
+                                    ),
+                                    child: Text(
+                                      'اليومية: ${client.nurseDailyPrice.toStringAsFixed(0)} ج.م',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.orange.shade900,
+                                        fontFamily: 'Cairo',
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          if (provider.isManager || provider.isAccountant || provider.canEditAnyData)
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.swap_horiz, size: 16),
+                              label: Text(
+                                client.nurseAssigned != null && client.nurseAssigned!.isNotEmpty
+                                    ? 'تبديل مقدم الخدمة 🔄'
+                                    : 'إسناد ممرض ➕',
+                                style: const TextStyle(fontSize: 11, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.teal,
+                                foregroundColor: Colors.white,
+                                elevation: 0.5,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => SwapCaregiverDialog(client: client),
+                                );
+                              },
+                            ),
+                        ],
+                      ),
                       if (client.notes.isNotEmpty) ...[
                         const SizedBox(height: 10),
                         Row(
