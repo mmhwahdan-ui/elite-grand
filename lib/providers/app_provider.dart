@@ -16,6 +16,7 @@ import '../models/partner_loan_model.dart';
 import '../models/partner_settlement_model.dart';
 import '../models/caregiver_model.dart';
 import '../models/chat_message_model.dart';
+import '../models/case_offer_model.dart';
 import '../services/storage_service.dart';
 import '../services/cloud_sync_service.dart';
 
@@ -37,6 +38,8 @@ class AppProvider extends ChangeNotifier {
   List<ChatMessageModel> _chatMessages = [];
   final Set<String> _knownChatMessageIds = {};
   int _unreadChatCount = 0;
+  List<CaseOfferModel> _caseOffers = [];
+  final Set<String> _knownCaseOfferIds = {};
   List<String> _deletedIds = [];
   Map<String, double> _openingBalances = {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0};
 
@@ -69,6 +72,9 @@ class AppProvider extends ChangeNotifier {
   List<CaregiverModel> get caregivers => List.unmodifiable(_caregivers);
   List<ChatMessageModel> get chatMessages => List.unmodifiable(_chatMessages);
   int get unreadChatCount => _unreadChatCount;
+  List<CaseOfferModel> get caseOffers => List.unmodifiable(_caseOffers);
+  List<CaseOfferModel> get openCaseOffers => _caseOffers.where((o) => o.isOpen).toList();
+  int get openCaseOffersCount => openCaseOffers.length;
   List<String> get deletedIds => List.unmodifiable(_deletedIds);
   Map<String, double> get openingBalances => Map.unmodifiable(_openingBalances);
   bool get isLoading => _isLoading;
@@ -592,6 +598,10 @@ class AppProvider extends ChangeNotifier {
     _chatMessages = storageService.loadChatMessages();
     for (final m in _chatMessages) {
       _knownChatMessageIds.add(m.id);
+    }
+    _caseOffers = storageService.loadCaseOffers();
+    for (final o in _caseOffers) {
+      _knownCaseOfferIds.add(o.id);
     }
     _notifications = storageService.loadNotifications();
     for (final n in _notifications) {
@@ -1575,6 +1585,13 @@ class AppProvider extends ChangeNotifier {
           _caregivers = result.caregivers!.where((c) => !deletedSet.contains(c.id)).toList();
           await storageService.saveCaregivers(_caregivers);
         }
+        if (result.caseOffers != null) {
+          _caseOffers = result.caseOffers!.where((o) => !deletedSet.contains(o.id)).toList();
+          for (final o in _caseOffers) {
+            _knownCaseOfferIds.add(o.id);
+          }
+          await storageService.saveCaseOffers(_caseOffers);
+        }
         if (result.chatMessages != null && result.chatMessages!.isNotEmpty) {
           final incoming = result.chatMessages!;
           bool hasNewIncomingChatMessage = false;
@@ -1683,6 +1700,7 @@ class AppProvider extends ChangeNotifier {
           users: _users,
           caregivers: _caregivers,
           chatMessages: _chatMessages,
+          caseOffers: _caseOffers,
           notifications: _notifications,
           deletedIds: _deletedIds,
           openingBalances: _openingBalances,
@@ -1707,6 +1725,7 @@ class AppProvider extends ChangeNotifier {
     await storageService.savePartnerSettlements(_partnerSettlements);
     await storageService.saveCaregivers(_caregivers);
     await storageService.saveChatMessages(_chatMessages);
+    await storageService.saveCaseOffers(_caseOffers);
     await storageService.saveOpeningBalances(_openingBalances);
     await storageService.saveNotifications(_notifications);
     notifyListeners();
@@ -1723,6 +1742,7 @@ class AppProvider extends ChangeNotifier {
       users: _users,
       caregivers: _caregivers,
       chatMessages: _chatMessages,
+      caseOffers: _caseOffers,
       notifications: _notifications,
       deletedIds: _deletedIds,
       openingBalances: _openingBalances,
@@ -2374,18 +2394,105 @@ class AppProvider extends ChangeNotifier {
     return _chatMessages.where((m) => m.isGroupMessage).toList();
   }
 
+  /// جلب رسائل جروب عرض الحالات والفرص الجديدة
+  List<ChatMessageModel> get casesGroupMessages {
+    return _chatMessages.where((m) => m.isCasesGroupMessage).toList();
+  }
+
   /// جلب الرسائل الخاصة مع مستخدم معين
   List<ChatMessageModel> getDirectMessagesWith(String otherUserId, [String? otherUsername]) {
     final myId = _currentUser?.id ?? '';
     final myUser = _currentUser?.username ?? '';
     return _chatMessages.where((m) {
-      if (m.isGroupMessage) return false;
+      if (m.isGroupMessage || m.isCasesGroupMessage) return false;
       final sentByMeToOther = (m.senderId == myId || m.senderUsername == myUser) &&
           (m.recipientId == otherUserId || (otherUsername != null && m.recipientId == otherUsername));
       final sentByOtherToMe = (m.senderId == otherUserId || (otherUsername != null && m.senderUsername == otherUsername)) &&
           (m.recipientId == myId || m.recipientId == myUser);
       return sentByMeToOther || sentByOtherToMe;
     }).toList();
+  }
+
+  /// جلب كامل سجل محادثة الممرض مع الإدارة (أ/ شيماء وأ/ وهدان)
+  List<ChatMessageModel> getNurseDirectMessages(String nurseUserId) {
+    return _chatMessages.where((m) {
+      if (m.isGroupMessage || m.isCasesGroupMessage) return false;
+      if (m.threadId == 'thread_$nurseUserId') return true;
+      final involvedWithNurse = m.senderId == nurseUserId || m.recipientId == nurseUserId;
+      if (!involvedWithNurse) return false;
+      final involvedWithManagement = m.senderId == 'usr_shimaa' ||
+          m.recipientId == 'usr_shimaa' ||
+          m.senderId == 'usr_wahdan' ||
+          m.recipientId == 'usr_wahdan' ||
+          m.senderUsername == 'shimaa' ||
+          m.recipientId == 'shimaa' ||
+          m.senderUsername == 'wahdan' ||
+          m.recipientId == 'wahdan' ||
+          m.senderRole.contains('مدير') ||
+          m.senderRole.contains('متابعة');
+      return involvedWithManagement;
+    }).toList();
+  }
+
+  /// جلب قائمة بكافة غرف المحادثات الخاصة مع التمريض (لـ أ/ شيماء ولـ أ/ وهدان المدير العام)
+  List<Map<String, dynamic>> getAllNurseChatThreads() {
+    final Map<String, Map<String, dynamic>> threads = {};
+
+    for (var u in _users.where((u) => u.isNurse)) {
+      final cg = _caregivers.where((c) => c.id == u.caregiverId || c.phone.trim() == u.phone?.trim() || c.name.trim() == u.displayName.trim()).firstOrNull;
+      threads[u.id] = {
+        'nurseUserId': u.id,
+        'nurseName': u.displayName,
+        'nursePhone': u.phone ?? cg?.phone ?? u.username,
+        'caregiverCode': cg?.code ?? '',
+        'caregiverId': cg?.id ?? '',
+        'lastMessage': '',
+        'lastMessageTime': DateTime.fromMillisecondsSinceEpoch(0),
+        'unreadCount': 0,
+      };
+    }
+
+    for (var c in _caregivers) {
+      final user = _users.where((u) => u.caregiverId == c.id || u.phone?.trim() == c.phone.trim()).firstOrNull;
+      final uid = user?.id ?? 'usr_cg_${c.id}';
+      if (!threads.containsKey(uid)) {
+        threads[uid] = {
+          'nurseUserId': uid,
+          'nurseName': c.name,
+          'nursePhone': c.phone,
+          'caregiverCode': c.code,
+          'caregiverId': c.id,
+          'lastMessage': '',
+          'lastMessageTime': c.createdAt,
+          'unreadCount': 0,
+        };
+      }
+    }
+
+    for (var m in _chatMessages) {
+      if (m.isGroupMessage || m.isCasesGroupMessage) continue;
+      String? nurseId;
+      if (threads.containsKey(m.senderId)) {
+        nurseId = m.senderId;
+      } else if (threads.containsKey(m.recipientId)) {
+        nurseId = m.recipientId;
+      } else if (m.threadId != null && m.threadId!.startsWith('thread_')) {
+        nurseId = m.threadId!.replaceFirst('thread_', '');
+      }
+
+      if (nurseId != null && threads.containsKey(nurseId)) {
+        final t = threads[nurseId]!;
+        final curTime = t['lastMessageTime'] as DateTime;
+        if (m.timestamp.isAfter(curTime)) {
+          t['lastMessage'] = m.text;
+          t['lastMessageTime'] = m.timestamp;
+        }
+      }
+    }
+
+    final list = threads.values.toList();
+    list.sort((a, b) => (b['lastMessageTime'] as DateTime).compareTo(a['lastMessageTime'] as DateTime));
+    return list;
   }
 
   /// إرسال رسالة جديدة
@@ -2395,21 +2502,31 @@ class AppProvider extends ChangeNotifier {
     String recipientName = 'الجميع',
     String? tag,
     String? relatedClientName,
+    String? caseOfferId,
+    String? threadId,
+    bool isSupervisorAction = false,
   }) async {
     final cleanText = text.trim();
     if (cleanText.isEmpty) return;
+
+    final isWahdan = _currentUser?.username == 'wahdan' || _currentUser?.roleType == 'manager';
 
     final newMsg = ChatMessageModel(
       id: 'msg_${_uuid.v4().substring(0, 8)}',
       senderId: _currentUser?.id ?? 'usr_guest',
       senderUsername: _currentUser?.username ?? 'user',
-      senderDisplayName: _currentUser?.displayName ?? 'مستخدم',
+      senderDisplayName: isWahdan && isSupervisorAction
+          ? 'أ/ وهدان (المدير العام) 🛡️'
+          : (_currentUser?.displayName ?? 'مستخدم'),
       senderRole: _currentUser?.roleTitle ?? '',
       recipientId: recipientId,
       recipientName: recipientName,
       text: cleanText,
       tag: tag,
       relatedClientName: relatedClientName,
+      caseOfferId: caseOfferId,
+      threadId: threadId,
+      isSupervisorAction: isSupervisorAction || (isWahdan && recipientId != 'all' && recipientId != 'cases_group'),
       timestamp: DateTime.now(),
       isRead: false,
     );
@@ -2435,6 +2552,7 @@ class AppProvider extends ChangeNotifier {
       users: _users,
       caregivers: _caregivers,
       chatMessages: _chatMessages,
+      caseOffers: _caseOffers,
       notifications: _notifications,
       deletedIds: _deletedIds,
       openingBalances: _openingBalances,
@@ -2445,6 +2563,312 @@ class AppProvider extends ChangeNotifier {
   void markChatAsRead([String? recipientId]) {
     _unreadChatCount = 0;
     notifyListeners();
+  }
+
+  // ==========================================
+  // --- جروب الحالات والفرص الجديدة لمقدمي الخدمة والتمريض ---
+  // ==========================================
+
+  /// توليد كود تلقائي للحالة المعروضة (e.g. CASE-001, CASE-002...)
+  String generateNextCaseOfferCode() {
+    int maxNum = 0;
+    for (var o in _caseOffers) {
+      final digits = o.code.replaceAll(RegExp(r'[^0-9]'), '');
+      final n = int.tryParse(digits);
+      if (n != null && n > maxNum) {
+        maxNum = n;
+      }
+    }
+    final nextNum = maxNum + 1;
+    return 'CASE-${nextNum.toString().padLeft(3, '0')}';
+  }
+
+  /// نشر حالة جديدة في جروب الفرص بواسطة أ/ شيماء أو الإدارة
+  Future<void> addCaseOffer({
+    required String title,
+    required String patientDescription,
+    required String city,
+    required String area,
+    String shiftType = 'hours12',
+    required double nurseDailyPrice,
+    String genderPreference = 'any',
+    String requirements = '',
+    String clientName = '',
+    String clientPhone = '',
+    double clientDailyPrice = 0.0,
+    String? notes,
+  }) async {
+    final nextCode = generateNextCaseOfferCode();
+    final newOffer = CaseOfferModel(
+      id: 'case_${_uuid.v4().substring(0, 8)}',
+      code: nextCode,
+      title: title.trim(),
+      patientDescription: patientDescription.trim(),
+      city: city.trim(),
+      area: area.trim(),
+      shiftType: shiftType,
+      nurseDailyPrice: nurseDailyPrice,
+      genderPreference: genderPreference,
+      requirements: requirements.trim(),
+      clientName: clientName.trim(),
+      clientPhone: clientPhone.trim(),
+      clientDailyPrice: clientDailyPrice,
+      status: 'open',
+      postedByUserId: _currentUser?.id ?? 'usr_shimaa',
+      postedByUserName: _currentUser?.displayName ?? 'أ/ شيماء',
+      createdAt: DateTime.now(),
+      notes: notes?.trim(),
+    );
+
+    _knownCaseOfferIds.add(newOffer.id);
+    _caseOffers.insert(0, newOffer);
+
+    // بث رسالة إعلان تلقائية في جروب الحالات المتاح للتمريض
+    final announcementText = '📢 فرصة وحالة تمريض جديدة متاحة:\n'
+        '• الحالة: ${newOffer.title} ($nextCode)\n'
+        '• المنطقة: ${newOffer.city} - ${newOffer.area}\n'
+        '• نوع الوردية: ${newOffer.shiftTypeArabic}\n'
+        '• سعر التمريض اليومي: ${newOffer.nurseDailyPrice.toStringAsFixed(0)} ج.م\n'
+        '• وصف الحالة: ${newOffer.patientDescription}\n'
+        '👉 لمن يناسبه السعر والقدرة على التنفيذ، اضغط تقديم أو راسل أ/ شيماء على الخاص 💬';
+
+    final announceMsg = ChatMessageModel(
+      id: 'msg_${_uuid.v4().substring(0, 8)}',
+      senderId: _currentUser?.id ?? 'usr_shimaa',
+      senderUsername: _currentUser?.username ?? 'shimaa',
+      senderDisplayName: _currentUser?.displayName ?? 'أ/ شيماء',
+      senderRole: _currentUser?.roleTitle ?? 'مديرة المتابعة والتشغيل',
+      recipientId: 'cases_group',
+      recipientName: 'جروب الحالات والفرص',
+      text: announcementText,
+      tag: 'case_offer',
+      caseOfferId: newOffer.id,
+      timestamp: DateTime.now(),
+    );
+    _knownChatMessageIds.add(announceMsg.id);
+    _chatMessages.add(announceMsg);
+
+    await _logAction(
+      title: 'نشر حالة جديدة في جروب الفرص',
+      description: '${_currentUser?.displayName ?? "الإدارة"} قامت بنشر حالة: ${newOffer.title} ($nextCode) بسعر تمريض: ${newOffer.nurseDailyPrice.toStringAsFixed(0)} ج',
+      actionType: 'case_offer_post',
+      metadata: {'caseOfferId': newOffer.id, 'title': newOffer.title},
+    );
+
+    await _persistAndSync();
+  }
+
+  /// تعديل بيانات حالة معروضة
+  Future<void> updateCaseOffer(CaseOfferModel updated) async {
+    final idx = _caseOffers.indexWhere((o) => o.id == updated.id);
+    if (idx != -1) {
+      _caseOffers[idx] = updated.copyWith(updatedAt: DateTime.now());
+      await _logAction(
+        title: 'تعديل حالة في جروب الفرص',
+        description: 'تم تعديل بيانات الحالة: ${updated.title} (${updated.code})',
+        actionType: 'case_offer_edit',
+        metadata: {'caseOfferId': updated.id},
+      );
+      await _persistAndSync();
+    }
+  }
+
+  /// حذف حالة معروضة
+  Future<void> deleteCaseOffer(String id) async {
+    final removed = _caseOffers.where((o) => o.id == id).firstOrNull;
+    if (removed != null) {
+      _caseOffers.removeWhere((o) => o.id == id);
+      _deletedIds.add(id);
+      await _logAction(
+        title: 'حذف حالة من جروب الفرص',
+        description: 'تم حذف الحالة: ${removed.title} (${removed.code})',
+        actionType: 'case_offer_delete',
+        metadata: {'caseOfferId': id},
+      );
+      await _persistAndSync();
+    }
+  }
+
+  /// تقديم مقدم الخدمة على الحالة وإرسال رسالة خاصة فورية لـ أ/ شيماء
+  Future<void> applyForCaseOffer({
+    required String caseOfferId,
+    required String notes,
+  }) async {
+    final idx = _caseOffers.indexWhere((o) => o.id == caseOfferId);
+    if (idx == -1) throw 'الحالة المعروضة غير موجودة أو تم حذفها';
+
+    final offer = _caseOffers[idx];
+    final cg = currentNurseCaregiver;
+    final nurseUser = _currentUser;
+    final nurseName = cg?.name ?? nurseUser?.displayName ?? 'مقدم خدمة';
+    final nurseId = cg?.id ?? nurseUser?.caregiverId ?? nurseUser?.id ?? 'cg_temp';
+    final nursePhone = cg?.phone ?? nurseUser?.phone ?? nurseUser?.username ?? '';
+    final nurseUserId = nurseUser?.id ?? 'usr_cg_$nurseId';
+
+    if (offer.applicants.any((a) => a.caregiverId == nurseId || a.nurseUserId == nurseUserId)) {
+      throw 'لقد تقدمت بالفعل لهذه الحالة من قبل';
+    }
+
+    final newApplicant = CaseApplicantModel(
+      caregiverId: nurseId,
+      caregiverName: nurseName,
+      caregiverCode: cg?.code ?? '',
+      phone: nursePhone,
+      nurseUserId: nurseUserId,
+      appliedAt: DateTime.now(),
+      notes: notes.trim(),
+      status: 'applied',
+    );
+
+    final updatedApplicants = List<CaseApplicantModel>.from(offer.applicants)..add(newApplicant);
+    _caseOffers[idx] = offer.copyWith(
+      applicants: updatedApplicants,
+      status: offer.status == 'open' ? 'open' : offer.status,
+      updatedAt: DateTime.now(),
+    );
+
+    // إرسال رسالة شات خاص تلقائية ومباشرة لـ أ/ شيماء
+    final directMessageText = 'السلام عليكم أ/ شيماء، أنا موافق وجاهز لتنفيذ حالة: [${offer.title} - ${offer.area}] بسعر ${offer.nurseDailyPrice.toStringAsFixed(0)} ج.م/يوم.'
+        '${notes.trim().isNotEmpty ? '\nملاحظاتي: ${notes.trim()}' : ''}';
+
+    final privateMsg = ChatMessageModel(
+      id: 'msg_${_uuid.v4().substring(0, 8)}',
+      senderId: nurseUserId,
+      senderUsername: nurseUser?.username ?? nursePhone,
+      senderDisplayName: nurseName,
+      senderRole: 'طاقم تمريض / مقدم خدمة',
+      recipientId: 'usr_shimaa',
+      recipientName: 'أ/ شيماء',
+      text: directMessageText,
+      tag: 'case_offer',
+      caseOfferId: offer.id,
+      threadId: 'thread_$nurseUserId',
+      timestamp: DateTime.now(),
+    );
+    _knownChatMessageIds.add(privateMsg.id);
+    _chatMessages.add(privateMsg);
+
+    await _logAction(
+      title: 'طلب تنفيذ حالة (شات خاص)',
+      description: 'الممرض $nurseName تقدم لتنفيذ حالة: ${offer.title} (${offer.code}) وراسل أ/ شيماء على الخاص',
+      actionType: 'case_applicant',
+      metadata: {'caseOfferId': offer.id, 'caregiverName': nurseName, 'caregiverId': nurseId},
+    );
+
+    await _persistAndSync();
+  }
+
+  /// إتمام الحالة هاتفياً بواسطة أ/ زيزو وتسكين الممرض المختار وتحويلها لعميل نشط
+  Future<void> finalizeCaseWithZezo({
+    required String caseOfferId,
+    required String selectedCaregiverId,
+    required double clientDailyPrice,
+    required double nurseDailyPrice,
+    DateTime? startDate,
+    String? agreementNotes,
+  }) async {
+    final idx = _caseOffers.indexWhere((o) => o.id == caseOfferId);
+    if (idx == -1) throw 'الحالة غير موجودة';
+
+    final offer = _caseOffers[idx];
+    CaregiverModel? selectedCaregiver = _caregivers.where((c) => c.id == selectedCaregiverId).firstOrNull;
+    if (selectedCaregiver == null) {
+      final app = offer.applicants.where((a) => a.caregiverId == selectedCaregiverId || a.nurseUserId == selectedCaregiverId).firstOrNull;
+      if (app != null) {
+        selectedCaregiver = findCaregiverByName(app.caregiverName);
+      }
+    }
+    final caregiverName = selectedCaregiver?.name ?? 'مقدم الخدمة';
+
+    final effectiveClientPrice = clientDailyPrice > 0 ? clientDailyPrice : offer.clientDailyPrice;
+    final effectiveNursePrice = nurseDailyPrice > 0 ? nurseDailyPrice : (selectedCaregiver?.dailyPrice ?? offer.nurseDailyPrice);
+    final effectiveStartDate = startDate ?? DateTime.now();
+
+    // 1. إنشاء العميل الجديد في قاعدة العملاء
+    final newClient = ClientModel(
+      id: 'cli_${_uuid.v4().substring(0, 8)}',
+      name: offer.clientName.trim().isNotEmpty ? offer.clientName.trim() : offer.title,
+      phone: offer.clientPhone.trim(),
+      address: '${offer.city} - ${offer.area}'.trim(),
+      healthCondition: offer.patientDescription,
+      serviceType: offer.shiftType,
+      dailyPrice: effectiveClientPrice,
+      nurseDailyPrice: effectiveNursePrice,
+      nurseAssigned: caregiverName,
+      startDate: effectiveStartDate,
+      status: 'active',
+      notes: 'تم إتمام الحالة تليفونياً بواسطة أ/ زيزو وتسكين الممرض: $caregiverName. ${agreementNotes ?? ''}'.trim(),
+      createdBy: _currentUser?.username ?? 'zezo',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    _clients.insert(0, newClient);
+
+    // 2. تحديث حالة الممرض في قاعدة مقدمي الخدمة
+    if (selectedCaregiver != null) {
+      final cgIdx = _caregivers.indexWhere((c) => c.id == selectedCaregiver!.id);
+      if (cgIdx != -1) {
+        final past = List<String>.from(_caregivers[cgIdx].pastClients);
+        if (!past.contains(newClient.name)) past.add(newClient.name);
+        _caregivers[cgIdx] = _caregivers[cgIdx].copyWith(
+          isCurrentlyWorking: true,
+          currentClientName: newClient.name,
+          pastClients: past,
+          hasWorkedWithUs: true,
+          updatedAt: DateTime.now(),
+        );
+      }
+    }
+
+    // 3. تحديث حالة عرض الحالة إلى تم التسكين والإتمام
+    final updatedApplicants = offer.applicants.map((a) {
+      if (a.caregiverId == selectedCaregiverId || a.nurseUserId == selectedCaregiverId || a.caregiverName == caregiverName) {
+        return a.copyWith(status: 'approved');
+      }
+      return a.copyWith(status: 'contacted');
+    }).toList();
+
+    _caseOffers[idx] = offer.copyWith(
+      status: 'assigned',
+      assignedCaregiverId: selectedCaregiver?.id ?? selectedCaregiverId,
+      assignedCaregiverName: caregiverName,
+      assignedAt: DateTime.now(),
+      clientDailyPrice: effectiveClientPrice,
+      nurseDailyPrice: effectiveNursePrice,
+      applicants: updatedApplicants,
+      updatedAt: DateTime.now(),
+    );
+
+    // 4. إرسال رسالة شات تهنئة وتأكيد للممرض في شاته الخاص
+    final applicantUser = _users.where((u) => u.caregiverId == selectedCaregiver?.id || u.displayName.trim() == caregiverName.trim() || u.id == selectedCaregiverId).firstOrNull;
+    final nurseTargetId = applicantUser?.id ?? 'usr_cg_${selectedCaregiver?.id ?? selectedCaregiverId}';
+
+    final confirmChatMsg = ChatMessageModel(
+      id: 'msg_${_uuid.v4().substring(0, 8)}',
+      senderId: _currentUser?.id ?? 'usr_zezo',
+      senderUsername: _currentUser?.username ?? 'zezo',
+      senderDisplayName: 'أ/ زيزو (مدير الحسابات والمالية)',
+      senderRole: 'مدير الحسابات والمالية',
+      recipientId: nurseTargetId,
+      recipientName: caregiverName,
+      text: '🎉 مبروك يا $caregiverName! تم إتمام الاتفاق تليفونياً مع العميل وتسكينك رسمياً لحالة: ${newClient.name} (${newClient.address}) بسعر يومية ${effectiveNursePrice.toStringAsFixed(0)} ج.م. يمكنك الآن متابعة تفاصيل الحالة وبدء تسجيل حضور الوردية من بوابتك.',
+      tag: 'case_offer',
+      caseOfferId: offer.id,
+      threadId: 'thread_$nurseTargetId',
+      timestamp: DateTime.now(),
+    );
+    _knownChatMessageIds.add(confirmChatMsg.id);
+    _chatMessages.add(confirmChatMsg);
+
+    await _logAction(
+      title: 'إتمام حالة وتسكين ممرض',
+      description: 'أ/ زيزو قام بإتمام الاتفاق هاتفياً مع عميل حالة: ${newClient.name} وتسكين الممرض: $caregiverName بنجاح',
+      actionType: 'finalize_case',
+      metadata: {'clientId': newClient.id, 'clientName': newClient.name, 'nurseName': caregiverName},
+    );
+
+    await _persistAndSync();
   }
 
   // ==========================================

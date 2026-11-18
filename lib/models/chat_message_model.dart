@@ -4,11 +4,14 @@ class ChatMessageModel {
   final String senderUsername;
   final String senderDisplayName;
   final String senderRole;
-  final String recipientId; // 'all' for team group, or specific userId
+  final String recipientId; // 'all' for team group, 'cases_group' for cases offer board, or specific userId
   final String recipientName; // 'الجميع' or recipient display name
   final String text;
-  final String? tag; // 'urgent', 'shift', 'payment', 'nurse', 'client', null
+  final String? tag; // 'urgent', 'shift', 'payment', 'nurse', 'client', 'case_offer', null
   final String? relatedClientName; // optional client referenced
+  final String? caseOfferId; // optional case offer ID
+  final String? threadId; // optional thread identifier (e.g. 'thread_$nurseUserId')
+  final bool isSupervisorAction; // true when General Manager (Wahdan) participates in Shimaa's chat
   final DateTime timestamp;
   final bool isRead;
 
@@ -23,11 +26,15 @@ class ChatMessageModel {
     required this.text,
     this.tag,
     this.relatedClientName,
+    this.caseOfferId,
+    this.threadId,
+    this.isSupervisorAction = false,
     DateTime? timestamp,
     this.isRead = false,
   }) : timestamp = timestamp ?? DateTime.now();
 
   bool get isGroupMessage => recipientId == 'all';
+  bool get isCasesGroupMessage => recipientId == 'cases_group';
 
   String? get tagArabic {
     switch (tag) {
@@ -41,6 +48,8 @@ class ChatMessageModel {
         return '🩺 طاقم التمريض';
       case 'client':
         return '📋 ملاحظة حالة';
+      case 'case_offer':
+        return '📢 فرصة / حالة جديدة';
       default:
         return null;
     }
@@ -57,6 +66,9 @@ class ChatMessageModel {
     String? text,
     String? tag,
     String? relatedClientName,
+    String? caseOfferId,
+    String? threadId,
+    bool? isSupervisorAction,
     DateTime? timestamp,
     bool? isRead,
   }) {
@@ -71,6 +83,9 @@ class ChatMessageModel {
       text: text ?? this.text,
       tag: tag ?? this.tag,
       relatedClientName: relatedClientName ?? this.relatedClientName,
+      caseOfferId: caseOfferId ?? this.caseOfferId,
+      threadId: threadId ?? this.threadId,
+      isSupervisorAction: isSupervisorAction ?? this.isSupervisorAction,
       timestamp: timestamp ?? this.timestamp,
       isRead: isRead ?? this.isRead,
     );
@@ -88,6 +103,9 @@ class ChatMessageModel {
       'text': text,
       'tag': tag,
       'relatedClientName': relatedClientName,
+      'caseOfferId': caseOfferId,
+      'threadId': threadId,
+      'isSupervisorAction': isSupervisorAction,
       'timestamp': timestamp.toIso8601String(),
       'isRead': isRead,
     };
@@ -105,6 +123,9 @@ class ChatMessageModel {
       text: map['text']?.toString() ?? '',
       tag: map['tag']?.toString(),
       relatedClientName: map['relatedClientName']?.toString(),
+      caseOfferId: map['caseOfferId']?.toString(),
+      threadId: map['threadId']?.toString(),
+      isSupervisorAction: map['isSupervisorAction'] == true,
       timestamp: map['timestamp'] != null
           ? DateTime.tryParse(map['timestamp'].toString()) ?? DateTime.now()
           : DateTime.now(),

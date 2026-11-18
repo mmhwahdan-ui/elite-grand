@@ -17,6 +17,7 @@ import 'partner_settlement_screen.dart';
 import 'caregivers_screen.dart';
 import 'team_chat_screen.dart';
 import 'nurse_portal_screen.dart';
+import 'case_offers_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,6 +46,34 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icon(Icons.people_outline),
         selectedIcon: Icon(Icons.people),
         label: 'الحالات',
+      ),
+      NavigationDestination(
+        icon: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Icon(Icons.campaign_outlined),
+            if (provider.openCaseOffersCount > 0)
+              Positioned(
+                top: -3,
+                right: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Colors.teal,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                  child: Text(
+                    provider.openCaseOffersCount.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        selectedIcon: const Icon(Icons.campaign),
+        label: 'جروب الفرص',
       ),
       NavigationDestination(
         icon: Stack(
@@ -83,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final List<Widget> screens = [
       const ClientsListScreen(),
+      const CaseOffersScreen(),
       const TeamChatScreen(),
       const CaregiversScreen(),
     ];
@@ -229,6 +259,39 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 4),
 
+            // Cases & Opportunities Group Button
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.campaign_outlined, color: Colors.white),
+                  tooltip: 'جروب الحالات والفرص الجديدة 📢',
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const CaseOffersScreen()));
+                  },
+                ),
+                if (provider.openCaseOffersCount > 0)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.tealAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        provider.openCaseOffersCount.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Cairo'),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 4),
+
             // Team Chat Button with Unread Badge
             Stack(
               alignment: Alignment.topRight,
@@ -308,6 +371,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     context: context,
                     builder: (_) => const NotificationsDialog(),
                   );
+                } else if (val == 'case_offers') {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CaseOffersScreen()));
                 } else if (val == 'chat') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamChatScreen()));
                 } else if (val == 'caregivers') {
@@ -345,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         currentUser?.displayName ?? '',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: const Color(0xFF1E293B)),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: Color(0xFF1E293B)),
                       ),
                       Text(
                         currentUser?.roleTitle ?? '',
@@ -382,6 +447,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icon(Icons.cloud_sync, color: AppTheme.accent, size: 20),
                       SizedBox(width: 8),
                       Text('إعدادات السحابة والمزامنة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'case_offers',
+                  child: Row(
+                    children: [
+                      Icon(Icons.campaign, color: Colors.teal, size: 20),
+                      SizedBox(width: 8),
+                      Text('جروب الحالات والفرص الجديدة 📢', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.teal)),
                     ],
                   ),
                 ),

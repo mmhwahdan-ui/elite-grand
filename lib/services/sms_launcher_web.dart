@@ -25,3 +25,14 @@ void launchWhatsAppUri(String phone, String message) {
     web.window.open(uri, '_blank');
   } catch (_) {}
 }
+
+void launchPhoneCallUri(String phone) {
+  try {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final uri = 'tel:$cleanPhone';
+    final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
+    anchor.href = uri;
+    anchor.target = '_blank';
+    anchor.click();
+  } catch (_) {}
+}

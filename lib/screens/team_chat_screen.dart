@@ -3,11 +3,12 @@ import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../models/chat_message_model.dart';
 import '../models/user_model.dart';
+import '../models/caregiver_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 
 class TeamChatScreen extends StatefulWidget {
-  final String? initialRecipientId; // null or 'all' for group, or specific userId
+  final String? initialRecipientId; // null or 'all' for group, 'cases_group', or specific userId
 
   const TeamChatScreen({super.key, this.initialRecipientId});
 
@@ -19,7 +20,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  String _currentChannel = 'all'; // 'all' for group, or specific userId
+  String _currentChannel = 'all'; // 'all', 'cases_group', or specific userId
   String _currentChannelName = 'شات الفريق العام (الكل)';
   String? _selectedTag;
   String? _selectedClientName;
@@ -69,15 +70,23 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
       _selectedClientName = null;
     });
 
+    final isNurseChannel = _currentChannel.startsWith('usr_cg_') ||
+        _currentChannel.startsWith('cg_') ||
+        provider.caregivers.any((c) => c.id == _currentChannel || 'usr_cg_${c.id}' == _currentChannel) ||
+        provider.users.any((u) => u.id == _currentChannel && u.isNurse);
+
+    final isWahdan = provider.currentUser?.username == 'wahdan' || provider.currentUser?.roleType == 'manager';
+
     await provider.sendChatMessage(
       text: text,
       recipientId: _currentChannel,
       recipientName: _currentChannelName,
       tag: tag,
       relatedClientName: clientName,
+      threadId: isNurseChannel ? 'thread_$_currentChannel' : null,
+      isSupervisorAction: isWahdan && isNurseChannel,
     );
 
-    // Scroll to bottom
     Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
   }
 
@@ -86,23 +95,43 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
     final provider = context.watch<AppProvider>();
     final currentUser = provider.currentUser;
     final users = provider.users;
+    final caregivers = provider.caregivers;
     final activeClients = provider.activeClients;
+    final nurseThreads = provider.getAllNurseChatThreads();
+
+    final isWahdan = currentUser?.username == 'wahdan' || currentUser?.roleType == 'manager';
+    final isShimaa = currentUser?.username == 'shimaa' || currentUser?.roleType == 'followup';
+
+    final isNurseChannel = _currentChannel.startsWith('usr_cg_') ||
+        _currentChannel.startsWith('cg_') ||
+        caregivers.any((c) => c.id == _currentChannel || 'usr_cg_${c.id}' == _currentChannel) ||
+        users.any((u) => u.id == _currentChannel && u.isNurse);
 
     // Filter messages for current channel
     final List<ChatMessageModel> messages;
     if (_currentChannel == 'all') {
       messages = provider.groupChatMessages;
+    } else if (_currentChannel == 'cases_group') {
+      messages = provider.casesGroupMessages;
+    } else if (isNurseChannel) {
+      messages = provider.getNurseDirectMessages(_currentChannel);
     } else {
       messages = provider.getDirectMessagesWith(_currentChannel);
     }
 
     // Direct chat target user
     UserModel? otherUser;
-    if (_currentChannel != 'all') {
+    CaregiverModel? otherCaregiver;
+    if (_currentChannel != 'all' && _currentChannel != 'cases_group') {
       try {
         otherUser = users.firstWhere((u) => u.id == _currentChannel || u.username == _currentChannel);
       } catch (_) {}
+      try {
+        otherCaregiver = caregivers.firstWhere((c) => c.id == _currentChannel || 'usr_cg_${c.id}' == _currentChannel);
+      } catch (_) {}
     }
+
+    final targetDisplayName = otherCaregiver?.name ?? otherUser?.displayName ?? _currentChannelName;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -118,7 +147,13 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                   color: Colors.white.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.chat_rounded, color: AppTheme.accentBright, size: 22),
+                child: Icon(
+                  _currentChannel == 'cases_group'
+                      ? Icons.campaign_rounded
+                      : (_currentChannel == 'all' ? Icons.groups : Icons.chat_rounded),
+                  color: AppTheme.accentBright,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 10),
               Column(
@@ -126,17 +161,21 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                 children: [
                   Text(
                     _currentChannel == 'all'
-                        ? 'شات الفريق العام (إيليت جراند)'
-                        : 'محادثة خاصة: ${otherUser?.displayName ?? _currentChannelName}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+                        ? 'شات الفريق الداخلي (إيليت جراند)'
+                        : (_currentChannel == 'cases_group'
+                            ? '📢 جروب عرض الحالات والفرص (التمريض)'
+                            : (isWahdan && isNurseChannel
+                                ? 'إشراف المدير العام: محادثة شيماء مع $targetDisplayName'
+                                : 'محادثة خاصة: $targetDisplayName')),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
                   ),
                   Row(
                     children: [
                       Container(
                         width: 7,
                         height: 7,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.accentBright,
+                        decoration: BoxDecoration(
+                          color: (isWahdan && isNurseChannel) ? Colors.amber : AppTheme.accentBright,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -144,8 +183,17 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                       Text(
                         _currentChannel == 'all'
                             ? 'أفراد الشركة (وهدان، شيماء، زيزو)'
-                            : (otherUser?.roleTitle ?? 'محادثة مشفرة ولحظية 24/7'),
-                        style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontFamily: 'Cairo'),
+                            : (_currentChannel == 'cases_group'
+                                ? 'معروض لجميع طاقم ومقدمي الرعاية والتمريض'
+                                : (isWahdan && isNurseChannel
+                                    ? '👑 لك الحق الكامل في الاطلاع والكتابة في المحادثة'
+                                    : (otherUser?.roleTitle ?? otherCaregiver?.shiftPreferenceArabic ?? 'محادثة خاصة ومباشرة'))),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: (isWahdan && isNurseChannel) ? Colors.amber.shade200 : const Color(0xFF94A3B8),
+                          fontFamily: 'Cairo',
+                          fontWeight: (isWahdan && isNurseChannel) ? FontWeight.bold : FontWeight.normal,
+                        ),
                       ),
                     ],
                   ),
@@ -163,9 +211,12 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                   _currentChannel = val;
                   if (val == 'all') {
                     _currentChannelName = 'شات الفريق العام (الكل)';
+                  } else if (val == 'cases_group') {
+                    _currentChannelName = 'جروب عرض الحالات والفرص';
                   } else {
-                    final target = users.firstWhere((u) => u.id == val || u.username == val, orElse: () => users.first);
-                    _currentChannelName = target.displayName;
+                    final targetU = users.where((u) => u.id == val || u.username == val).firstOrNull;
+                    final targetC = caregivers.where((c) => c.id == val || 'usr_cg_${c.id}' == val).firstOrNull;
+                    _currentChannelName = targetC?.name ?? targetU?.displayName ?? val;
                   }
                 });
                 Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
@@ -177,12 +228,26 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                     children: [
                       Icon(Icons.groups, color: _currentChannel == 'all' ? AppTheme.primary : Colors.grey, size: 20),
                       const SizedBox(width: 8),
-                      const Text('👥 شات الفريق العام (الكل)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                      const Text('👥 شات الفريق الداخلي (الإدارة)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'cases_group',
+                  child: Row(
+                    children: [
+                      Icon(Icons.campaign, color: _currentChannel == 'cases_group' ? Colors.teal : Colors.grey, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('📢 جروب الحالات والفرص (التمريض)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
                 const PopupMenuDivider(),
-                ...users.where((u) => u.id != currentUser?.id).map((u) {
+                const PopupMenuItem(
+                  enabled: false,
+                  child: Text('--- محادثات أفراد الإدارة ---', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.blueGrey)),
+                ),
+                ...users.where((u) => u.id != currentUser?.id && !u.isNurse).map((u) {
                   final isSelected = _currentChannel == u.id || _currentChannel == u.username;
                   return PopupMenuItem(
                     value: u.id,
@@ -201,6 +266,38 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                     ),
                   );
                 }),
+                if (nurseThreads.isNotEmpty) ...[
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    enabled: false,
+                    child: Text(
+                      isWahdan ? '👑 --- محادثات شيماء مع التمريض (إشراف) ---' : '--- محادثات التمريض الخاصة ---',
+                      style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: isWahdan ? Colors.amber.shade900 : Colors.teal),
+                    ),
+                  ),
+                  ...nurseThreads.map((t) {
+                    final nid = t['nurseUserId'] as String;
+                    final nname = t['nurseName'] as String;
+                    final ncode = t['caregiverCode'] as String;
+                    final isSelected = _currentChannel == nid;
+                    return PopupMenuItem(
+                      value: nid,
+                      child: Row(
+                        children: [
+                          Icon(isWahdan ? Icons.shield : Icons.medical_services, color: isSelected ? Colors.amber.shade800 : Colors.grey, size: 18),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('$nname ${ncode.isNotEmpty ? "($ncode)" : ""}', style: TextStyle(fontFamily: 'Cairo', fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                              Text(isWahdan ? 'محادثة شيماء مع الممرض 👁️' : 'شات خاص مباشر', style: const TextStyle(fontFamily: 'Cairo', fontSize: 9, color: Colors.grey)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
               ],
             ),
             const SizedBox(width: 8),
@@ -219,7 +316,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                     // Group Chat Tab
                     _buildChannelTab(
                       id: 'all',
-                      label: '👥 شات الفريق العام',
+                      label: '👥 شات الفريق الداخلي',
                       subtitle: 'وهدان • شيماء • زيزو',
                       isSelected: _currentChannel == 'all',
                       color: AppTheme.primary,
@@ -233,8 +330,25 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                     ),
                     const SizedBox(width: 8),
 
-                    // Direct chat tabs for other members
-                    ...users.where((u) => u.id != currentUser?.id).map((u) {
+                    // Cases Group Chat Tab
+                    _buildChannelTab(
+                      id: 'cases_group',
+                      label: '📢 جروب الحالات والفرص',
+                      subtitle: 'عرض الحالات للتمريض',
+                      isSelected: _currentChannel == 'cases_group',
+                      color: Colors.teal.shade700,
+                      onTap: () {
+                        setState(() {
+                          _currentChannel = 'cases_group';
+                          _currentChannelName = 'جروب عرض الحالات والفرص';
+                        });
+                        Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Direct chat tabs for other management members
+                    ...users.where((u) => u.id != currentUser?.id && !u.isNurse).map((u) {
                       final isSelected = _currentChannel == u.id || _currentChannel == u.username;
                       return Padding(
                         padding: const EdgeInsets.only(left: 8),
@@ -243,7 +357,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                           label: u.displayName,
                           subtitle: u.roleTitle.split(' ').take(2).join(' '),
                           isSelected: isSelected,
-                          color: Colors.teal,
+                          color: Colors.indigo,
                           onTap: () {
                             setState(() {
                               _currentChannel = u.id;
@@ -254,11 +368,57 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                         ),
                       );
                     }),
+
+                    // Nurse chat threads (Accessible to Wahdan & Shimaa)
+                    if (isWahdan || isShimaa) ...[
+                      ...nurseThreads.take(6).map((t) {
+                        final nid = t['nurseUserId'] as String;
+                        final nname = t['nurseName'] as String;
+                        final ncode = t['caregiverCode'] as String;
+                        final isSelected = _currentChannel == nid;
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: _buildChannelTab(
+                            id: nid,
+                            label: isWahdan ? '👑 $nname' : '🩺 $nname',
+                            subtitle: isWahdan ? 'محادثة شيماء 🛡️' : (ncode.isNotEmpty ? ncode : 'مقدم خدمة'),
+                            isSelected: isSelected,
+                            color: isWahdan ? Colors.amber.shade900 : Colors.teal,
+                            onTap: () {
+                              setState(() {
+                                _currentChannel = nid;
+                                _currentChannelName = nname;
+                              });
+                              Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+                            },
+                          ),
+                        );
+                      }),
+                    ],
                   ],
                 ),
               ),
             ),
             const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+            // Manager Supervisory Banner (Shown only to Wahdan when viewing Shimaa's chat with a nurse)
+            if (isWahdan && isNurseChannel)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                color: Colors.amber.shade50,
+                child: Row(
+                  children: [
+                    const Icon(Icons.shield, color: Colors.amber, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'وضع إشراف المدير العام (أ/ وهدان): أنت تتطلع على محادثة أ/ شيماء مع الممرض ($targetDisplayName). يمكنك القراءة والمشاركة بالكتابة مباشرة وستظهر رسائلك مميزة ومعتمدة 🛡️',
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.brown.shade900),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // Messages View
             Expanded(
@@ -268,7 +428,9 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            _currentChannel == 'all' ? Icons.chat_bubble_outline : Icons.lock_outline,
+                            _currentChannel == 'cases_group'
+                                ? Icons.campaign_outlined
+                                : (_currentChannel == 'all' ? Icons.chat_bubble_outline : Icons.lock_outline),
                             size: 56,
                             color: Colors.grey.shade400,
                           ),
@@ -276,8 +438,12 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                           Text(
                             _currentChannel == 'all'
                                 ? 'لا توجد رسائل سابقة في شات الفريق'
-                                : 'ابدأ محادثة خاصة مع ${otherUser?.displayName ?? "الزميل"}',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: Colors.blueGrey),
+                                : (_currentChannel == 'cases_group'
+                                    ? 'جروب عرض الحالات للتمريض - تنشر الحالات هنا تلقائياً 📢'
+                                    : (isWahdan && isNurseChannel
+                                        ? 'لا توجد رسائل سابقة بين أ/ شيماء والممرض $targetDisplayName'
+                                        : 'ابدأ محادثة خاصة مع $targetDisplayName')),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: Colors.blueGrey),
                           ),
                           const SizedBox(height: 6),
                           const Text(
@@ -296,7 +462,6 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                         final isMe = currentUser != null &&
                             (msg.senderId == currentUser.id || msg.senderUsername.trim() == currentUser.username.trim());
 
-                        // Check if need date separator
                         bool showDateHeader = false;
                         if (index == 0) {
                           showDateHeader = true;
@@ -348,54 +513,48 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                         const SizedBox(width: 6),
                         _buildTagFilterChip('🩺 تمريض', 'nurse', Colors.teal),
                         const SizedBox(width: 6),
-                        _buildTagFilterChip('📋 ملاحظة حالة', 'client', Colors.amber.shade800),
-                        const SizedBox(width: 8),
+                        _buildTagFilterChip('📢 فرصة / حالة', 'case_offer', Colors.orange),
+                        const SizedBox(width: 10),
 
-                        // Attach Client Mention
+                        // Link Active Client
                         if (activeClients.isNotEmpty) ...[
                           PopupMenuButton<String>(
-                            tooltip: 'إشارة لحالة معينة',
+                            tooltip: 'ربط المحادثة بحالة عميل',
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: _selectedClientName != null ? Colors.blue.shade100 : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: _selectedClientName != null ? Colors.blue : Colors.grey.shade300,
-                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: _selectedClientName != null ? Colors.blue : Colors.grey.shade300),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.person_pin,
-                                    size: 14,
-                                    color: _selectedClientName != null ? Colors.blue : Colors.grey.shade700,
-                                  ),
+                                  Icon(Icons.person_pin, size: 14, color: _selectedClientName != null ? Colors.blue : Colors.grey.shade700),
                                   const SizedBox(width: 4),
                                   Text(
-                                    _selectedClientName != null ? 'الحالة: $_selectedClientName' : '+ إشارة لحالة',
+                                    _selectedClientName != null ? 'الحالة: $_selectedClientName' : 'إشارة لحالة عميل',
                                     style: TextStyle(
+                                      fontSize: 10,
                                       fontFamily: 'Cairo',
-                                      fontSize: 11,
+                                      color: _selectedClientName != null ? Colors.blue.shade900 : Colors.grey.shade700,
                                       fontWeight: _selectedClientName != null ? FontWeight.bold : FontWeight.normal,
-                                      color: _selectedClientName != null ? Colors.blue : Colors.grey.shade700,
                                     ),
                                   ),
                                   if (_selectedClientName != null) ...[
                                     const SizedBox(width: 4),
-                                    InkWell(
+                                    GestureDetector(
                                       onTap: () => setState(() => _selectedClientName = null),
-                                      child: const Icon(Icons.close, size: 12, color: Colors.blue),
+                                      child: const Icon(Icons.close, size: 12, color: Colors.red),
                                     ),
                                   ],
                                 ],
                               ),
                             ),
-                            itemBuilder: (ctx) => activeClients.map((cl) {
+                            itemBuilder: (ctx) => activeClients.map((c) {
                               return PopupMenuItem(
-                                value: cl.name,
-                                child: Text(cl.name, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                                value: c.name,
+                                child: Text(c.name, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12)),
                               );
                             }).toList(),
                             onSelected: (clName) {
@@ -423,16 +582,22 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                             textInputAction: TextInputAction.send,
                             onSubmitted: (_) => _handleSendMessage(),
                             decoration: InputDecoration(
-                              hintText: _currentChannel == 'all'
-                                  ? 'اكتب رسالة لجميع أفراد الشركة...'
-                                  : 'اكتب رسالة خاصة إلى ${otherUser?.displayName ?? _currentChannelName}...',
+                              hintText: isWahdan && isNurseChannel
+                                  ? 'اكتب رداً أو توجيهاً بصفتك: أ/ وهدان (المدير العام) 🛡️...'
+                                  : (_currentChannel == 'all'
+                                      ? 'اكتب رسالة لجميع أفراد الشركة...'
+                                      : (_currentChannel == 'cases_group'
+                                          ? 'اكتب إعلاناً في جروب الحالات والفرص...'
+                                          : 'اكتب رسالة خاصة إلى $targetDisplayName...')),
                               hintStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 13, color: Colors.grey),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(20),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(
+                                  color: (isWahdan && isNurseChannel) ? Colors.amber : Colors.grey.shade300,
+                                ),
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
+                              fillColor: (isWahdan && isNurseChannel) ? Colors.amber.shade50.withOpacity(0.3) : const Color(0xFFF8FAFC),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             ),
                           ),
@@ -444,7 +609,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                       ElevatedButton(
                         onPressed: _handleSendMessage,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
+                          backgroundColor: (isWahdan && isNurseChannel) ? Colors.amber.shade900 : AppTheme.primary,
                           foregroundColor: Colors.white,
                           shape: const CircleBorder(),
                           padding: const EdgeInsets.all(12),
@@ -484,31 +649,26 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
             width: isSelected ? 1.8 : 1.0,
           ),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? color : const Color(0xFF1E293B),
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 9,
-                    color: isSelected ? color.withOpacity(0.8) : Colors.grey,
-                  ),
-                ),
-              ],
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? color : const Color(0xFF1E293B),
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 9,
+                color: isSelected ? color.withOpacity(0.8) : Colors.grey,
+              ),
             ),
           ],
         ),
@@ -579,6 +739,11 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
     final timeFormat = DateFormat('hh:mm a', 'ar');
     final formattedTime = timeFormat.format(msg.timestamp);
 
+    final isSupervisor = msg.isSupervisorAction ||
+        msg.senderRole.contains('مدير عام') ||
+        msg.senderDisplayName.contains('وهدان') ||
+        msg.senderUsername == 'wahdan';
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -587,7 +752,9 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
           maxWidth: MediaQuery.of(context).size.width * 0.78 > 480 ? 480 : MediaQuery.of(context).size.width * 0.78,
         ),
         decoration: BoxDecoration(
-          color: isMe ? AppTheme.primary : Colors.white,
+          color: isSupervisor && !isMe
+              ? const Color(0xFFFEF3C7)
+              : (isMe ? AppTheme.primary : Colors.white),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -602,16 +769,46 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
             ),
           ],
           border: Border.all(
-            color: msg.tag == 'urgent'
-                ? Colors.red.shade400
-                : (isMe ? AppTheme.primary : Colors.grey.shade200),
-            width: msg.tag == 'urgent' ? 1.5 : 1.0,
+            color: isSupervisor
+                ? Colors.amber.shade700
+                : (msg.tag == 'urgent'
+                    ? Colors.red.shade400
+                    : (isMe ? AppTheme.primary : Colors.grey.shade200)),
+            width: isSupervisor || msg.tag == 'urgent' ? 1.5 : 1.0,
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Supervisor Badge if message from Manager
+            if (isSupervisor) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isMe ? Colors.amber.shade700 : Colors.amber.shade200,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.shield, size: 12, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text(
+                      '👑 إشراف الإدارة العامة (أ/ وهدان)',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Cairo',
+                        color: isMe ? Colors.white : Colors.brown.shade900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             // Sender info (for other members)
             if (!isMe) ...[
               Row(
@@ -619,16 +816,26 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                 children: [
                   CircleAvatar(
                     radius: 10,
-                    backgroundColor: AppTheme.accentBright.withOpacity(0.3),
+                    backgroundColor: isSupervisor ? Colors.amber : AppTheme.accentBright.withOpacity(0.3),
                     child: Text(
                       msg.senderDisplayName.isNotEmpty ? msg.senderDisplayName[0] : 'U',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primary, fontFamily: 'Cairo'),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isSupervisor ? Colors.brown.shade900 : AppTheme.primary,
+                        fontFamily: 'Cairo',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     msg.senderDisplayName,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary, fontFamily: 'Cairo'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isSupervisor ? Colors.brown.shade900 : AppTheme.primary,
+                      fontFamily: 'Cairo',
+                    ),
                   ),
                   const SizedBox(width: 4),
                   Container(
@@ -647,7 +854,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
               const SizedBox(height: 6),
             ],
 
-            // Tag badge if present (e.g. 🚨 عاجل)
+            // Tag badge if present (e.g. 🚨 عاجل أو 📢 فرصة)
             if (msg.tag != null && msg.tagArabic != null) ...[
               Container(
                 margin: const EdgeInsets.only(bottom: 6),
@@ -700,9 +907,11 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
             SelectableText(
               msg.text,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontFamily: 'Cairo',
-                color: isMe ? Colors.white : const Color(0xFF0F172A),
+                color: isSupervisor && !isMe
+                    ? Colors.brown.shade900
+                    : (isMe ? Colors.white : const Color(0xFF0F172A)),
                 height: 1.4,
               ),
             ),

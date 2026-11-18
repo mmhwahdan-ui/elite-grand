@@ -11,6 +11,7 @@ import '../models/partner_settlement_model.dart';
 import '../models/app_notification_model.dart';
 import '../models/caregiver_model.dart';
 import '../models/chat_message_model.dart';
+import '../models/case_offer_model.dart';
 
 class StorageService {
   static const String _keyUsers = 'eg_users_data';
@@ -30,6 +31,7 @@ class StorageService {
   static const String _keyNotifications = 'eg_notifications_data';
   static const String _keyCaregivers = 'eg_caregivers_data';
   static const String _keyChatMessages = 'eg_chat_messages_data';
+  static const String _keyCaseOffers = 'eg_case_offers_data';
 
   final SharedPreferences prefs;
 
@@ -323,5 +325,24 @@ class StorageService {
   Future<void> saveChatMessages(List<ChatMessageModel> list) async {
     final data = list.take(300).map((m) => m.toMap()).toList();
     await prefs.setString(_keyChatMessages, jsonEncode(data));
+  }
+
+  // Case Offers & Bulletins (جروب عرض الحالات والفرص الجديدة للتمريض)
+  List<CaseOfferModel> loadCaseOffers() {
+    final jsonStr = prefs.getString(_keyCaseOffers);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      return [];
+    }
+    try {
+      final List decoded = jsonDecode(jsonStr);
+      return decoded.map((o) => CaseOfferModel.fromMap(Map<String, dynamic>.from(o))).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveCaseOffers(List<CaseOfferModel> list) async {
+    final data = list.map((o) => o.toMap()).toList();
+    await prefs.setString(_keyCaseOffers, jsonEncode(data));
   }
 }

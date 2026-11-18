@@ -7,6 +7,7 @@ import '../models/client_model.dart';
 import '../models/caregiver_model.dart';
 import '../models/service_day_model.dart';
 import '../models/nurse_transaction_model.dart';
+import '../models/case_offer_model.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 
@@ -19,16 +20,20 @@ class NursePortalScreen extends StatefulWidget {
 
 class _NursePortalScreenState extends State<NursePortalScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController _chatTextCtrl = TextEditingController();
+  final ScrollController _chatScrollCtrl = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _chatTextCtrl.dispose();
+    _chatScrollCtrl.dispose();
     super.dispose();
   }
 
@@ -476,15 +481,26 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
           ],
           bottom: TabBar(
             controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             indicatorColor: AppTheme.accentBright,
             indicatorWeight: 3,
             labelColor: AppTheme.accentBright,
             unselectedLabelColor: Colors.white70,
             labelStyle: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
-            tabs: const [
-              Tab(icon: Icon(Icons.personal_injury_outlined, size: 20), text: 'الحالة والعميل'),
-              Tab(icon: Icon(Icons.account_balance_wallet_outlined, size: 20), text: 'كشف حسابي ومستحقاتي'),
-              Tab(icon: Icon(Icons.badge_outlined, size: 20), text: 'بياناتي الشخصية'),
+            tabs: [
+              Tab(
+                icon: Badge(
+                  isLabelVisible: provider.openCaseOffersCount > 0,
+                  label: Text('${provider.openCaseOffersCount}'),
+                  child: const Icon(Icons.campaign_outlined, size: 20),
+                ),
+                text: 'الحالات والفرص المتاحة 📢',
+              ),
+              const Tab(icon: Icon(Icons.chat_outlined, size: 20), text: 'محادثة الإدارة (شيماء/وهدان) 💬'),
+              const Tab(icon: Icon(Icons.personal_injury_outlined, size: 20), text: 'الحالة والعميل الحالي'),
+              const Tab(icon: Icon(Icons.account_balance_wallet_outlined, size: 20), text: 'كشف حسابي ومستحقاتي'),
+              const Tab(icon: Icon(Icons.badge_outlined, size: 20), text: 'بياناتي الشخصية'),
             ],
           ),
         ),
@@ -504,13 +520,19 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // Tab 1: Current Assigned Case & Medical Data
+                  // Tab 0: Available Cases & Opportunities Board
+                  _buildAvailableCasesTab(context, provider, caregiver),
+
+                  // Tab 1: Live Direct Chat with Management (Shimaa & Wahdan)
+                  _buildNurseChatTab(context, provider, caregiver),
+
+                  // Tab 2: Current Assigned Case & Medical Data
                   _buildCurrentCaseTab(context, provider, activeClient, caregiver, allClients),
 
-                  // Tab 2: Nurse's Financial Ledger
+                  // Tab 3: Nurse's Financial Ledger
                   _buildFinancialLedgerTab(shifts, transactions, totalEarned, totalReceived, remainingBalance),
 
-                  // Tab 3: Nurse Profile & Past Cases
+                  // Tab 4: Nurse Profile & Past Cases
                   _buildNurseProfileTab(caregiver, allClients),
                 ],
               ),
@@ -612,7 +634,553 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
     );
   }
 
-  /// Tab 1: Current Assigned Case
+  /// Tab 0: Available Cases & Opportunities Board (الحالات والفرص المتاحة للتمريض)
+  Widget _buildAvailableCasesTab(BuildContext context, AppProvider provider, CaregiverModel? caregiver) {
+    final openOffers = provider.openCaseOffers;
+    final nurseUserId = provider.currentUser?.id ?? '';
+    final caregiverId = caregiver?.id ?? '';
+    final caregiverPhone = caregiver?.phone ?? provider.currentUser?.phone ?? '';
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Informative Header Banner
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.teal.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.teal.shade200),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(color: Colors.teal, shape: BoxShape.circle),
+                child: const Icon(Icons.campaign, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ساحة الحالات والفرص المتاحة للتمريض 📢',
+                      style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.teal),
+                    ),
+                    Text(
+                      'الحالات المعروضة محدثة لحظياً مع يوميتك المحددة. إذا ناسبتك الحالة اضغط (أنا موافق) لبدء المحادثة مع أ/ شيماء.',
+                      style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey.shade800),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        if (openOffers.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Column(
+                children: [
+                  Icon(Icons.check_circle_outline, size: 56, color: Colors.grey.shade400),
+                  const SizedBox(height: 12),
+                  const Text('لا توجد حالات جديدة معروضة حالياً', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const SizedBox(height: 4),
+                  const Text('سيصلك إشعار فوري عند قيام الإدارة بنشر أي فرصة أو وردية جديدة', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey)),
+                ],
+              ),
+            ),
+          )
+        else
+          ...openOffers.map((offer) {
+            final hasApplied = offer.applicants.any((a) =>
+                a.caregiverId == caregiverId ||
+                (caregiverPhone.isNotEmpty && a.phone.contains(caregiverPhone)) ||
+                a.nurseUserId == nurseUserId);
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Top: Code & Title & Date
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.shade50,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.teal.shade200),
+                          ),
+                          child: Text(
+                            offer.code,
+                            style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'Cairo'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            offer.title,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Cairo'),
+                          ),
+                        ),
+                        Text(
+                          DateFormat('yyyy/MM/dd').format(offer.createdAt),
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.grey.shade500),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Area & Shift & Rate
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.place, size: 16, color: Colors.redAccent),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    '${offer.city} - ${offer.area}',
+                                    style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
+                            child: Text(
+                              offer.shiftTypeArabic,
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.blue.shade800),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.teal.shade100,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.payments_outlined, size: 14, color: Colors.teal),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${offer.nurseDailyPrice.toStringAsFixed(0)} ج / يوم',
+                                  style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.teal.shade900),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Medical details
+                    Text(
+                      '📋 الحالة المرضية: ${offer.patientDescription}',
+                      style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.grey.shade800, height: 1.4),
+                    ),
+                    if (offer.requirements.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        '⚡ متطلبات خاصة: ${offer.requirements}',
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.orange, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+
+                    // Application Action
+                    if (hasApplied) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                'تم إرسال موافقتك لـ أ/ شيماء - قيد التنسيق والاتفاق',
+                                style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () => _tabController.animateTo(1),
+                              icon: const Icon(Icons.chat, size: 14),
+                              label: const Text('شات أ/ شيماء', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.teal,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      ElevatedButton.icon(
+                        onPressed: () => _showApplyDialog(context, provider, offer, caregiver),
+                        icon: const Icon(Icons.check, size: 18),
+                        label: const Text('أنا موافق على التنفيذ / شات مع أ/ شيماء 💬', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  void _showApplyDialog(BuildContext context, AppProvider provider, CaseOfferModel offer, CaregiverModel? caregiver) {
+    final notesCtrl = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.teal),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'تأكيد الموافقة على حالة: ${offer.title}',
+                    style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Colors.teal.shade50, borderRadius: BorderRadius.circular(8)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('• المنطقة: ${offer.city} - ${offer.area}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                        Text('• نوع الوردية: ${offer.shiftTypeArabic}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                        Text('• اليومية المحددة: ${offer.nurseDailyPrice.toStringAsFixed(0)} ج.م', style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold, color: Colors.teal)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: notesCtrl,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'ملاحظتك لـ أ/ شيماء (اختياري)',
+                      hintText: 'مثال: جاهز فوراً للتنفيذ، متفرغ تماماً...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+              ),
+              ElevatedButton.icon(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        setDlgState(() => isSubmitting = true);
+                        try {
+                          await provider.applyForCaseOffer(
+                            caseOfferId: offer.id,
+                            notes: notesCtrl.text.trim(),
+                          );
+                          if (context.mounted) {
+                            Navigator.pop(ctx);
+                            _tabController.animateTo(1);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'تم إرسال موافقتك ورسالتك بنجاح إلى أ/ شيماء على الخاص 💬',
+                                  style: TextStyle(fontFamily: 'Cairo'),
+                                ),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          setDlgState(() => isSubmitting = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('$e', style: const TextStyle(fontFamily: 'Cairo')),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                icon: isSubmitting
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.send, size: 16),
+                label: const Text('إرسال الموافقة لـ أ/ شيماء 💬', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Tab 1: Live Chat with Management (محادثة الإدارة: أ/ شيماء وأ/ وهدان)
+  Widget _buildNurseChatTab(BuildContext context, AppProvider provider, CaregiverModel? caregiver) {
+    final nurseUserId = provider.currentUser?.id ?? '';
+    final messages = provider.getNurseDirectMessages(nurseUserId);
+
+    return Column(
+      children: [
+        // Top Header Banner
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          color: Colors.white,
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.teal.shade50, shape: BoxShape.circle),
+                child: const Icon(Icons.support_agent, color: Colors.teal, size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'محادثة مباشرة مع مديرة المتابعة والتشغيل (أ/ شيماء) 💬',
+                      style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.shield, size: 12, color: Colors.amber),
+                        const SizedBox(width: 4),
+                        Text(
+                          'تحت إشراف ومتابعة المدير العام (أ/ وهدان) 🛡️',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.amber.shade900, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+        // Message List
+        Expanded(
+          child: messages.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.chat_bubble_outline, size: 56, color: Colors.grey.shade400),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'لا توجد رسائل سابقة مع الإدارة',
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'اكتب رسالتك لـ أ/ شيماء أو قدم على أي حالة وسيبدأ الشات تلقائياً',
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  controller: _chatScrollCtrl,
+                  padding: const EdgeInsets.all(12),
+                  itemCount: messages.length,
+                  itemBuilder: (context, idx) {
+                    final msg = messages[idx];
+                    final isMe = msg.senderId == nurseUserId ||
+                        msg.senderUsername == provider.currentUser?.username;
+                    final isWahdan = msg.isSupervisorAction ||
+                        msg.senderRole.contains('مدير عام') ||
+                        msg.senderDisplayName.contains('وهدان');
+
+                    return Align(
+                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isMe
+                              ? Colors.teal
+                              : (isWahdan ? const Color(0xFFFEF3C7) : Colors.white),
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(14),
+                            topRight: const Radius.circular(14),
+                            bottomLeft: Radius.circular(isMe ? 14 : 3),
+                            bottomRight: Radius.circular(isMe ? 3 : 14),
+                          ),
+                          border: Border.all(
+                            color: isWahdan ? Colors.amber.shade700 : (isMe ? Colors.teal : Colors.grey.shade300),
+                            width: isWahdan ? 1.5 : 1.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 1)),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!isMe) ...[
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (isWahdan) const Icon(Icons.shield, size: 12, color: Colors.amber),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isWahdan ? '👑 أ/ وهدان (المدير العام)' : msg.senderDisplayName,
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11,
+                                      color: isWahdan ? Colors.brown.shade900 : Colors.teal.shade900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                            ],
+                            SelectableText(
+                              msg.text,
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 13,
+                                color: isMe ? Colors.white : (isWahdan ? Colors.brown.shade900 : const Color(0xFF0F172A)),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: Text(
+                                DateFormat('hh:mm a').format(msg.timestamp),
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: isMe ? Colors.white70 : Colors.grey.shade500,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+
+        // Bottom Input Row
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _chatTextCtrl,
+                  decoration: const InputDecoration(
+                    hintText: 'اكتب رسالتك لـ أ/ شيماء والإدارة...',
+                    hintStyle: TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () async {
+                  final text = _chatTextCtrl.text.trim();
+                  if (text.isEmpty) return;
+                  _chatTextCtrl.clear();
+                  await provider.sendChatMessage(
+                    text: text,
+                    recipientId: 'usr_shimaa',
+                    recipientName: 'أ/ شيماء',
+                    threadId: 'thread_$nurseUserId',
+                  );
+                  Future.delayed(const Duration(milliseconds: 100), () {
+                    if (_chatScrollCtrl.hasClients) {
+                      _chatScrollCtrl.animateTo(
+                        _chatScrollCtrl.position.maxScrollExtent + 60,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                  shape: const CircleBorder(),
+                  padding: const EdgeInsets.all(12),
+                ),
+                child: const Icon(Icons.send, size: 18),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Tab 2: Current Assigned Case
   Widget _buildCurrentCaseTab(
     BuildContext context,
     AppProvider provider,
