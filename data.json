@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-18T16:47:30.880Z",
+  "lastUpdated": "2026-11-18T17:00:53.504Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -135,7 +135,10 @@
     "ntr_088844f8",
     "exp_088844f8",
     "exp_b2394998",
-    "day_5ce0facd"
+    "day_5ce0facd",
+    "cli_73334dfe",
+    "day_f4d8fa2b",
+    "day_5500c75d"
   ],
   "openingBalances": {
     "bank": 0,
@@ -317,7 +320,7 @@
       "updatedAt": "2026-11-10T16:04:03.882"
     },
     {
-      "address": "رابعه الع��ويه مدينه نصر",
+      "address": "رابعه العدويه مدينه نصر",
       "createdAt": "2026-11-10T15:50:49.543",
       "createdBy": "wahdan",
       "dailyPrice": 450,
@@ -413,26 +416,6 @@
       "startDate": "2026-11-14T00:00:00.000",
       "status": "active",
       "updatedAt": "2026-11-14T22:34:21.581"
-    },
-    {
-      "address": "7 شارع الراعي الزيتون",
-      "createdAt": "2026-11-18T18:31:10.670",
-      "createdBy": "wahdan",
-      "dailyPrice": 100,
-      "healthCondition": "مسن",
-      "id": "cli_73334dfe",
-      "isExistingClient": false,
-      "name": "مصطفى وهدان",
-      "notes": "",
-      "nurseAssigned": "شيماء حسن الحاكم",
-      "nurseDailyPrice": 100,
-      "openingBalance": 0,
-      "phone": "0226786449",
-      "serviceType": "hours12",
-      "status": "active",
-      "updatedAt": "2026-11-18T18:31:57.404",
-      "endDate": "2026-11-18T00:00:00.000",
-      "startDate": "2026-11-18T00:00:00.000"
     }
   ],
   "payments": [
@@ -1428,38 +1411,6 @@
       "nursePrice": 700,
       "recordedBy": "wahdan",
       "shiftType": "hours24"
-    },
-    {
-      "clientId": "cli_73334dfe",
-      "clientName": "مصطفى وهدان",
-      "clientPrice": 100,
-      "createdAt": "2026-11-18T18:31:57.406",
-      "date": "2026-11-18T00:00:00.000",
-      "id": "day_5500c75d",
-      "notes": "تسجيل آلي للمدة المحددة للتعاقد (1 يوم)",
-      "nurseName": "شيماء حسن الحاكم",
-      "nursePrice": 100,
-      "recordedBy": "wahdan",
-      "shiftType": "hours12"
-    },
-    {
-      "clientId": "cli_73334dfe",
-      "clientName": "مصطفى وهدان",
-      "clientPrice": 100,
-      "createdAt": "2026-11-18T18:33:47.513",
-      "date": "2026-11-18T18:33:30.373",
-      "endTime": "06:38 PM",
-      "hoursCount": 12,
-      "id": "day_f4d8fa2b",
-      "notes": "",
-      "nurseName": "شيماء حسن الحاكم",
-      "nursePrice": 100,
-      "recordedBy": "01033408925",
-      "shiftType": "hours12",
-      "startTime": "08:00 ص",
-      "checkOutAt": "2026-11-18T18:38:44.910",
-      "checkOutLatitude": 30.079597880058223,
-      "checkOutLongitude": 31.376492935683956
     }
   ],
   "nurseTransactions": [
@@ -1920,6 +1871,28 @@
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
       "username": "cg002"
+    },
+    {
+      "caregiverId": "cg_1795020786803",
+      "displayName": "هايدي عبد الهادي محمد بكري",
+      "id": "usr_cg_cg_1795020786803",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
+      "phone": "01019399875",
+      "roleTitle": "طاقم تمريض / مقدم خدمة",
+      "roleType": "nurse",
+      "username": "cg003"
     }
   ],
   "notifications": [
@@ -3246,7 +3219,7 @@
         "name": "زينب محمد عبد الحميد احمد خير الله"
       },
       "timestamp": "2026-11-18T16:13:34.383",
-      "title": "إضافة مقدم ��دمة بقاعدة البيانات",
+      "title": "إضافة مقدم خدمة بقاعدة البيانات",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"
@@ -3271,7 +3244,7 @@
       "id": "ntf_54a236fc",
       "metadata": {
         "amount": 1200,
-        "nurseName": "محمود"
+        "nurseName": "م��مود"
       },
       "timestamp": "2026-11-18T17:34:58.254",
       "title": "صرف مستحقات تمريض",
@@ -3350,6 +3323,40 @@
       "userId": "usr_cg_cg_1794991670881",
       "userName": "شيماء حسن الحاكم",
       "userRole": "طاقم تمريض / مقدم خدمة"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: هايدي عبد الهادي محمد بكري (اسم المستخدم: cg003) وإرسال رسالة SMS",
+      "id": "ntf_1fb5a271",
+      "timestamp": "2026-11-18T18:53:07.663",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_caregiver",
+      "description": "أ/ وهدان قام بإضافة: هايدي عبد الهادي محمد بكري (كود: CG-003) - السعر: 350 ج",
+      "id": "ntf_1f5de890",
+      "metadata": {
+        "caregiverId": "cg_1795020786803",
+        "name": "هايدي عبد الهادي محمد بكري"
+      },
+      "timestamp": "2026-11-18T18:53:06.807",
+      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "delete_client",
+      "description": "تم حذف العميل: مصطفى وهدان من النظام",
+      "id": "ntf_3347eae2",
+      "timestamp": "2026-11-18T18:54:42.133",
+      "title": "حذف عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
     }
   ]
 }

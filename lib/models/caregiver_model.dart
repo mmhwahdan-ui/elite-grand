@@ -157,6 +157,42 @@ class CaregiverModel {
     );
   }
 
+  CaregiverModel clearLocation() {
+    return CaregiverModel(
+      id: id,
+      code: code,
+      name: name,
+      nationalId: nationalId,
+      phone: phone,
+      qualification: qualification,
+      address: address,
+      residenceArea: residenceArea,
+      weight: weight,
+      height: height,
+      shiftPreference: shiftPreference,
+      dailyPrice: dailyPrice,
+      rating: rating,
+      isBlocked: isBlocked,
+      blockReason: blockReason,
+      hasWorkedWithUs: hasWorkedWithUs,
+      pastClients: pastClients,
+      isCurrentlyWorking: isCurrentlyWorking,
+      currentClientName: currentClientName,
+      notes: notes,
+      createdAt: createdAt,
+      updatedAt: DateTime.now(),
+      createdBy: createdBy,
+      hasLoginAccount: hasLoginAccount,
+      loginUsername: loginUsername,
+      loginPassword: loginPassword,
+      lastSmsSentAt: lastSmsSentAt,
+      lastLatitude: null,
+      lastLongitude: null,
+      lastLocationAccuracy: null,
+      lastLocationUpdate: null,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

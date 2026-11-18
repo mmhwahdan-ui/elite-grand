@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
@@ -264,16 +264,37 @@ class CaregiverDetailDialog extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            ElevatedButton.icon(
-                              onPressed: () => LocationService.openMapUrl(caregiver.locationMapsUrl!),
-                              icon: const Icon(Icons.map, size: 16),
-                              label: const Text('فتح الخريطة', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green.shade700,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () => LocationService.openMapUrl(caregiver.locationMapsUrl!),
+                                  icon: const Icon(Icons.map, size: 16),
+                                  label: const Text('فتح الخريطة', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green.shade700,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () async {
+                                    final provider = context.read<AppProvider>();
+                                    await provider.clearCaregiverLocation(caregiver.id);
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                  child: const Padding(
+                                    padding: EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'مسح الموقع 🗑️',
+                                      style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.red),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

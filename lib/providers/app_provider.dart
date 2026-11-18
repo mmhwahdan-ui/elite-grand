@@ -3578,6 +3578,36 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  /// مسح وإلغاء إحداثيات الـ GPS لمقدم الخدمة (لحذف أي إحداثيات تم تسجيلها بالخطأ أو من كمبيوتر الإدارة)
+  Future<void> clearCaregiverLocation(String caregiverId) async {
+    final idx = _caregivers.indexWhere((c) => c.id == caregiverId);
+    if (idx != -1) {
+      _caregivers[idx] = _caregivers[idx].clearLocation();
+      await storageService.saveCaregivers(_caregivers);
+      notifyListeners();
+    }
+  }
+
+  /// تعيين موقع جغرافي يدوياً لمقدم الخدمة (من قبل الإدارة)
+  Future<void> setCaregiverManualLocation({
+    required String caregiverId,
+    required double latitude,
+    required double longitude,
+    double accuracy = 10.0,
+  }) async {
+    final idx = _caregivers.indexWhere((c) => c.id == caregiverId);
+    if (idx != -1) {
+      _caregivers[idx] = _caregivers[idx].copyWith(
+        lastLatitude: latitude,
+        lastLongitude: longitude,
+        lastLocationAccuracy: accuracy,
+        lastLocationUpdate: DateTime.now(),
+      );
+      await storageService.saveCaregivers(_caregivers);
+      notifyListeners();
+    }
+  }
+
   // ==========================================
   // إمكانات وبوابة التمريض ورسائل الـ SMS
   // ==========================================

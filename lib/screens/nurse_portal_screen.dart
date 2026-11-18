@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -66,10 +66,14 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
     if (!mounted) return;
     try {
       final provider = context.read<AppProvider>();
+      // هام جداً: لا تقم برصد الموقع إذا كان المستخدم الحالي مديراً يقوم بالمعاينة (Impersonating)
+      // لمنع حفظ موقع كمبيوتر الإدارة كـ موقع للممرض!
+      if (provider.isImpersonating) return;
+
       final caregiver = provider.currentNurseCaregiver;
       if (caregiver == null) return;
       final loc = await LocationService.getCurrentLocation();
-      if (loc != null && mounted) {
+      if (loc != null && loc.isSuccess && loc.latitude != 0.0 && loc.longitude != 0.0 && mounted) {
         await provider.updateCaregiverLiveLocation(
           caregiverId: caregiver.id,
           latitude: loc.latitude,
@@ -196,10 +200,10 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
               setDlgState(() {
                 currentLocation = loc;
                 isFetchingLocation = false;
-                if (loc != null) {
-                  locationStatusText = 'تم تحديد الموقع بنجاح: دقة (${loc.accuracy?.toStringAsFixed(0) ?? "10"}م) • سيتم إثبات الحضور بمقر الحالة';
+                if (loc != null && loc.isSuccess && loc.latitude != 0.0) {
+                  locationStatusText = loc.accuracyDescriptionArabic;
                 } else {
-                  locationStatusText = 'لم نتمكن من تحديد الموقع تلقائياً (تأكد من تفعيل خدمة الـ GPS بالهاتف)';
+                  locationStatusText = 'لم نتمكن من التقاط إشارة GPS دقيقة (تأكد من تفعيل خدمة الموقع الدقيق بالهاتف)';
                 }
               });
             }).catchError((_) {
@@ -535,10 +539,10 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
               setDlgState(() {
                 currentLocation = loc;
                 isFetchingLocation = false;
-                if (loc != null) {
-                  locationStatusText = 'تم إثبات موقع الانصراف بنجاح: دقة (${loc.accuracy?.toStringAsFixed(0) ?? "10"}م)';
+                if (loc != null && loc.isSuccess && loc.latitude != 0.0) {
+                  locationStatusText = loc.accuracyDescriptionArabic;
                 } else {
-                  locationStatusText = 'لم نتمكن من التقاط إشارة GPS (تأكد من تفعيل الموقع بالهاتف)';
+                  locationStatusText = 'لم نتمكن من التقاط إشارة GPS دقيقة (تأكد من تفعيل خدمة الموقع بالهاتف)';
                 }
               });
             }).catchError((_) {

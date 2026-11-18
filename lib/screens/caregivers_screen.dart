@@ -1120,9 +1120,22 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                         style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
                       ),
                       if (caregiver.lastLocationAccuracy != null)
-                        Text(
-                          'دقة التحديد: ±${caregiver.lastLocationAccuracy!.toStringAsFixed(0)} متر',
-                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                        Row(
+                          children: [
+                            Text(
+                              caregiver.lastLocationAccuracy! <= 35
+                                  ? '🎯 دقة ممتازة عبر الأقمار الصناعية: ±${caregiver.lastLocationAccuracy!.toStringAsFixed(0)} متر'
+                                  : (caregiver.lastLocationAccuracy! <= 100
+                                      ? '🟢 دقة جيدة: ±${caregiver.lastLocationAccuracy!.toStringAsFixed(0)} متر'
+                                      : '⚠️ دقة تقريبية (شبكة اتصال/مبنى مغلق): ±${caregiver.lastLocationAccuracy!.toStringAsFixed(0)} متر'),
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: caregiver.lastLocationAccuracy! <= 50 ? Colors.green.shade800 : Colors.amber.shade900,
+                              ),
+                            ),
+                          ],
                         ),
                       if (caregiver.lastLocationUpdate != null)
                         Text(
@@ -1148,6 +1161,43 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (c) => AlertDialog(
+                        title: const Text('إعادة ضبط ومسح الموقع المسجل', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                        content: const Text(
+                          'هل تريد مسح إحداثيات هذا الموقع؟\n\nيُستخدم هذا الإجراء إذا تم تسجيل موقع غير دقيق بالخطأ من كمبيوتر الإدارة أثناء المعاينة.',
+                          style: TextStyle(fontFamily: 'Cairo'),
+                        ),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('إلغاء')),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(c, true),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                            child: const Text('مسح الموقع'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await provider.clearCaregiverLocation(caregiver.id);
+                      if (context.mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('تم مسح وإعادة ضبط الموقع الجغرافي للممرض بنجاح 🗑️', style: TextStyle(fontFamily: 'Cairo')),
+                            backgroundColor: Colors.blueGrey,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.delete_sweep_outlined, color: Colors.red, size: 16),
+                  label: const Text('مسح هذا الموقع (إذا سُجّل بالخطأ من كمبيوتر الإدارة) 🗑️', style: TextStyle(fontFamily: 'Cairo', color: Colors.red, fontSize: 11)),
                 ),
               ] else ...[
                 Container(
@@ -1179,15 +1229,37 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                if (caregiver.isCurrentlyWorking || caregiver.currentClientName != null) ...[
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      final clientName = caregiver.currentClientName ?? '';
+                      final client = provider.clients.where((c) => provider.isNurseNameMatch(c.name, clientName)).firstOrNull;
+                      final query = client != null && client.address.isNotEmpty ? client.address : clientName;
+                      LocationService.openMapUrl('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}');
+                    },
+                    icon: const Icon(Icons.local_hospital, size: 18),
+                    label: Text(
+                      'فتح مقر الحالة الحالية على الخريطة (${caregiver.currentClientName ?? "حالة نشطة"}) 🏥',
+                      style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 ElevatedButton.icon(
                   onPressed: () {
                     final query = caregiver.residenceArea.isNotEmpty ? caregiver.residenceArea : caregiver.name;
                     final mapUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}';
                     LocationService.openMapUrl(mapUrl);
                   },
-                  icon: const Icon(Icons.search, size: 18),
+                  icon: const Icon(Icons.home_outlined, size: 18),
                   label: const Text(
-                    'فتح الخريطة (موقع السكن والمنطقة) 🗺️',
+                    'فتح خريطة منطقة السكن المسجلة للممرض 🏠',
                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(

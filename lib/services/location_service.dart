@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'location_service_stub.dart'
     if (dart.library.js_interop) 'location_service_web.dart' as platform;
 
@@ -27,6 +28,25 @@ class GeoLocationResult {
     );
   }
 
+  /// هل دقة التحديد ممتازة (GPS أقمار صناعية <= 35 متر)
+  bool get isHighPrecision => isSuccess && (accuracy != null && accuracy! <= 35.0);
+
+  /// هل دقة التحديد مقبولة (واي فاي / A-GPS)
+  bool get isModeratePrecision => isSuccess && (accuracy != null && accuracy! > 35.0 && accuracy! <= 100.0);
+
+  /// هل دقة التحديد تقريبية / ضعيفة (برج اتصال أو شبكة هاتف)
+  bool get isCoarsePrecision => isSuccess && (accuracy == null || accuracy! > 100.0);
+
+  /// وصف الدقة بالعربية
+  String get accuracyDescriptionArabic {
+    if (!isSuccess) return errorMessage ?? 'فشل تحديد الموقع';
+    if (accuracy == null) return 'تم تحديد الموقع (دقة غير محددة)';
+    final acc = accuracy!.toStringAsFixed(0);
+    if (accuracy! <= 30) return '🎯 دقة ممتازة (GPS أقمار صناعية: ±$acc متر)';
+    if (accuracy! <= 80) return '🟢 دقة جيدة (±$acc متر)';
+    return '⚠️ دقة تقريبية (±$acc متر - شبكة محمول/داخل مبنى)';
+  }
+
   String get googleMapsUrl => 'https://www.google.com/maps?q=$latitude,$longitude';
 
   Map<String, dynamic> toMap() {
@@ -53,7 +73,7 @@ class GeoLocationResult {
 }
 
 class LocationService {
-  /// جلب الموقع الجغرافي الحالي (GPS) بدقة عالية
+  /// جلب الموقع الجغرافي الحالي (GPS) بدقة عالية مع تنقية متعددة للعينات
   static Future<GeoLocationResult?> getCurrentLocation() async {
     return await platform.getPlatformLocation();
   }
@@ -67,5 +87,13 @@ class LocationService {
   /// فتح رابط الخريطة في تبويب مستقل
   static void openMapUrl(String url) {
     platform.openPlatformMap(url);
+  }
+
+  /// حساب المسافة بين نقطتين بالأمتار (Haversine Formula)
+  static double calculateDistanceInMeters(double lat1, double lon1, double lat2, double lon2) {
+    const p = 0.017453292519943295; // Math.PI / 180
+    final a = 0.5 - cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742000 * asin(sqrt(a));
   }
 }
