@@ -12,6 +12,7 @@ import '../models/case_offer_model.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
+import 'home_screen.dart';
 
 class NursePortalScreen extends StatefulWidget {
   const NursePortalScreen({super.key});
@@ -803,6 +804,46 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
             ],
           ),
           actions: [
+            // Admin Impersonation Controls (Quick Return & Live Map)
+            if (provider.isImpersonating) ...[
+              if (caregiver != null && caregiver.hasLocation)
+                IconButton(
+                  icon: const Icon(Icons.location_on, color: Colors.greenAccent),
+                  tooltip: 'تحديد موقع مقدم الخدمة على الخريطة',
+                  onPressed: () => LocationService.openMapUrl(caregiver.locationMapsUrl!),
+                ),
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await provider.exitCaregiverImpersonation();
+                    if (context.mounted) {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.admin_panel_settings, size: 16),
+                  label: Text(
+                    'العودة للإدارة (${provider.impersonatorAdminUser?.displayName ?? "وهدان"})',
+                    style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber.shade800,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
+
             // Rating badge if available
             if (caregiver != null) ...[
               Container(
@@ -895,6 +936,76 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
         ),
         body: Column(
           children: [
+            // Admin Impersonation Banner
+            if (provider.isImpersonating) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  border: Border(bottom: BorderSide(color: Colors.amber.shade400, width: 1.5)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.remove_red_eye_rounded, color: Color(0xFFB45309), size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'أنت الآن تتصفح شاشة وبوابة مقدم الخدمة (${caregiver?.name ?? "الممرض"}) كإدارة (معاينة كاملة بدون باسوورد)',
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                      ),
+                    ),
+                    if (caregiver?.hasLocation == true) ...[
+                      InkWell(
+                        onTap: () => LocationService.openMapUrl(caregiver!.locationMapsUrl!),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade700,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.location_on, size: 12, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text('موقع GPS الميداني 📍', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await provider.exitCaregiverImpersonation();
+                        if (context.mounted) {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => const HomeScreen()),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.exit_to_app, size: 14),
+                      label: Text(
+                        'العودة للإدارة (${provider.impersonatorAdminUser?.displayName ?? "وهدان"})',
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF92400E),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             // Top Nurse Financial Summary Cards (Strictly nurse's own finances!)
             _buildTopNurseKpis(
               dailyRate: dailyRate,

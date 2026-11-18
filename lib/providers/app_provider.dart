@@ -26,6 +26,7 @@ class AppProvider extends ChangeNotifier {
   final Uuid _uuid = const Uuid();
 
   UserModel? _currentUser;
+  UserModel? _impersonatorAdminUser;
   List<UserModel> _users = [];
   List<ClientModel> _clients = [];
   List<PaymentModel> _payments = [];
@@ -61,6 +62,8 @@ class AppProvider extends ChangeNotifier {
 
   // Getters
   UserModel? get currentUser => _currentUser;
+  UserModel? get impersonatorAdminUser => _impersonatorAdminUser;
+  bool get isImpersonating => _impersonatorAdminUser != null;
   List<UserModel> get users => List.unmodifiable(_users);
   List<ClientModel> get clients => List.unmodifiable(_clients);
   List<PaymentModel> get payments => List.unmodifiable(_payments);
@@ -771,6 +774,52 @@ class AppProvider extends ChangeNotifier {
     _currentUser = found;
     await storageService.setCurrentUserId(found.id);
     notifyListeners();
+  }
+
+  /// دخول فوري كـ مقدم خدمة دون الحاجة لاسم مستخدم أو كلمة مرور (خاص بالإدارة لمراجعة ومعاينة الشاشة)
+  Future<void> loginAsCaregiver(CaregiverModel caregiver) async {
+    if (_impersonatorAdminUser == null && _currentUser != null && _currentUser!.roleType != 'nurse') {
+      _impersonatorAdminUser = _currentUser;
+    }
+
+    UserModel? nurseUser = _users.where((u) =>
+        u.roleType == 'nurse' &&
+        (u.caregiverId == caregiver.id || isNurseNameMatch(u.displayName, caregiver.name))).firstOrNull;
+
+    if (nurseUser == null) {
+      final cleanPhone = caregiver.phone.trim();
+      final username = caregiver.loginUsername?.trim().isNotEmpty == true
+          ? caregiver.loginUsername!.trim()
+          : (cleanPhone.isNotEmpty ? cleanPhone : 'nurse_${caregiver.code.toLowerCase()}');
+
+      nurseUser = UserModel(
+        id: 'u_${caregiver.id}',
+        username: username,
+        displayName: caregiver.name,
+        roleTitle: 'طاقم تمريض / مقدم خدمة',
+        roleType: 'nurse',
+        password: caregiver.loginPassword ?? '123',
+        phone: cleanPhone,
+        caregiverId: caregiver.id,
+        permissions: const UserPermissions(),
+      );
+      _users.add(nurseUser);
+      await storageService.saveUsers(_users);
+    }
+
+    _currentUser = nurseUser;
+    await storageService.setCurrentUserId(nurseUser.id);
+    notifyListeners();
+  }
+
+  /// الخروج من وضع معاينة شاشة الممرض والعودة الفورية لحساب الإدارة
+  Future<void> exitCaregiverImpersonation() async {
+    if (_impersonatorAdminUser != null) {
+      _currentUser = _impersonatorAdminUser;
+      _impersonatorAdminUser = null;
+      await storageService.setCurrentUserId(_currentUser?.id);
+      notifyListeners();
+    }
   }
 
   // --- Opening Balances Management (Wahdan & Zezo) ---

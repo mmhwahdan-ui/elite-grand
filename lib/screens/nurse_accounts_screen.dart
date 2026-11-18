@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../services/export_service.dart';
 import '../widgets/edit_service_day_dialog.dart';
 import '../services/location_service.dart';
+import 'nurse_portal_screen.dart';
 
 class NurseAccountsScreen extends StatefulWidget {
   const NurseAccountsScreen({super.key});
@@ -363,9 +364,35 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                             ),
                           ],
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          icon: const Icon(Icons.close),
+                        Row(
+                          children: [
+                            if (caregiver != null)
+                              ElevatedButton.icon(
+                                onPressed: () async {
+                                  Navigator.pop(ctx);
+                                  await provider.loginAsCaregiver(caregiver);
+                                  if (context.mounted) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const NursePortalScreen()),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.remove_red_eye_rounded, size: 14),
+                                label: const Text('دخول ومعاينة الشاشة 👁️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF6366F1),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              icon: const Icon(Icons.close),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -867,6 +894,35 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                                    ),
                                                  ),
                                                ),
+                                              if (provider.findCaregiverByName(nurse) != null)
+                                                InkWell(
+                                                  onTap: () async {
+                                                    final cg = provider.findCaregiverByName(nurse)!;
+                                                    await provider.loginAsCaregiver(cg);
+                                                    if (context.mounted) {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(builder: (_) => const NursePortalScreen()),
+                                                      );
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFEEF2FF),
+                                                      borderRadius: BorderRadius.circular(4),
+                                                      border: Border.all(color: const Color(0xFFC7D2FE)),
+                                                    ),
+                                                    child: const Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(Icons.remove_red_eye_rounded, size: 10, color: Color(0xFF4F46E5)),
+                                                        SizedBox(width: 2),
+                                                        Text('معاينة الشاشة 👁️', style: TextStyle(color: Color(0xFF4F46E5), fontSize: 10, fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
                                            ],
                                          ),
                                       ],

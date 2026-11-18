@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import 'add_edit_caregiver_dialog.dart';
 import 'nurse_account_dialog.dart';
 import '../services/location_service.dart';
+import '../screens/nurse_portal_screen.dart';
 
 class CaregiverDetailDialog extends StatelessWidget {
   final CaregiverModel caregiver;
@@ -269,6 +270,52 @@ class CaregiverDetailDialog extends StatelessWidget {
                               label: const Text('فتح الخريطة', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green.shade700,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.blueGrey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blueGrey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined, color: Colors.blueGrey, size: 22),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'الموقع الجغرافي المسجل',
+                                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blueGrey),
+                                  ),
+                                  Text(
+                                    'المنطقة: ${caregiver.residenceArea.isNotEmpty ? caregiver.residenceArea : "غير محددة"} (لم يسجل GPS تلقائي بعد)',
+                                    style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.blueGrey.shade800),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                final query = caregiver.residenceArea.isNotEmpty ? caregiver.residenceArea : caregiver.name;
+                                final mapUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}';
+                                LocationService.openMapUrl(mapUrl);
+                              },
+                              icon: const Icon(Icons.search, size: 16),
+                              label: const Text('بحث السكن على الخريطة', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.teal.shade700,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -619,6 +666,26 @@ class CaregiverDetailDialog extends StatelessWidget {
 
                 Row(
                   children: [
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await provider.loginAsCaregiver(caregiver);
+                        if (context.mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const NursePortalScreen()),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.remove_red_eye_rounded, size: 16),
+                      label: const Text('دخول ومعاينة الشاشة 👁️', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('إغلاق', style: TextStyle(fontFamily: 'Cairo')),

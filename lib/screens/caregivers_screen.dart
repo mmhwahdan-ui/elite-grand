@@ -7,6 +7,8 @@ import '../widgets/add_edit_caregiver_dialog.dart';
 import '../widgets/caregiver_detail_dialog.dart';
 import '../widgets/nurse_account_dialog.dart';
 import '../services/location_service.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import 'nurse_portal_screen.dart';
 
 class CaregiversScreen extends StatefulWidget {
   const CaregiversScreen({super.key});
@@ -671,6 +673,52 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                                       ],
                                     ],
                                   ),
+                                  const SizedBox(height: 8),
+                                  // Impersonation & Location Quick Actions
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 6,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () async {
+                                          await provider.loginAsCaregiver(caregiver);
+                                          if (context.mounted) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (_) => const NursePortalScreen()),
+                                            );
+                                          }
+                                        },
+                                        icon: const Icon(Icons.remove_red_eye_rounded, size: 15),
+                                        label: const Text('دخول ومعاينة الشاشة 👁️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF6366F1),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          elevation: 1,
+                                        ),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed: () => _showCaregiverLocationDialog(context, caregiver),
+                                        icon: Icon(Icons.location_on, size: 15, color: caregiver.hasLocation ? Colors.green.shade700 : Colors.teal.shade700),
+                                        label: Text(
+                                          caregiver.hasLocation ? 'موقع GPS مباشر 📍' : 'تحديد الموقع الجغرافي 📍',
+                                          style: TextStyle(
+                                            fontFamily: 'Cairo',
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: caregiver.hasLocation ? Colors.green.shade800 : Colors.teal.shade800,
+                                          ),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(color: caregiver.hasLocation ? Colors.green : Colors.teal),
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
@@ -881,6 +929,194 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text('حذف نهائي', style: TextStyle(fontFamily: 'Cairo')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCaregiverLocationDialog(BuildContext context, CaregiverModel caregiver) {
+    final dateFormat = DateFormat('yyyy/MM/dd - hh:mm a', 'ar');
+    final provider = context.read<AppProvider>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: caregiver.hasLocation ? Colors.green.shade100 : Colors.teal.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.location_on, color: caregiver.hasLocation ? Colors.green.shade800 : Colors.teal.shade800, size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'الموقع الجغرافي: ${caregiver.name}',
+                    style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  Text(
+                    'كود: ${caregiver.code} • تليفون: ${caregiver.phone}',
+                    style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (caregiver.hasLocation) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green, size: 18),
+                          SizedBox(width: 6),
+                          Text(
+                            'تم رصد إحداثيات GPS فعلية عبر هاتف مقدم الخدمة',
+                            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF14532D)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'خط العرض: ${caregiver.lastLatitude!.toStringAsFixed(6)}',
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                      ),
+                      Text(
+                        'خط الطول: ${caregiver.lastLongitude!.toStringAsFixed(6)}',
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                      ),
+                      if (caregiver.lastLocationAccuracy != null)
+                        Text(
+                          'دقة التحديد: ±${caregiver.lastLocationAccuracy!.toStringAsFixed(0)} متر',
+                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                        ),
+                      if (caregiver.lastLocationUpdate != null)
+                        Text(
+                          'آخر توقيت تحديث: ${dateFormat.format(caregiver.lastLocationUpdate!)}',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey.shade700),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    LocationService.openMapUrl(caregiver.locationMapsUrl!);
+                  },
+                  icon: const Icon(Icons.map, size: 18),
+                  label: const Text(
+                    'فتح الموقع المباشر على خرائط Google 🗺️',
+                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade700,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.amber, size: 18),
+                          SizedBox(width: 6),
+                          Text(
+                            'لم يسجل إحداثيات GPS تلقائية حتى الآن عبر البوابة',
+                            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF78350F)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'المنطقة السكنية المسجلة: ${caregiver.residenceArea.isNotEmpty ? caregiver.residenceArea : "غير محددة"}',
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    final query = caregiver.residenceArea.isNotEmpty ? caregiver.residenceArea : caregiver.name;
+                    final mapUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}';
+                    LocationService.openMapUrl(mapUrl);
+                  },
+                  icon: const Icon(Icons.search, size: 18),
+                  label: const Text(
+                    'البحث عن عنوان سكنه على خرائط Google 🗺️',
+                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal.shade700,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await provider.loginAsCaregiver(caregiver);
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const NursePortalScreen()),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.remove_red_eye_rounded, size: 16),
+                label: const Text(
+                  'دخول فوري ومعاينة شاشته في البوابة 👁️',
+                  style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF6366F1),
+                  side: const BorderSide(color: Color(0xFF6366F1)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('إغلاق', style: TextStyle(fontFamily: 'Cairo')),
           ),
         ],
       ),
