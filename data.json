@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-10T12:32:34.539Z",
+  "lastUpdated": "2026-11-18T08:33:24.422Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -111,11 +111,35 @@
     "day_fc743d47",
     "day_212c47ee",
     "day_6c23ca5c",
-    "day_12b54bc9"
+    "day_12b54bc9",
+    "pay_18ad2305",
+    "cli_c6b984f8",
+    "pay_35d8398e",
+    "day_fa0c9502",
+    "day_d72c84c2",
+    "day_0f4bbf30",
+    "day_fc633658",
+    "day_7e15392e",
+    "day_b65c1990",
+    "day_c081a6a9",
+    "day_2a85293d",
+    "exp_6634a1cb",
+    "exp_6071879f",
+    "exp_7d612827",
+    "ntr_7d612827",
+    "ntr_6071879f",
+    "exp_c03ecec0",
+    "ntr_6634a1cb",
+    "ntr_75c36120",
+    "exp_75c36120",
+    "ntr_088844f8",
+    "exp_088844f8",
+    "exp_b2394998",
+    "day_5ce0facd"
   ],
   "openingBalances": {
     "bank": 0,
-    "cash": 36000,
+    "cash": 0,
     "wallet": 0
   },
   "clients": [
@@ -231,21 +255,313 @@
       "serviceType": "hours12",
       "status": "pending_pricing",
       "updatedAt": "2026-11-10T13:42:50.661"
+    },
+    {
+      "address": "كوبري القبه",
+      "createdAt": "2026-11-10T16:37:28.397",
+      "createdBy": "wahdan",
+      "dailyPrice": 375,
+      "healthCondition": "زهايمر",
+      "id": "cli_8c0d8c7d",
+      "isExistingClient": false,
+      "name": "يسري الاسناوي",
+      "notes": "",
+      "nurseAssigned": "متغير",
+      "nurseDailyPrice": 350,
+      "openingBalance": 0,
+      "phone": "01091286404",
+      "serviceType": "hours12",
+      "startDate": "2026-11-07T00:00:00.000",
+      "status": "active",
+      "updatedAt": "2026-11-10T16:38:21.670"
+    },
+    {
+      "address": "الف مسكن",
+      "createdAt": "2026-11-10T16:07:19.748",
+      "createdBy": "wahdan",
+      "dailyPrice": 500,
+      "endDate": "2026-11-13T00:00:00.000",
+      "healthCondition": "زهايمر",
+      "id": "cli_ed651c21",
+      "isExistingClient": false,
+      "name": "عبد الباقي",
+      "notes": "",
+      "nurseAssigned": "فاطمه",
+      "nurseDailyPrice": 400,
+      "openingBalance": 0,
+      "phone": "01062749569",
+      "serviceType": "hours24",
+      "startDate": "2026-10-29T00:00:00.000",
+      "status": "completed",
+      "updatedAt": "2026-11-14T17:08:12.608",
+      "terminationReason": "طلب العميل إيقاف الخدمة مؤقتاً"
+    },
+    {
+      "address": "الزيتون",
+      "createdAt": "2026-11-10T16:03:10.059",
+      "createdBy": "wahdan",
+      "dailyPrice": 550,
+      "endDate": "2026-11-10T00:00:00.000",
+      "healthCondition": "زهيمر",
+      "id": "cli_84191f94",
+      "isExistingClient": false,
+      "name": "عمرو",
+      "notes": "",
+      "nurseAssigned": "نهى",
+      "nurseDailyPrice": 450,
+      "openingBalance": 0,
+      "phone": "01001434236",
+      "serviceType": "hours12",
+      "startDate": "2026-11-07T00:00:00.000",
+      "status": "active",
+      "updatedAt": "2026-11-10T16:04:03.882"
+    },
+    {
+      "address": "رابعه العدويه مدينه نصر",
+      "createdAt": "2026-11-10T15:50:49.543",
+      "createdBy": "wahdan",
+      "dailyPrice": 450,
+      "healthCondition": "مسنه",
+      "id": "cli_678010eb",
+      "isExistingClient": false,
+      "name": "ناديه",
+      "notes": "",
+      "nurseAssigned": "هايدي",
+      "nurseDailyPrice": 350,
+      "openingBalance": 0,
+      "phone": "01092153466",
+      "serviceType": "hours24",
+      "startDate": "2026-11-07T00:00:00.000",
+      "status": "active",
+      "updatedAt": "2026-11-10T15:52:14.319"
+    },
+    {
+      "address": "عمار ابن ياسر",
+      "createdAt": "2026-11-10T15:42:25.967",
+      "createdBy": "wahdan",
+      "dailyPrice": 450,
+      "endDate": "2026-11-10T00:00:00.000",
+      "healthCondition": "مسن",
+      "id": "cli_c025fb5c",
+      "isExistingClient": false,
+      "name": "محمد عثمان",
+      "notes": "",
+      "nurseAssigned": "كوثر",
+      "nurseDailyPrice": 350,
+      "openingBalance": 0,
+      "phone": "01009591938",
+      "serviceType": "hours12",
+      "startDate": "2026-11-03T00:00:00.000",
+      "status": "active",
+      "updatedAt": "2026-11-11T19:05:00.213"
+    },
+    {
+      "address": "النزهه الجديد",
+      "createdAt": "2026-11-10T14:50:01.220",
+      "createdBy": "wahdan",
+      "dailyPrice": 321.42,
+      "healthCondition": "مسن",
+      "id": "cli_3ba3dbe3",
+      "isExistingClient": false,
+      "name": "اميره",
+      "notes": "",
+      "nurseAssigned": "هدى",
+      "nurseDailyPrice": 250,
+      "openingBalance": 0,
+      "phone": "01066643278",
+      "serviceType": "hours12",
+      "startDate": "2026-11-10T00:00:00.000",
+      "status": "active",
+      "updatedAt": "2026-11-10T14:52:16.778"
+    },
+    {
+      "address": "مدينة أكتوبر \nالتوسعات الشمالية\nالتعاونيات \nالحى ال  ١١",
+      "createdAt": "2026-11-11T10:40:27.929",
+      "createdBy": "shimaa",
+      "dailyPrice": 0,
+      "healthCondition": "عايزة تمريض رعاية لمريض جلطة دماغية مأثرة على الحركة والوعى والبلع ومتأسترة ومركب فاكيوم و جاسترو \nرجل ٧٧سنة",
+      "id": "cli_e3a85ae4",
+      "isExistingClient": false,
+      "name": "دكتوره مني",
+      "notes": "تم الاتفاق على 1600 في اليوم وهي بلغت انها محتاجه الخدمه التلات والاثنين فقط",
+      "nurseAssigned": "ممرض ولد",
+      "nurseDailyPrice": 0,
+      "openingBalance": 0,
+      "phone": "01001440466",
+      "serviceType": "hours12",
+      "status": "active",
+      "updatedAt": "2026-11-11T16:41:22.295",
+      "endDate": "2026-11-12T00:00:00.000",
+      "startDate": "2026-11-12T00:00:00.000"
+    },
+    {
+      "address": "مدينه نصر",
+      "createdAt": "2026-11-14T22:32:52.025",
+      "createdBy": "wahdan",
+      "dailyPrice": 900,
+      "endDate": "2026-11-19T00:00:00.000",
+      "healthCondition": "مسن",
+      "id": "cli_19d0c98d",
+      "isExistingClient": false,
+      "name": "احمد وصفي",
+      "notes": "مطلوب بديل يوم الخميس القادم",
+      "nurseAssigned": "زينب",
+      "nurseDailyPrice": 700,
+      "openingBalance": 0,
+      "phone": "01001489072",
+      "serviceType": "hours24",
+      "startDate": "2026-11-14T00:00:00.000",
+      "status": "active",
+      "updatedAt": "2026-11-14T22:34:21.581"
     }
   ],
-  "payments": [],
-  "expenses": [
+  "payments": [
     {
-      "amount": 400,
-      "category": "nurse_advance",
-      "createdAt": "2026-11-10T09:48:41.637",
-      "expenseDate": "2026-11-08T00:00:00.000",
-      "id": "exp_088844f8",
+      "amount": 7000,
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "createdAt": "2026-11-10T16:09:06.277",
+      "id": "pay_3b4bde3a",
       "notes": "",
       "paymentChannel": "bank",
-      "recordedBy": "wahdan",
-      "title": "سلفة تمريض: محمود"
+      "paymentDate": "2026-11-10T16:08:50.265",
+      "paymentMethod": "transfer",
+      "receivedBy": "wahdan"
     },
+    {
+      "amount": 2200,
+      "clientId": "cli_84191f94",
+      "clientName": "عمرو",
+      "createdAt": "2026-11-10T16:04:29.350",
+      "id": "pay_ca472821",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-10T16:04:20.760",
+      "paymentMethod": "transfer",
+      "receivedBy": "wahdan"
+    },
+    {
+      "amount": 3600,
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "createdAt": "2026-11-10T15:45:32.493",
+      "id": "pay_131530ed",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-10T15:45:20.376",
+      "paymentMethod": "transfer",
+      "receivedBy": "wahdan"
+    },
+    {
+      "amount": 1926,
+      "clientId": "cli_3ba3dbe3",
+      "clientName": "اميره",
+      "createdAt": "2026-11-10T14:55:04.887",
+      "id": "pay_2a457d84",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-10T14:54:31.053",
+      "paymentMethod": "transfer",
+      "receivedBy": "wahdan"
+    },
+    {
+      "amount": 2250,
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "createdAt": "2026-11-11T17:33:23.711",
+      "id": "pay_0baa49bc",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-11T17:33:13.740",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 5000,
+      "clientId": "cli_c5474aeb",
+      "clientName": "منال",
+      "createdAt": "2026-11-12T07:06:12.622",
+      "id": "pay_8cfa225c",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-12T07:06:01.176",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 6300,
+      "clientId": "cli_678010eb",
+      "clientName": "ناديه",
+      "createdAt": "2026-11-11T18:28:22.291",
+      "id": "pay_316ae59a",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-11T18:28:14.263",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 2625,
+      "clientId": "cli_8c0d8c7d",
+      "clientName": "يسري الاسناوي",
+      "createdAt": "2026-11-12T08:49:00.029",
+      "id": "pay_a9e7b998",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-12T08:48:46.857",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 1500,
+      "clientId": "cli_2e10d0fd",
+      "clientName": "كريم الحسيني",
+      "createdAt": "2026-11-12T12:46:53.361",
+      "id": "pay_a3e3b1ae",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-12T12:46:44.476",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 2750,
+      "clientId": "cli_84191f94",
+      "clientName": "عمرو",
+      "createdAt": "2026-11-14T11:20:59.840",
+      "id": "pay_f74d257e",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-14T11:20:40.687",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 3500,
+      "clientId": "cli_76e68670",
+      "clientName": "هيفاء",
+      "createdAt": "2026-11-14T17:07:08.707",
+      "id": "pay_d052ea19",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-14T17:07:00.878",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 2800,
+      "clientId": "cli_2a197e89",
+      "clientName": "ابتسام",
+      "createdAt": "2026-11-14T13:40:55.930",
+      "id": "pay_5e082b19",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-14T13:40:49.528",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    }
+  ],
+  "expenses": [
     {
       "amount": 1230,
       "category": "nurse_dues",
@@ -258,17 +574,6 @@
       "title": "صرف مستحقات تمريض: شيماء 1"
     },
     {
-      "amount": 1400,
-      "category": "nurse_advance",
-      "createdAt": "2026-11-10T11:12:34.221",
-      "expenseDate": "2026-11-10T11:12:27.778",
-      "id": "exp_6634a1cb",
-      "notes": "",
-      "paymentChannel": "cash",
-      "recordedBy": "wahdan",
-      "title": "سلفة تمريض: سحر"
-    },
-    {
       "amount": 500,
       "category": "nurse_advance",
       "createdAt": "2026-11-10T11:08:46.488",
@@ -278,22 +583,251 @@
       "paymentChannel": "bank",
       "recordedBy": "wahdan",
       "title": "سلفة تمريض: صابرين"
+    },
+    {
+      "amount": 350,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-10T16:39:22.887",
+      "expenseDate": "2026-11-10T16:39:12.976",
+      "id": "exp_cc007282",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "title": "صرف مستحقات تمريض: متغير"
+    },
+    {
+      "amount": 2200,
+      "category": "partner_loan",
+      "createdAt": "2026-11-10T16:31:02.003",
+      "expenseDate": "2026-11-10T16:30:43.896",
+      "id": "exp_b1b98e4c",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "title": "سلفة شريك: أ/ شيماء"
+    },
+    {
+      "amount": 7000,
+      "category": "partner_loan",
+      "createdAt": "2026-11-10T16:30:22.911",
+      "expenseDate": "2026-11-10T16:29:30.524",
+      "id": "exp_7bccf679",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "title": "سلفة شريك: أ/ شيماء"
+    },
+    {
+      "amount": 200,
+      "category": "nurse_advance",
+      "createdAt": "2026-11-10T15:53:06.686",
+      "expenseDate": "2026-11-10T15:52:55.184",
+      "id": "exp_0f86cf96",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "title": "سلفة تمريض: هايدي"
+    },
+    {
+      "amount": 1800,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-11T08:46:16.302",
+      "expenseDate": "2026-11-11T08:46:02.737",
+      "id": "exp_bca4fca5",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "title": "صرف مستحقات تمريض: نورهان"
+    },
+    {
+      "amount": 700,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-11T08:49:15.285",
+      "expenseDate": "2026-11-11T08:49:03.548",
+      "id": "exp_46033fb2",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "title": "صرف مستحقات تمريض: نورهان"
+    },
+    {
+      "amount": 1400,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-11T08:56:55.681",
+      "expenseDate": "2026-11-11T08:56:37.469",
+      "id": "exp_c74b5a31",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "title": "صرف مستحقات تمريض: سحر"
+    },
+    {
+      "amount": 8600,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-11T15:36:43.558",
+      "expenseDate": "2026-11-11T15:36:17.479",
+      "id": "exp_cc5caa69",
+      "notes": "باقي مستحقاتها حتي تاريخ 11 نوفمبر محوله علي حساب ياسر لوقف محفظتها",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: صابرين"
+    },
+    {
+      "amount": 1800,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-12T10:31:00.312",
+      "expenseDate": "2026-11-12T10:30:52.564",
+      "id": "exp_8d7fefae",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: نهى"
+    },
+    {
+      "amount": 2550,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-12T12:43:25.520",
+      "expenseDate": "2026-11-12T12:43:17.039",
+      "id": "exp_b6329fcf",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: هايدي"
+    },
+    {
+      "amount": 800,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-12T12:43:40.362",
+      "expenseDate": "2026-11-12T12:43:34.648",
+      "id": "exp_ddee7fe5",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: محمود"
+    },
+    {
+      "amount": 5600,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-12T13:28:47.857",
+      "expenseDate": "2026-11-12T13:28:40.560",
+      "id": "exp_197240b0",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: فاطمه"
+    },
+    {
+      "amount": 1750,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-12T18:41:08.786",
+      "expenseDate": "2026-11-12T18:41:04.741",
+      "id": "exp_403fc09f",
+      "notes": "",
+      "paymentChannel": "cash",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: هدى"
+    },
+    {
+      "amount": 2100,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-13T17:00:16.396",
+      "expenseDate": "2026-11-13T17:00:10.416",
+      "id": "exp_d36390b1",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: متغير"
+    },
+    {
+      "amount": 1000,
+      "category": "partner_loan",
+      "createdAt": "2026-11-14T11:25:18.918",
+      "expenseDate": "2026-11-14T11:24:54.057",
+      "id": "exp_d8b2d5fe",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "title": "سلفة شريك: أ/ شيماء"
+    },
+    {
+      "amount": 500,
+      "category": "nurse_advance",
+      "createdAt": "2026-11-14T11:58:17.697",
+      "expenseDate": "2026-11-14T11:58:10.679",
+      "id": "exp_734ad164",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "سلفة تمريض: اميره"
+    },
+    {
+      "amount": 400,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-15T12:46:11.512",
+      "expenseDate": "2026-11-15T12:46:02.267",
+      "id": "exp_1ffed145",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: هايدي"
+    },
+    {
+      "amount": 400,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-15T13:03:06.561",
+      "expenseDate": "2026-11-15T13:03:00.825",
+      "id": "exp_b348b6d5",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: محمود"
+    },
+    {
+      "amount": 500,
+      "category": "nurse_advance",
+      "createdAt": "2026-11-16T11:35:13.293",
+      "expenseDate": "2026-11-16T11:35:04.074",
+      "id": "exp_81d228c0",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "سلفة تمريض: هايدي"
+    },
+    {
+      "amount": 400,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-16T12:42:52.392",
+      "expenseDate": "2026-11-16T12:42:48.052",
+      "id": "exp_f1a3df36",
+      "notes": "",
+      "paymentChannel": "cash",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: هايدي"
+    },
+    {
+      "amount": 700,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-16T18:47:59.179",
+      "expenseDate": "2026-11-16T18:47:52.075",
+      "id": "exp_a738bf84",
+      "notes": "",
+      "paymentChannel": "cash",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: اميره"
+    },
+    {
+      "amount": 2150,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-17T11:19:13.800",
+      "expenseDate": "2026-11-17T11:19:05.926",
+      "id": "exp_0dfccfde",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: شيماء 1"
     }
   ],
   "serviceDays": [
-    {
-      "clientId": "cli_2e10d0fd",
-      "clientName": "كريم الحسيني",
-      "clientPrice": 500,
-      "createdAt": "2026-11-10T09:44:33.678",
-      "date": "2026-11-11T09:44:07.387",
-      "id": "day_5ce0facd",
-      "notes": "",
-      "nurseName": "محمود",
-      "nursePrice": 400,
-      "recordedBy": "wahdan",
-      "shiftType": "hours12"
-    },
     {
       "clientId": "cli_2e10d0fd",
       "clientName": "كريم الحسيني",
@@ -306,20 +840,555 @@
       "nursePrice": 400,
       "recordedBy": "wahdan",
       "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-11T23:00:00.000",
+      "id": "day_5117afd1",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-10T23:00:00.000",
+      "id": "day_12401476",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-09T23:00:00.000",
+      "id": "day_ae547d94",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-08T23:00:00.000",
+      "id": "day_185d8fc9",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-07T23:00:00.000",
+      "id": "day_e4ad78f1",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-06T23:00:00.000",
+      "id": "day_a1e412a3",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-05T23:00:00.000",
+      "id": "day_f4bad41f",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-04T23:00:00.000",
+      "id": "day_525ac99b",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-03T23:00:00.000",
+      "id": "day_f29810b5",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-02T23:00:00.000",
+      "id": "day_6a277466",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-11-01T23:00:00.000",
+      "id": "day_09bc2210",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-10-31T23:00:00.000",
+      "id": "day_6dc652a9",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-10-30T23:00:00.000",
+      "id": "day_cc712b7f",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_ed651c21",
+      "clientName": "عبد الباقي",
+      "clientPrice": 500,
+      "createdAt": "2026-11-10T16:11:20.072",
+      "date": "2026-10-29T23:00:00.000",
+      "id": "day_3c140b76",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (15 يوم)",
+      "nurseName": "فاطمه",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_84191f94",
+      "clientName": "عمرو",
+      "clientPrice": 550,
+      "createdAt": "2026-11-10T16:04:03.883",
+      "date": "2026-11-10T00:00:00.000",
+      "id": "day_c4f5fc63",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (4 يوم)",
+      "nurseName": "نهى",
+      "nursePrice": 450,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_84191f94",
+      "clientName": "عمرو",
+      "clientPrice": 550,
+      "createdAt": "2026-11-10T16:04:03.883",
+      "date": "2026-11-09T00:00:00.000",
+      "id": "day_ce9a3264",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (4 يوم)",
+      "nurseName": "نهى",
+      "nursePrice": 450,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_84191f94",
+      "clientName": "عمرو",
+      "clientPrice": 550,
+      "createdAt": "2026-11-10T16:04:03.883",
+      "date": "2026-11-08T00:00:00.000",
+      "id": "day_188b0df4",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (4 يوم)",
+      "nurseName": "نهى",
+      "nursePrice": 450,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_84191f94",
+      "clientName": "عمرو",
+      "clientPrice": 550,
+      "createdAt": "2026-11-10T16:04:03.883",
+      "date": "2026-11-07T00:00:00.000",
+      "id": "day_1dcd5be9",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (4 يوم)",
+      "nurseName": "نهى",
+      "nursePrice": 450,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-10T15:45:01.110",
+      "date": "2026-11-10T00:00:00.000",
+      "id": "day_a5615b52",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم)",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-10T15:45:01.110",
+      "date": "2026-11-09T00:00:00.000",
+      "id": "day_031d829e",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم)",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-10T15:45:01.110",
+      "date": "2026-11-08T00:00:00.000",
+      "id": "day_52264c4a",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم)",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-10T15:45:01.110",
+      "date": "2026-11-07T00:00:00.000",
+      "id": "day_a91b9d60",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم)",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-10T15:45:01.110",
+      "date": "2026-11-06T00:00:00.000",
+      "id": "day_40ede2e6",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم)",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-10T15:45:01.110",
+      "date": "2026-11-05T00:00:00.000",
+      "id": "day_29a5c04e",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم)",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-10T15:45:01.110",
+      "date": "2026-11-04T00:00:00.000",
+      "id": "day_ce35cfe2",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم)",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-10T15:45:01.110",
+      "date": "2026-11-03T00:00:00.000",
+      "id": "day_6a992e99",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم)",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_3ba3dbe3",
+      "clientName": "اميره",
+      "clientPrice": 321,
+      "createdAt": "2026-11-10T14:54:10.655",
+      "date": "2026-11-10T00:00:00.000",
+      "id": "day_f8888c66",
+      "notes": "",
+      "nurseName": "هدى",
+      "nursePrice": 250,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_3ba3dbe3",
+      "clientName": "اميره",
+      "clientPrice": 321,
+      "createdAt": "2026-11-10T14:54:10.655",
+      "date": "2026-11-09T00:00:00.000",
+      "id": "day_0407ce78",
+      "notes": "",
+      "nurseName": "هدى",
+      "nursePrice": 250,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_3ba3dbe3",
+      "clientName": "اميره",
+      "clientPrice": 321,
+      "createdAt": "2026-11-10T14:54:10.655",
+      "date": "2026-11-08T00:00:00.000",
+      "id": "day_a7ec8863",
+      "notes": "",
+      "nurseName": "هدى",
+      "nursePrice": 250,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_3ba3dbe3",
+      "clientName": "اميره",
+      "clientPrice": 321,
+      "createdAt": "2026-11-10T14:54:10.655",
+      "date": "2026-11-07T00:00:00.000",
+      "id": "day_6094096e",
+      "notes": "",
+      "nurseName": "هدى",
+      "nursePrice": 250,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_e3a85ae4",
+      "clientName": "دكتوره مني",
+      "clientPrice": 0,
+      "createdAt": "2026-11-11T16:41:22.297",
+      "date": "2026-11-12T00:00:00.000",
+      "id": "day_5577b2c5",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (1 يوم)",
+      "nurseName": "ممرض ولد",
+      "nursePrice": 0,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-11T17:32:26.473",
+      "date": "2026-11-15T00:00:00.000",
+      "id": "day_8c32a852",
+      "notes": "",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "zezo",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-11T17:32:26.472",
+      "date": "2026-11-14T00:00:00.000",
+      "id": "day_2539176c",
+      "notes": "",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "zezo",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-11T17:32:26.472",
+      "date": "2026-11-13T00:00:00.000",
+      "id": "day_33a4a1f8",
+      "notes": "",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "zezo",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-11T17:32:26.472",
+      "date": "2026-11-12T00:00:00.000",
+      "id": "day_8834fadc",
+      "notes": "",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "zezo",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_c025fb5c",
+      "clientName": "محمد عثمان",
+      "clientPrice": 450,
+      "createdAt": "2026-11-11T17:32:26.472",
+      "date": "2026-11-11T00:00:00.000",
+      "id": "day_d38f239e",
+      "notes": "",
+      "nurseName": "نورهان",
+      "nursePrice": 350,
+      "recordedBy": "zezo",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_19d0c98d",
+      "clientName": "احمد وصفي",
+      "clientPrice": 900,
+      "createdAt": "2026-11-14T22:34:21.583",
+      "date": "2026-11-19T00:00:00.000",
+      "id": "day_a7fba348",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (6 يوم)",
+      "nurseName": "زينب",
+      "nursePrice": 700,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_19d0c98d",
+      "clientName": "احمد وصفي",
+      "clientPrice": 900,
+      "createdAt": "2026-11-14T22:34:21.582",
+      "date": "2026-11-18T00:00:00.000",
+      "id": "day_7cfc93d2",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (6 يوم)",
+      "nurseName": "زينب",
+      "nursePrice": 700,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_19d0c98d",
+      "clientName": "احمد وصفي",
+      "clientPrice": 900,
+      "createdAt": "2026-11-14T22:34:21.582",
+      "date": "2026-11-17T00:00:00.000",
+      "id": "day_9cccbb96",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (6 يوم)",
+      "nurseName": "زينب",
+      "nursePrice": 700,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_19d0c98d",
+      "clientName": "احمد وصفي",
+      "clientPrice": 900,
+      "createdAt": "2026-11-14T22:34:21.582",
+      "date": "2026-11-16T00:00:00.000",
+      "id": "day_42217905",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (6 يوم)",
+      "nurseName": "زينب",
+      "nursePrice": 700,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_19d0c98d",
+      "clientName": "احمد وصفي",
+      "clientPrice": 900,
+      "createdAt": "2026-11-14T22:34:21.582",
+      "date": "2026-11-15T00:00:00.000",
+      "id": "day_c3243e77",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (6 يوم)",
+      "nurseName": "زينب",
+      "nursePrice": 700,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_19d0c98d",
+      "clientName": "احمد وصفي",
+      "clientPrice": 900,
+      "createdAt": "2026-11-14T22:34:21.582",
+      "date": "2026-11-14T00:00:00.000",
+      "id": "day_090aa9a5",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (6 يوم)",
+      "nurseName": "زينب",
+      "nursePrice": 700,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24"
     }
   ],
   "nurseTransactions": [
-    {
-      "amount": 400,
-      "createdAt": "2026-11-10T09:48:41.637",
-      "date": "2026-11-08T00:00:00.000",
-      "id": "ntr_088844f8",
-      "notes": "",
-      "nurseName": "محمود",
-      "paymentChannel": "bank",
-      "recordedBy": "wahdan",
-      "type": "advance"
-    },
     {
       "amount": 1230,
       "createdAt": "2026-11-10T11:25:15.403",
@@ -332,17 +1401,6 @@
       "type": "payout"
     },
     {
-      "amount": 1400,
-      "createdAt": "2026-11-10T11:12:34.221",
-      "date": "2026-11-10T11:12:27.778",
-      "id": "ntr_6634a1cb",
-      "notes": "",
-      "nurseName": "سحر",
-      "paymentChannel": "cash",
-      "recordedBy": "wahdan",
-      "type": "advance"
-    },
-    {
       "amount": 500,
       "createdAt": "2026-11-10T11:08:46.488",
       "date": "2026-11-10T11:08:27.315",
@@ -352,9 +1410,275 @@
       "paymentChannel": "bank",
       "recordedBy": "wahdan",
       "type": "advance"
+    },
+    {
+      "amount": 350,
+      "createdAt": "2026-11-10T16:39:22.887",
+      "date": "2026-11-10T16:39:12.976",
+      "id": "ntr_cc007282",
+      "notes": "",
+      "nurseName": "متغير",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "type": "payout"
+    },
+    {
+      "amount": 200,
+      "createdAt": "2026-11-10T15:53:06.686",
+      "date": "2026-11-10T15:52:55.184",
+      "id": "ntr_0f86cf96",
+      "notes": "",
+      "nurseName": "هايدي",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "type": "advance"
+    },
+    {
+      "amount": 1800,
+      "createdAt": "2026-11-11T08:46:16.302",
+      "date": "2026-11-11T08:46:02.737",
+      "id": "ntr_bca4fca5",
+      "notes": "",
+      "nurseName": "نورهان",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "type": "payout"
+    },
+    {
+      "amount": 700,
+      "createdAt": "2026-11-11T08:49:15.285",
+      "date": "2026-11-11T08:49:03.548",
+      "id": "ntr_46033fb2",
+      "notes": "",
+      "nurseName": "نورهان",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "type": "payout"
+    },
+    {
+      "amount": 1400,
+      "createdAt": "2026-11-11T08:56:55.681",
+      "date": "2026-11-11T08:56:37.469",
+      "id": "ntr_c74b5a31",
+      "notes": "",
+      "nurseName": "سحر",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "type": "payout"
+    },
+    {
+      "amount": 400,
+      "createdAt": "2026-11-11T08:58:04.079",
+      "date": "2026-11-11T08:57:52.474",
+      "id": "ntr_b2394998",
+      "notes": "",
+      "nurseName": "محمود",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "type": "payout"
+    },
+    {
+      "amount": 8600,
+      "createdAt": "2026-11-11T15:36:43.558",
+      "date": "2026-11-11T15:36:17.479",
+      "id": "ntr_cc5caa69",
+      "notes": "باقي مستحقاتها حتي تاريخ 11 نوفمبر محوله علي حساب ياسر لوقف محفظتها",
+      "nurseName": "صابرين",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 1800,
+      "createdAt": "2026-11-12T10:31:00.312",
+      "date": "2026-11-12T10:30:52.564",
+      "id": "ntr_8d7fefae",
+      "notes": "",
+      "nurseName": "نهى",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 2550,
+      "createdAt": "2026-11-12T12:43:25.520",
+      "date": "2026-11-12T12:43:17.039",
+      "id": "ntr_b6329fcf",
+      "notes": "",
+      "nurseName": "هايدي",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 800,
+      "createdAt": "2026-11-12T12:43:40.362",
+      "date": "2026-11-12T12:43:34.648",
+      "id": "ntr_ddee7fe5",
+      "notes": "",
+      "nurseName": "محمود",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 5600,
+      "createdAt": "2026-11-12T13:28:47.857",
+      "date": "2026-11-12T13:28:40.560",
+      "id": "ntr_197240b0",
+      "notes": "",
+      "nurseName": "فاطمه",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 1750,
+      "createdAt": "2026-11-12T18:41:08.784",
+      "date": "2026-11-12T18:41:04.741",
+      "id": "ntr_403fc09f",
+      "notes": "",
+      "nurseName": "هدى",
+      "paymentChannel": "cash",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 2100,
+      "createdAt": "2026-11-13T17:00:16.396",
+      "date": "2026-11-13T17:00:10.416",
+      "id": "ntr_d36390b1",
+      "notes": "",
+      "nurseName": "متغير",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 500,
+      "createdAt": "2026-11-14T11:58:17.697",
+      "date": "2026-11-14T11:58:10.679",
+      "id": "ntr_734ad164",
+      "notes": "",
+      "nurseName": "اميره",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "advance"
+    },
+    {
+      "amount": 400,
+      "createdAt": "2026-11-15T12:46:11.512",
+      "date": "2026-11-15T12:46:02.267",
+      "id": "ntr_1ffed145",
+      "notes": "",
+      "nurseName": "هايدي",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 400,
+      "createdAt": "2026-11-15T13:03:06.561",
+      "date": "2026-11-15T13:03:00.825",
+      "id": "ntr_b348b6d5",
+      "notes": "",
+      "nurseName": "محمود",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 500,
+      "createdAt": "2026-11-16T11:35:13.293",
+      "date": "2026-11-16T11:35:04.074",
+      "id": "ntr_81d228c0",
+      "notes": "",
+      "nurseName": "هايدي",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "advance"
+    },
+    {
+      "amount": 400,
+      "createdAt": "2026-11-16T12:42:52.392",
+      "date": "2026-11-16T12:42:48.052",
+      "id": "ntr_f1a3df36",
+      "notes": "",
+      "nurseName": "هايدي",
+      "paymentChannel": "cash",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 700,
+      "createdAt": "2026-11-16T18:47:59.179",
+      "date": "2026-11-16T18:47:52.075",
+      "id": "ntr_a738bf84",
+      "notes": "",
+      "nurseName": "اميره",
+      "paymentChannel": "cash",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 2150,
+      "createdAt": "2026-11-17T11:19:13.800",
+      "date": "2026-11-17T11:19:05.926",
+      "id": "ntr_0dfccfde",
+      "notes": "",
+      "nurseName": "شيماء 1",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
     }
   ],
-  "partnerLoans": [],
+  "partnerLoans": [
+    {
+      "createdAt": "2026-11-10T16:31:02.003",
+      "date": "2026-11-10T16:30:43.896",
+      "id": "loan_b1b98e4c",
+      "installmentMonths": 1,
+      "monthlyDeduction": 2200,
+      "notes": "",
+      "paidAmount": 0,
+      "partnerName": "أ/ شيماء",
+      "partnerUsername": "shimaa",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "repaymentType": "single",
+      "totalAmount": 2200
+    },
+    {
+      "createdAt": "2026-11-10T16:30:22.911",
+      "date": "2026-11-10T16:29:30.524",
+      "id": "loan_7bccf679",
+      "installmentMonths": 7,
+      "monthlyDeduction": 1000,
+      "notes": "",
+      "paidAmount": 0,
+      "partnerName": "أ/ شيماء",
+      "partnerUsername": "shimaa",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "repaymentType": "installments",
+      "totalAmount": 7000
+    },
+    {
+      "createdAt": "2026-11-14T11:25:18.918",
+      "date": "2026-11-14T11:24:54.057",
+      "id": "loan_d8b2d5fe",
+      "installmentMonths": 1,
+      "monthlyDeduction": 1000,
+      "notes": "",
+      "paidAmount": 0,
+      "partnerName": "أ/ شيماء",
+      "partnerUsername": "shimaa",
+      "paymentChannel": "bank",
+      "recordedBy": "wahdan",
+      "repaymentType": "single",
+      "totalAmount": 1000
+    }
+  ],
   "partnerSettlements": [],
   "users": [
     {
@@ -472,6 +1796,1224 @@
       "userId": "usr_shimaa",
       "userName": "أ/ شيماء",
       "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "expense",
+      "description": "تم تسجيل مصروف: حساب نورهان بقيمة 700 ج.م (الحساب البنكي)",
+      "id": "ntf_d7193d25",
+      "metadata": {
+        "amount": 700,
+        "title": "حساب نورهان"
+      },
+      "timestamp": "2026-11-11T05:48:39.855",
+      "title": "تسجيل مصروف جديد",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "user_permissions",
+      "description": "تم تعديل صلاحيات المستخدم: أ/ شيماء",
+      "id": "ntf_133e9991",
+      "timestamp": "2026-11-10T17:49:14.331",
+      "title": "تعديل صلاحيات مستخدم",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "balances",
+      "description": "تم تحديث أرصدة الخزينة (بنك: 0 ج.م | محفظة: 0 ج.م | كاش: 0 ج.م)",
+      "id": "ntf_8c6a7df8",
+      "timestamp": "2026-11-10T16:44:55.949",
+      "title": "تعديل الأرصدة الافتتاحية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "balances",
+      "description": "تم تحديث أرصدة الخزينة (بنك: 66034 ج.م | محفظة: 0 ج.م | كاش: 0 ج.م)",
+      "id": "ntf_91c5f5ea",
+      "timestamp": "2026-11-10T16:41:00.644",
+      "title": "تعديل الأرصدة الافتتاحية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: متغير بمبلغ 350 ج.م (الحساب البنكي)",
+      "id": "ntf_c7830dc4",
+      "metadata": {
+        "amount": 350,
+        "nurseName": "متغير"
+      },
+      "timestamp": "2026-11-10T16:39:22.887",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: يسري الاسناوي (مدة مفتوحة) - التمريض: متغير",
+      "id": "ntf_930f181f",
+      "metadata": {
+        "clientId": "cli_8c0d8c7d",
+        "clientName": "يسري الاسناوي"
+      },
+      "timestamp": "2026-11-10T16:38:21.670",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: يسري الاسناوي (السعر اليومي: 375 ج.م - يومية التمريض: 350 ج.م)",
+      "id": "ntf_7c9fade5",
+      "metadata": {
+        "clientName": "يسري الاسناوي",
+        "dailyPrice": 375
+      },
+      "timestamp": "2026-11-10T16:37:28.398",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "partner_loan",
+      "description": "تم تسجيل سلفة للشريك: أ/ شيماء بمبلغ 2200 ج.م (الحساب البنكي)",
+      "id": "ntf_13444112",
+      "metadata": {
+        "amount": 2200,
+        "partnerName": "أ/ شيماء"
+      },
+      "timestamp": "2026-11-10T16:31:02.003",
+      "title": "تسجيل سلفة شريك",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "partner_loan",
+      "description": "تم تسجيل سلفة للشريك: أ/ شيماء بمبلغ 7000 ج.م (الحساب البنكي)",
+      "id": "ntf_2286d253",
+      "metadata": {
+        "amount": 7000,
+        "partnerName": "أ/ شيماء"
+      },
+      "timestamp": "2026-11-10T16:30:22.912",
+      "title": "تسجيل سلفة شريك",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_advance",
+      "description": "تم تسجيل سلفة تمريض للممرض: نورهان بمبلغ 1800 ج.م (الحساب البنكي)",
+      "id": "ntf_957d1e2a",
+      "metadata": {
+        "amount": 1800,
+        "nurseName": "نورهان"
+      },
+      "timestamp": "2026-11-10T16:16:08.221",
+      "title": "تسجيل سلفة تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "delete_expense",
+      "description": "تم حذف مصروف: سلفة تمريض: نورهان بقيمة 1800 ج.م",
+      "id": "ntf_f4c9ca56",
+      "timestamp": "2026-11-10T16:15:36.576",
+      "title": "حذف مصروف",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_advance",
+      "description": "تم تسجيل سلفة تمريض للممرض: سحر بمبلغ 1400 ج.م (الحساب البنكي)",
+      "id": "ntf_3a7e10e0",
+      "metadata": {
+        "amount": 1400,
+        "nurseName": "سحر"
+      },
+      "timestamp": "2026-11-10T16:15:23.326",
+      "title": "تسجيل سلفة تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "delete_expense",
+      "description": "تم حذف مصروف: سلفة تمريض: سحر بقيمة 1400 ج.م",
+      "id": "ntf_4ab9cd0f",
+      "timestamp": "2026-11-10T16:15:00.311",
+      "title": "حذف مصروف",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "balances",
+      "description": "تم تحديث أرصدة الخزينة (بنك: 0 ج.م | محفظة: 0 ج.م | كاش: 0 ج.م)",
+      "id": "ntf_95d90447",
+      "timestamp": "2026-11-10T16:13:54.225",
+      "title": "تعديل الأرصدة الافتتاحية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: عبد الباقي (من 2026/10/29 إلى 2026/11/12) - التمريض: فاطمه",
+      "id": "ntf_1a4b0952",
+      "metadata": {
+        "clientId": "cli_ed651c21",
+        "clientName": "عبد الباقي"
+      },
+      "timestamp": "2026-11-10T16:11:20.080",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 15 يوم خدمة للعميل: عبد الباقي - التمريض: فاطمه (hours24)",
+      "id": "ntf_e9dec4a2",
+      "metadata": {
+        "clientId": "cli_ed651c21",
+        "clientName": "عبد الباقي",
+        "daysCount": 15
+      },
+      "timestamp": "2026-11-10T16:11:20.072",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 14 يوم خدمة للعميل: عبد الباقي - التمريض: فاطمه (hours24)",
+      "id": "ntf_08c5939d",
+      "metadata": {
+        "clientId": "cli_ed651c21",
+        "clientName": "عبد الباقي",
+        "daysCount": 14
+      },
+      "timestamp": "2026-11-10T16:10:43.796",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 7000 ج.م من العميل: عبد الباقي (الحساب البنكي)",
+      "id": "ntf_344bebbc",
+      "metadata": {
+        "amount": 7000,
+        "clientId": "cli_ed651c21",
+        "clientName": "عبد الباقي"
+      },
+      "timestamp": "2026-11-10T16:09:06.277",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 14 يوم خدمة للعميل: عبد الباقي - التمريض: فاطمه (hours24) (من 06:00 م إلى 06:00 م)",
+      "id": "ntf_b3cbd635",
+      "metadata": {
+        "clientId": "cli_ed651c21",
+        "clientName": "عبد الباقي",
+        "daysCount": 14
+      },
+      "timestamp": "2026-11-10T16:08:44.954",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: عبد الباقي (السعر اليومي: 500 ج.م - يومية التمريض: 400 ج.م)",
+      "id": "ntf_9dce3c53",
+      "metadata": {
+        "clientName": "عبد الباقي",
+        "dailyPrice": 500
+      },
+      "timestamp": "2026-11-10T16:07:19.748",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2200 ج.م من العميل: عمرو (الحساب البنكي)",
+      "id": "ntf_e2e1fb83",
+      "metadata": {
+        "amount": 2200,
+        "clientId": "cli_84191f94",
+        "clientName": "عمرو"
+      },
+      "timestamp": "2026-11-10T16:04:29.350",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: عمرو (من 2026/11/07 إلى 2026/11/10) - التمريض: نهى",
+      "id": "ntf_871df4d5",
+      "metadata": {
+        "clientId": "cli_84191f94",
+        "clientName": "عمرو"
+      },
+      "timestamp": "2026-11-10T16:04:03.892",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 4 يوم خدمة للعميل: عمرو - التمريض: نهى (hours12)",
+      "id": "ntf_c42a7885",
+      "metadata": {
+        "clientId": "cli_84191f94",
+        "clientName": "عمرو",
+        "daysCount": 4
+      },
+      "timestamp": "2026-11-10T16:04:03.883",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: عمرو (السعر اليومي: 550 ج.م - يومية التمريض: 450 ج.م)",
+      "id": "ntf_0557f6fe",
+      "metadata": {
+        "clientName": "عمرو",
+        "dailyPrice": 550
+      },
+      "timestamp": "2026-11-10T16:03:10.059",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "delete_client",
+      "description": "تم حذف العميل: عمرو من النظام",
+      "id": "ntf_6d4d0e0e",
+      "timestamp": "2026-11-10T16:02:32.429",
+      "title": "حذف عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "delete_payment",
+      "description": "تم حذف دفعة بقيمة 2200 ج.م للعميل: عمرو",
+      "id": "ntf_5c678481",
+      "timestamp": "2026-11-10T16:01:08.382",
+      "title": "حذف دفعة نقدية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2200 ج.م من العميل: عمرو (الحساب البنكي)",
+      "id": "ntf_0eb7395d",
+      "metadata": {
+        "amount": 2200,
+        "clientId": "cli_c6b984f8",
+        "clientName": "عمرو"
+      },
+      "timestamp": "2026-11-10T15:59:25.532",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: عمرو (من 2026/11/10 إلى 2026/11/17) - التمريض: نهى",
+      "id": "ntf_271ebc92",
+      "metadata": {
+        "clientId": "cli_c6b984f8",
+        "clientName": "عمرو"
+      },
+      "timestamp": "2026-11-10T15:59:02.740",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 8 يوم خدمة للعميل: عمرو - التمريض: نهى (hours24)",
+      "id": "ntf_bea96962",
+      "metadata": {
+        "clientId": "cli_c6b984f8",
+        "clientName": "عمرو",
+        "daysCount": 8
+      },
+      "timestamp": "2026-11-10T15:59:02.734",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2200 ج.م من العميل: عمرو (الحساب البنكي)",
+      "id": "ntf_89145c7f",
+      "metadata": {
+        "amount": 2200,
+        "clientId": "cli_c6b984f8",
+        "clientName": "عمرو"
+      },
+      "timestamp": "2026-11-10T15:58:52.154",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 4 يوم خدمة للعميل: عمرو - التمريض: نهى (hours24)",
+      "id": "ntf_a3ec5347",
+      "metadata": {
+        "clientId": "cli_c6b984f8",
+        "clientName": "عمرو",
+        "daysCount": 4
+      },
+      "timestamp": "2026-11-10T15:58:17.213",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: عمرو (السعر اليومي: 550 ج.م - يومية التمريض: 450 ج.م)",
+      "id": "ntf_1ee1194c",
+      "metadata": {
+        "clientName": "عمرو",
+        "dailyPrice": 550
+      },
+      "timestamp": "2026-11-10T15:57:21.125",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_advance",
+      "description": "تم تسجيل سلفة تمريض للممرض: هايدي بمبلغ 200 ج.م (الحساب البنكي)",
+      "id": "ntf_5d141a9e",
+      "metadata": {
+        "amount": 200,
+        "nurseName": "هايدي"
+      },
+      "timestamp": "2026-11-10T15:53:06.686",
+      "title": "تسجيل سلفة تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: ناديه (مدة مفتوحة) - التمريض: هايدي",
+      "id": "ntf_e5384dad",
+      "metadata": {
+        "clientId": "cli_678010eb",
+        "clientName": "ناديه"
+      },
+      "timestamp": "2026-11-10T15:52:14.319",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: ناديه (السعر اليومي: 450 ج.م - يومية التمريض: 350 ج.م)",
+      "id": "ntf_f115c11b",
+      "metadata": {
+        "clientName": "ناديه",
+        "dailyPrice": 450
+      },
+      "timestamp": "2026-11-10T15:50:49.543",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_advance",
+      "description": "تم تسجيل سلفة تمريض للممرض: نورهان بمبلغ 1800 ج.م (الخزينة كاش)",
+      "id": "ntf_c000da75",
+      "metadata": {
+        "amount": 1800,
+        "nurseName": "نورهان"
+      },
+      "timestamp": "2026-11-10T15:46:08.853",
+      "title": "تسجيل سلفة تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 3600 ج.م من العميل: محمد عثمان (الحساب البنكي)",
+      "id": "ntf_94a4502c",
+      "metadata": {
+        "amount": 3600,
+        "clientId": "cli_c025fb5c",
+        "clientName": "محمد عثمان"
+      },
+      "timestamp": "2026-11-10T15:45:32.493",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: محمد عثمان (من 2026/11/03 إلى 2026/11/10) - التمريض: نورهان",
+      "id": "ntf_45ade6c9",
+      "metadata": {
+        "clientId": "cli_c025fb5c",
+        "clientName": "محمد عثمان"
+      },
+      "timestamp": "2026-11-10T15:45:01.115",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 8 يوم خدمة للعميل: محمد عثمان - التمريض: نورهان (hours12)",
+      "id": "ntf_129fb00a",
+      "metadata": {
+        "clientId": "cli_c025fb5c",
+        "clientName": "محمد عثمان",
+        "daysCount": 8
+      },
+      "timestamp": "2026-11-10T15:45:01.110",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 8 يوم خدمة للعميل: محمد عثمان - التمريض: نورهان (hours12) (من 11:00 ص إلى 11:00 م)",
+      "id": "ntf_69a893b1",
+      "metadata": {
+        "clientId": "cli_c025fb5c",
+        "clientName": "محمد عثمان",
+        "daysCount": 8
+      },
+      "timestamp": "2026-11-10T15:43:41.934",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: محمد عثمان (السعر اليومي: 450 ج.م - يومية التمريض: 350 ج.م)",
+      "id": "ntf_a2552e59",
+      "metadata": {
+        "clientName": "محمد عثمان",
+        "dailyPrice": 450
+      },
+      "timestamp": "2026-11-10T15:42:25.967",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 1926 ج.م من العميل: اميره (الحساب البنكي)",
+      "id": "ntf_c8f5a3fa",
+      "metadata": {
+        "amount": 1926,
+        "clientId": "cli_3ba3dbe3",
+        "clientName": "امير��"
+      },
+      "timestamp": "2026-11-10T14:55:04.887",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 4 يوم خدمة للعميل: اميره - التمريض: هدى (hours12)",
+      "id": "ntf_937bdebd",
+      "metadata": {
+        "clientId": "cli_3ba3dbe3",
+        "clientName": "اميره",
+        "daysCount": 4
+      },
+      "timestamp": "2026-11-10T14:54:10.655",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: اميره (مدة مفتوحة) - التمريض: هدى",
+      "id": "ntf_68c07509",
+      "metadata": {
+        "clientId": "cli_3ba3dbe3",
+        "clientName": "اميره"
+      },
+      "timestamp": "2026-11-10T14:52:16.779",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: اميره (السعر اليومي: 321 ج.م - يومية التمريض: 250 ج.م)",
+      "id": "ntf_f7134d6a",
+      "metadata": {
+        "clientName": "اميره",
+        "dailyPrice": 321.42
+      },
+      "timestamp": "2026-11-10T14:50:01.220",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "delete_expense",
+      "description": "تم حذف مصروف: سلفة تمريض: نورهان بقيمة 1800 ج.م",
+      "id": "ntf_af6ced50",
+      "timestamp": "2026-11-11T08:44:00.015",
+      "title": "حذف مصروف",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: نورهان بمبلغ 1800 ج.م (الحساب البنكي)",
+      "id": "ntf_8fb865ae",
+      "metadata": {
+        "amount": 1800,
+        "nurseName": "نورهان"
+      },
+      "timestamp": "2026-11-11T08:46:16.303",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_trans",
+      "description": "تم حذف معاملة للممرض: نورهان بقيمة 1800 ج.م",
+      "id": "ntf_aa353d4f",
+      "timestamp": "2026-11-11T08:47:47.823",
+      "title": "حذف معاملة تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_trans",
+      "description": "تم حذف معاملة للممرض: نورهان بقيمة 1800 ج.م",
+      "id": "ntf_247b8220",
+      "timestamp": "2026-11-11T08:47:53.797",
+      "title": "حذف معاملة تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "delete_expense",
+      "description": "تم حذف مصروف: حساب نورهان بقيمة 700 ج.م",
+      "id": "ntf_8df91a60",
+      "timestamp": "2026-11-11T08:48:39.763",
+      "title": "حذف مصروف",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: نورهان بمبلغ 700 ج.م (الحساب البنكي)",
+      "id": "ntf_04618cd6",
+      "metadata": {
+        "amount": 700,
+        "nurseName": "نورهان"
+      },
+      "timestamp": "2026-11-11T08:49:15.285",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_trans",
+      "description": "تم حذف معاملة ل��ممرض: سحر بقيمة 1400 ج.م",
+      "id": "ntf_9c38ae3b",
+      "timestamp": "2026-11-11T08:56:27.817",
+      "title": "حذف معاملة تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_trans",
+      "description": "تم حذف معاملة للممرض: سحر بقيمة 1400 ج.م",
+      "id": "ntf_d08b2800",
+      "timestamp": "2026-11-11T08:56:25.846",
+      "title": "حذف معاملة تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: سحر بمبلغ 1400 ج.م (الحساب البنكي)",
+      "id": "ntf_a08275c1",
+      "metadata": {
+        "amount": 1400,
+        "nurseName": "سحر"
+      },
+      "timestamp": "2026-11-11T08:56:55.681",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_trans",
+      "description": "تم حذف معاملة للممرض: محمود بقيمة 400 ج.م",
+      "id": "ntf_fa082991",
+      "timestamp": "2026-11-11T08:57:51.231",
+      "title": "حذف معاملة تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: محمود بمبلغ 400 ج.م (الحساب البنكي)",
+      "id": "ntf_da3c0a09",
+      "metadata": {
+        "amount": 400,
+        "nurseName": "محمود"
+      },
+      "timestamp": "2026-11-11T08:58:04.079",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "delete_expense",
+      "description": "تم حذف مصروف: صرف مستحقات تمريض: محمود بقيمة 400 ج.م",
+      "id": "ntf_17bc21d2",
+      "timestamp": "2026-11-11T08:59:05.633",
+      "title": "حذف مصروف",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: دكتوره مني (السعر اليومي: 0 ج.م - يومية التمريض: 0 ج.م)",
+      "id": "ntf_2bcc7816",
+      "metadata": {
+        "clientName": "دكتوره مني",
+        "dailyPrice": 0
+      },
+      "timestamp": "2026-11-11T10:40:27.930",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_shimaa",
+      "userName": "أ/ شيماء",
+      "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: صابرين بمبلغ 8600 ج.م (الحساب البنكي)",
+      "id": "ntf_fa5be6c2",
+      "metadata": {
+        "amount": 8600,
+        "nurseName": "صابرين"
+      },
+      "timestamp": "2026-11-11T15:36:43.558",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: دكتوره مني (من 2026/11/12 إلى 2026/11/12) - التمريض: ممرض ولد",
+      "id": "ntf_e57ae9c5",
+      "metadata": {
+        "clientId": "cli_e3a85ae4",
+        "clientName": "دكتوره مني"
+      },
+      "timestamp": "2026-11-11T16:41:22.316",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 1 يوم خدمة للعميل: دكتوره مني - التمريض: ممرض ولد (hours12)",
+      "id": "ntf_d8c4dbb1",
+      "metadata": {
+        "clientId": "cli_e3a85ae4",
+        "clientName": "دكتوره مني",
+        "daysCount": 1
+      },
+      "timestamp": "2026-11-11T16:41:22.298",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 5 يوم خدمة للعميل: محمد عثمان - التمريض: نورهان (hours12)",
+      "id": "ntf_a67ba697",
+      "metadata": {
+        "clientId": "cli_c025fb5c",
+        "clientName": "محمد عثمان",
+        "daysCount": 5
+      },
+      "timestamp": "2026-11-11T17:32:26.473",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2250 ج.م من العميل: محمد عثمان (الحساب البنكي)",
+      "id": "ntf_f14a1c5a",
+      "metadata": {
+        "amount": 2250,
+        "clientId": "cli_c025fb5c",
+        "clientName": "محمد عثمان"
+      },
+      "timestamp": "2026-11-11T17:33:23.712",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 5000 ج.م من العميل: منال (الحساب البنكي)",
+      "id": "ntf_10d522e6",
+      "metadata": {
+        "amount": 5000,
+        "clientId": "cli_c5474aeb",
+        "clientName": "منال"
+      },
+      "timestamp": "2026-11-12T07:06:12.623",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "edit_client",
+      "description": "تم تعديل بيانات العميل: محمد عثمان",
+      "id": "ntf_53e2f847",
+      "metadata": {
+        "clientId": "cli_c025fb5c",
+        "clientName": "محمد عثمان"
+      },
+      "timestamp": "2026-11-11T19:05:00.215",
+      "title": "تعديل بيانات عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 6300 ج.م من العميل: ناديه (الحساب البنكي)",
+      "id": "ntf_8a1c3aed",
+      "metadata": {
+        "amount": 6300,
+        "clientId": "cli_678010eb",
+        "clientName": "ناديه"
+      },
+      "timestamp": "2026-11-11T18:28:22.291",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2625 ج.م من العميل: يسري الاسناوي (الحساب البنكي)",
+      "id": "ntf_63552afb",
+      "metadata": {
+        "amount": 2625,
+        "clientId": "cli_8c0d8c7d",
+        "clientName": "يسري الاسناوي"
+      },
+      "timestamp": "2026-11-12T08:49:00.030",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: نهى بمبلغ 1800 ج.م (الحساب البنكي)",
+      "id": "ntf_77d7de97",
+      "metadata": {
+        "amount": 1800,
+        "nurseName": "نهى"
+      },
+      "timestamp": "2026-11-12T10:31:00.312",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: هايدي بمبلغ 2550 ج.م (الحساب البنكي)",
+      "id": "ntf_543ff6c8",
+      "metadata": {
+        "amount": 2550,
+        "nurseName": "هايدي"
+      },
+      "timestamp": "2026-11-12T12:43:25.520",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: محمود بمبلغ 800 ج.م (الحساب البنكي)",
+      "id": "ntf_398c040d",
+      "metadata": {
+        "amount": 800,
+        "nurseName": "محمود"
+      },
+      "timestamp": "2026-11-12T12:43:40.362",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 1500 ج.م من العميل: كريم الحسيني (الحساب البنكي)",
+      "id": "ntf_4ed22cca",
+      "metadata": {
+        "amount": 1500,
+        "clientId": "cli_2e10d0fd",
+        "clientName": "كريم الحسيني"
+      },
+      "timestamp": "2026-11-12T12:46:53.361",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم حذف يوم خدمة للعميل: كريم الحسيني (التمريض: محمود)",
+      "id": "ntf_4edc9852",
+      "timestamp": "2026-11-12T12:47:01.417",
+      "title": "حذف يوم خدمة",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: فاطمه بمبلغ 5600 ج.م (الحساب البنكي)",
+      "id": "ntf_d083ceb3",
+      "metadata": {
+        "amount": 5600,
+        "nurseName": "فاطمه"
+      },
+      "timestamp": "2026-11-12T13:28:47.857",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: هدى بمبلغ 1750 ج.م (الخزينة كاش)",
+      "id": "ntf_f2352e1e",
+      "metadata": {
+        "amount": 1750,
+        "nurseName": "هدى"
+      },
+      "timestamp": "2026-11-12T18:41:08.787",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: متغير بمبلغ 2100 ج.م (الحساب البنكي)",
+      "id": "ntf_ef591c6f",
+      "metadata": {
+        "amount": 2100,
+        "nurseName": "متغير"
+      },
+      "timestamp": "2026-11-13T17:00:16.397",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2750 ج.م من العميل: عمرو (الحساب البنكي)",
+      "id": "ntf_7dce2e24",
+      "metadata": {
+        "amount": 2750,
+        "clientId": "cli_84191f94",
+        "clientName": "عمرو"
+      },
+      "timestamp": "2026-11-14T11:20:59.841",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "partner_loan",
+      "description": "تم تسجيل سلفة للشريك: أ/ شيماء بمبلغ 1000 ج.م (الحساب البنكي)",
+      "id": "ntf_ad9ab765",
+      "metadata": {
+        "amount": 1000,
+        "partnerName": "أ/ شيماء"
+      },
+      "timestamp": "2026-11-14T11:25:18.918",
+      "title": "تسجيل سلفة شريك",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_advance",
+      "description": "تم تسجيل سلفة تمريض للممرض: اميره بمبلغ 500 ج.م (الحساب البنكي)",
+      "id": "ntf_082f39ee",
+      "metadata": {
+        "amount": 500,
+        "nurseName": "اميره"
+      },
+      "timestamp": "2026-11-14T11:58:17.697",
+      "title": "تسجيل سلفة تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: احمد وصفي (من 2026/11/14 إلى 2026/11/19) - التمريض: زينب",
+      "id": "ntf_20fdd094",
+      "metadata": {
+        "clientId": "cli_19d0c98d",
+        "clientName": "احمد وصفي"
+      },
+      "timestamp": "2026-11-14T22:34:21.593",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 6 يوم خدمة للعميل: احمد وصفي - التمريض: زينب (hours24)",
+      "id": "ntf_1db710a6",
+      "metadata": {
+        "clientId": "cli_19d0c98d",
+        "clientName": "احمد وصفي",
+        "daysCount": 6
+      },
+      "timestamp": "2026-11-14T22:34:21.583",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: احمد وصفي (السعر اليومي: 900 ج.م - يومية التمريض: 700 ج.م)",
+      "id": "ntf_edd31a53",
+      "metadata": {
+        "clientName": "احمد وصفي",
+        "dailyPrice": 900
+      },
+      "timestamp": "2026-11-14T22:32:52.025",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "end_service",
+      "description": "تم إنهاء خدمة العميل: عبد الباقي (السبب: طلب العميل إيقاف الخدمة مؤقتاً)",
+      "id": "ntf_c280f390",
+      "metadata": {
+        "clientId": "cli_ed651c21",
+        "clientName": "عبد الباقي"
+      },
+      "timestamp": "2026-11-14T17:08:12.608",
+      "title": "إنهاء خدمة عميل",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 3500 ج.م من العميل: هيفاء (الحساب البنكي)",
+      "id": "ntf_ac60a53f",
+      "metadata": {
+        "amount": 3500,
+        "clientId": "cli_76e68670",
+        "clientName": "هيفاء"
+      },
+      "timestamp": "2026-11-14T17:07:08.708",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2800 ج.م من العميل: ابتسام (الحساب البنكي)",
+      "id": "ntf_71225ff1",
+      "metadata": {
+        "amount": 2800,
+        "clientId": "cli_2a197e89",
+        "clientName": "ابتسام"
+      },
+      "timestamp": "2026-11-14T13:40:55.931",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: هايدي بمبلغ 400 ج.م (الحساب البنكي)",
+      "id": "ntf_51ba95e2",
+      "metadata": {
+        "amount": 400,
+        "nurseName": "هايدي"
+      },
+      "timestamp": "2026-11-15T12:46:11.513",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: محمود بمبلغ 400 ج.م (الحساب البنكي)",
+      "id": "ntf_90ae9a5e",
+      "metadata": {
+        "amount": 400,
+        "nurseName": "محمود"
+      },
+      "timestamp": "2026-11-15T13:03:06.561",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_advance",
+      "description": "تم تسجيل سلفة تمريض للممرض: هايدي بمبلغ 500 ج.م (الحساب البنكي)",
+      "id": "ntf_f4181f67",
+      "metadata": {
+        "amount": 500,
+        "nurseName": "هايدي"
+      },
+      "timestamp": "2026-11-16T11:35:13.294",
+      "title": "تسجيل سلفة تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: هايدي بمبلغ 400 ج.م (الخزينة كاش)",
+      "id": "ntf_33049346",
+      "metadata": {
+        "amount": 400,
+        "nurseName": "هايدي"
+      },
+      "timestamp": "2026-11-16T12:42:52.392",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: اميره بمبلغ 700 ج.م (الخزينة كاش)",
+      "id": "ntf_f1c69a7f",
+      "metadata": {
+        "amount": 700,
+        "nurseName": "اميره"
+      },
+      "timestamp": "2026-11-16T18:47:59.180",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: شيماء 1 بمبلغ 2150 ج.م (الحساب البنكي)",
+      "id": "ntf_3639b90d",
+      "metadata": {
+        "amount": 2150,
+        "nurseName": "شيماء 1"
+      },
+      "timestamp": "2026-11-17T11:19:13.801",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
     }
   ]
 }

@@ -22,6 +22,10 @@ class CaregiverModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String createdBy; // wahdan / shimaa
+  final bool hasLoginAccount; // هل لديه حساب دخول للنظام
+  final String? loginUsername; // اسم المستخدم للدخول
+  final String? loginPassword; // كلمة المرور للدخول
+  final DateTime? lastSmsSentAt; // تاريخ ووقت آخر إرسال لرسالة SMS
 
   CaregiverModel({
     required this.id,
@@ -47,6 +51,10 @@ class CaregiverModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.createdBy = 'shimaa',
+    this.hasLoginAccount = false,
+    this.loginUsername,
+    this.loginPassword,
+    this.lastSmsSentAt,
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
@@ -94,6 +102,10 @@ class CaregiverModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? createdBy,
+    bool? hasLoginAccount,
+    String? loginUsername,
+    String? loginPassword,
+    DateTime? lastSmsSentAt,
   }) {
     return CaregiverModel(
       id: id ?? this.id,
@@ -119,6 +131,10 @@ class CaregiverModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
       createdBy: createdBy ?? this.createdBy,
+      hasLoginAccount: hasLoginAccount ?? this.hasLoginAccount,
+      loginUsername: loginUsername ?? this.loginUsername,
+      loginPassword: loginPassword ?? this.loginPassword,
+      lastSmsSentAt: lastSmsSentAt ?? this.lastSmsSentAt,
     );
   }
 
@@ -147,6 +163,10 @@ class CaregiverModel {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'createdBy': createdBy,
+      'hasLoginAccount': hasLoginAccount,
+      'loginUsername': loginUsername,
+      'loginPassword': loginPassword,
+      'lastSmsSentAt': lastSmsSentAt?.toIso8601String(),
     };
   }
 
@@ -175,6 +195,10 @@ class CaregiverModel {
       createdAt: map['createdAt'] != null ? DateTime.tryParse(map['createdAt']) : null,
       updatedAt: map['updatedAt'] != null ? DateTime.tryParse(map['updatedAt']) : null,
       createdBy: map['createdBy'] ?? 'shimaa',
+      hasLoginAccount: map['hasLoginAccount'] ?? false,
+      loginUsername: map['loginUsername'],
+      loginPassword: map['loginPassword'],
+      lastSmsSentAt: map['lastSmsSentAt'] != null ? DateTime.tryParse(map['lastSmsSentAt']) : null,
     );
   }
 }

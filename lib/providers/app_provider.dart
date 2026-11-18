@@ -2,6 +2,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../models/app_notification_model.dart';
 import '../models/period_financial_summary.dart';
 import '../services/sound_service.dart';
+import '../services/sms_service.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -678,8 +679,29 @@ class AppProvider extends ChangeNotifier {
       }
     }
 
+    // Check nurse accounts by phone or caregiver code if not found yet
     if (foundUser == null) {
-      loginError = 'اسم المستخدم غير مسجل، يرجى كتابة wahdan أو zezo أو shimaa';
+      final cleanDigits = cleanUser.replaceAll(RegExp(r'[^0-9]'), '');
+      for (var u in _users) {
+        if (u.roleType == 'nurse') {
+          final phoneDigits = (u.phone ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+          if (cleanDigits.isNotEmpty && phoneDigits.isNotEmpty && (phoneDigits == cleanDigits || phoneDigits.endsWith(cleanDigits) || cleanDigits.endsWith(phoneDigits))) {
+            foundUser = u;
+            break;
+          }
+          if (u.caregiverId != null) {
+            final cgMatch = _caregivers.where((c) => c.id == u.caregiverId).toList();
+            if (cgMatch.isNotEmpty && cgMatch.first.code.toLowerCase() == cleanUser) {
+              foundUser = u;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (foundUser == null) {
+      loginError = 'اسم المستخدم أو رقم الهاتف غير مسجل بالنظام';
       notifyListeners();
       return false;
     }
@@ -909,7 +931,7 @@ class AppProvider extends ChangeNotifier {
           : 'من ${DateFormat('yyyy/MM/dd').format(start)} إلى ${end != null ? DateFormat('yyyy/MM/dd').format(end) : ''}';
       await _logAction(
         title: 'بدء خدمة عميل',
-        description: 'تم بدء الخدمة للعميل: ${current.name} (${durStr}) - التمريض: ${nurse ?? "غير محدد"}',
+        description: 'تم بدء الخدمة للعميل: ${current.name} ($durStr) - التمريض: ${nurse ?? "غير محدد"}',
         actionType: 'start_service',
         metadata: {'clientId': clientId, 'clientName': current.name},
       );
@@ -948,7 +970,7 @@ class AppProvider extends ChangeNotifier {
           : (newEndDate != null ? DateFormat('yyyy/MM/dd').format(newEndDate) : '');
       await _logAction(
         title: 'تمديد / تعديل مدة الخدمة',
-        description: 'تم تعديل/تمديد مدة خدمة العميل: ${current.name} (${newEndStr})',
+        description: 'تم تعديل/تمديد مدة خدمة العميل: ${current.name} ($newEndStr)',
         actionType: 'extend_service',
         metadata: {'clientId': clientId, 'clientName': current.name},
       );
@@ -1890,7 +1912,7 @@ class AppProvider extends ChangeNotifier {
     final actTitle = type == 'advance' ? 'تسجيل سلفة تمريض' : 'صرف مستحقات تمريض';
     await _logAction(
       title: actTitle,
-      description: 'تم ${actTitle} للممرض: ${nurseName.trim()} بمبلغ ${amount.toStringAsFixed(0)} ج.م (${_getChannelArabic(paymentChannel)})',
+      description: 'تم $actTitle للممرض: ${nurseName.trim()} بمبلغ ${amount.toStringAsFixed(0)} ج.م (${_getChannelArabic(paymentChannel)})',
       actionType: type == 'advance' ? 'nurse_advance' : 'nurse_payout',
       metadata: {'nurseName': nurseName, 'amount': amount},
     );
@@ -2613,5 +2635,279 @@ class AppProvider extends ChangeNotifier {
       );
       await _persistAndSync();
     }
+  }
+
+  // ==========================================
+  // إمكانات وبوابة التمريض ورسائل الـ SMS
+  // ==========================================
+
+  /// هل المستخدم الحالي هو ممرض / مقدم خدمة
+  bool get isNurse => _currentUser?.roleType == 'nurse';
+
+  /// سجل الممرض المرتبط بالمستخدم الحالي
+  CaregiverModel? get currentNurseCaregiver {
+    if (!isNurse || _currentUser == null) return null;
+    if (_currentUser!.caregiverId != null) {
+      final cg = _caregivers.where((c) => c.id == _currentUser!.caregiverId).toList();
+      if (cg.isNotEmpty) return cg.first;
+    }
+    final byName = _caregivers.where((c) => c.name.trim() == _currentUser!.displayName.trim()).toList();
+    if (byName.isNotEmpty) return byName.first;
+    return null;
+  }
+
+  /// الحالة النشطة المكلف بها الممرض حالياً
+  ClientModel? get currentNurseActiveClient {
+    final cg = currentNurseCaregiver;
+    if (cg == null) return null;
+    final assigned = _clients.where((c) {
+      final isAssigned = (c.nurseAssigned ?? '').trim() == cg.name.trim() ||
+          (c.nurseAssigned ?? '').trim() == cg.code.trim();
+      final isActive = c.status == 'active' || c.status == 'ready_to_start';
+      return isAssigned && isActive;
+    }).toList();
+    if (assigned.isNotEmpty) return assigned.first;
+    return null;
+  }
+
+  /// جميع الحالات المسندة للممرض الحالي (الحالية والسابقة)
+  List<ClientModel> get currentNurseAllAssignedClients {
+    final cg = currentNurseCaregiver;
+    if (cg == null) return [];
+    return _clients.where((c) {
+      return (c.nurseAssigned ?? '').trim() == cg.name.trim() ||
+          (c.nurseAssigned ?? '').trim() == cg.code.trim();
+    }).toList();
+  }
+
+  /// كشف ورديات الممرض الحالي
+  List<ServiceDayModel> get currentNurseShifts {
+    final cg = currentNurseCaregiver;
+    if (cg == null) return [];
+    return getNurseShifts(cg.name);
+  }
+
+  /// كشف سلف ومعاملات الممرض الحالي
+  List<NurseTransactionModel> get currentNurseTransactions {
+    final cg = currentNurseCaregiver;
+    if (cg == null) return [];
+    return getNurseTransactions(cg.name);
+  }
+
+  /// إجمالي المستحقات المكتسبة للممرض الحالي
+  double get currentNurseTotalEarned {
+    final cg = currentNurseCaregiver;
+    if (cg == null) return 0.0;
+    return getNurseTotalEarned(cg.name);
+  }
+
+  /// إجمالي السلف التي استلمها الممرض الحالي
+  double get currentNurseTotalAdvances {
+    final cg = currentNurseCaregiver;
+    if (cg == null) return 0.0;
+    return getNurseTotalAdvances(cg.name);
+  }
+
+  /// إجمالي المبالغ المنصرفة للممرض الحالي
+  double get currentNurseTotalPayouts {
+    final cg = currentNurseCaregiver;
+    if (cg == null) return 0.0;
+    return getNurseTotalPayouts(cg.name);
+  }
+
+  /// الرصيد الصافي المتبقي للممرض الحالي طرف الشركة
+  double get currentNurseRemainingBalance {
+    final cg = currentNurseCaregiver;
+    if (cg == null) return 0.0;
+    return getNurseRemainingBalance(cg.name);
+  }
+
+  /// إعدادات بوابة SMS
+  String? get smsGatewayEndpoint => storageService.getSmsGatewayEndpoint();
+  Future<void> setSmsGatewayEndpoint(String? endpoint) async {
+    await storageService.setSmsGatewayEndpoint(endpoint);
+    notifyListeners();
+  }
+
+  /// البحث عن حساب المستخدم المرتبط بمقدم خدمة معين
+  UserModel? getNurseUserForCaregiver(String caregiverId) {
+    final users = _users.where((u) => u.caregiverId == caregiverId).toList();
+    return users.isNotEmpty ? users.first : null;
+  }
+
+  /// إنشاء أو تحديث حساب دخول للممرض مع إرسال SMS
+  Future<bool> createOrUpdateNurseAccount({
+    required CaregiverModel caregiver,
+    required String username,
+    required String password,
+    bool sendSms = true,
+  }) async {
+    final cleanUsername = username.trim();
+    final cleanPassword = password.trim();
+
+    if (cleanUsername.isEmpty || cleanPassword.isEmpty) {
+      return false;
+    }
+
+    // فحص ما إذا كان اسم المستخدم مستخدم لشخص آخر
+    final existingUserIndex = _users.indexWhere(
+      (u) => u.username.toLowerCase() == cleanUsername.toLowerCase() && u.caregiverId != caregiver.id,
+    );
+    if (existingUserIndex != -1) {
+      throw 'اسم المستخدم مستخدم بالفعل لحساب آخر، يرجى اختيار اسم مستخدم مختلف.';
+    }
+
+    // العثور على حساب الممرض أو إنشائه
+    final userIdx = _users.indexWhere(
+      (u) => u.caregiverId == caregiver.id || u.username.toLowerCase() == cleanUsername.toLowerCase(),
+    );
+
+    if (userIdx != -1) {
+      _users[userIdx] = _users[userIdx].copyWith(
+        username: cleanUsername,
+        password: cleanPassword,
+        displayName: caregiver.name,
+        roleTitle: 'طاقم تمريض / مقدم خدمة',
+        roleType: 'nurse',
+        caregiverId: caregiver.id,
+        phone: caregiver.phone,
+      );
+    } else {
+      final newUserId = 'usr_cg_${caregiver.id}';
+      final newUser = UserModel(
+        id: newUserId,
+        username: cleanUsername,
+        password: cleanPassword,
+        displayName: caregiver.name,
+        roleTitle: 'طاقم تمريض / مقدم خدمة',
+        roleType: 'nurse',
+        caregiverId: caregiver.id,
+        phone: caregiver.phone,
+        permissions: const UserPermissions(),
+      );
+      _users.add(newUser);
+    }
+
+    // تحديث ملف مقدم الخدمة
+    final cgIdx = _caregivers.indexWhere((c) => c.id == caregiver.id);
+    if (cgIdx != -1) {
+      _caregivers[cgIdx] = _caregivers[cgIdx].copyWith(
+        hasLoginAccount: true,
+        loginUsername: cleanUsername,
+        loginPassword: cleanPassword,
+        lastSmsSentAt: sendSms ? DateTime.now() : _caregivers[cgIdx].lastSmsSentAt,
+      );
+    }
+
+    await storageService.saveUsers(_users);
+    await storageService.saveCaregivers(_caregivers);
+
+    // إرسال SMS تلقائي للممرض
+    if (sendSms && caregiver.phone.trim().isNotEmpty) {
+      await SmsService.sendNurseCredentials(
+        phone: caregiver.phone.trim(),
+        nurseName: caregiver.name,
+        username: cleanUsername,
+        password: cleanPassword,
+        customGatewayUrl: storageService.getSmsGatewayEndpoint(),
+      );
+    }
+
+    await _logAction(
+      title: 'حساب تمريض ورسالة SMS',
+      description: 'تم تفعيل حساب النظام للممرض: ${caregiver.name} (اسم المستخدم: $cleanUsername) ${sendSms ? "وإرسال رسالة SMS" : ""}',
+      actionType: 'nurse_account',
+    );
+
+    SoundService.playNotificationSound();
+    await _persistAndSync();
+    notifyListeners();
+    return true;
+  }
+
+  /// إعادة إرسال رسالة SMS ببيانات الدخول للممرض
+  Future<SmsResult> resendNurseCredentialsSms(CaregiverModel caregiver) async {
+    final username = caregiver.loginUsername ?? caregiver.phone;
+    final password = caregiver.loginPassword ?? '123';
+
+    final result = await SmsService.sendNurseCredentials(
+      phone: caregiver.phone.trim(),
+      nurseName: caregiver.name,
+      username: username,
+      password: password,
+      customGatewayUrl: storageService.getSmsGatewayEndpoint(),
+    );
+
+    final cgIdx = _caregivers.indexWhere((c) => c.id == caregiver.id);
+    if (cgIdx != -1) {
+      _caregivers[cgIdx] = _caregivers[cgIdx].copyWith(
+        lastSmsSentAt: DateTime.now(),
+      );
+      await storageService.saveCaregivers(_caregivers);
+    }
+
+    await _logAction(
+      title: 'إرسال SMS للممرض',
+      description: 'تم إرسال رسالة SMS ببيانات الدخول للممرض: ${caregiver.name} على الهاتف: ${caregiver.phone}',
+      actionType: 'nurse_sms',
+    );
+
+    SoundService.playNotificationSound();
+    notifyListeners();
+    return result;
+  }
+
+  /// تعطيل أو حذف حساب الممرض
+  Future<void> deleteNurseAccount(String caregiverId) async {
+    _users.removeWhere((u) => u.caregiverId == caregiverId);
+    final cgIdx = _caregivers.indexWhere((c) => c.id == caregiverId);
+    if (cgIdx != -1) {
+      _caregivers[cgIdx] = _caregivers[cgIdx].copyWith(
+        hasLoginAccount: false,
+        loginUsername: null,
+        loginPassword: null,
+      );
+    }
+    await storageService.saveUsers(_users);
+    await storageService.saveCaregivers(_caregivers);
+    await _persistAndSync();
+    notifyListeners();
+  }
+
+  /// تسجيل الممرض لحضور ورديته من خلال بوابته الخاصة
+  Future<void> nurseRecordShiftAttendance({
+    required String clientId,
+    required DateTime date,
+    required String shiftType,
+    required String startTime,
+    required String endTime,
+    double? hoursCount,
+    required String notes,
+  }) async {
+    final cg = currentNurseCaregiver;
+    if (cg == null) throw 'لا يمكن التعرف على حساب الممرض الحالي';
+
+    final client = _clients.firstWhere(
+      (c) => c.id == clientId,
+      orElse: () => throw 'الحالة غير مسجلة بالنظام',
+    );
+
+    // اليومية المستحقة للممرض
+    final double nurseRate = client.nurseDailyPrice > 0 ? client.nurseDailyPrice : cg.dailyPrice;
+    // سعر العميل يحفظ داخلياً للشركة ولا يظهر للممرض نهائياً
+    final double clientRate = client.dailyPrice;
+
+    await recordServiceDay(
+      clientId: clientId,
+      date: date,
+      nurseName: cg.name,
+      shiftType: shiftType,
+      clientPrice: clientRate,
+      nursePrice: nurseRate,
+      notes: notes,
+      startTime: startTime,
+      endTime: endTime,
+      hoursCount: hoursCount,
+    );
   }
 }

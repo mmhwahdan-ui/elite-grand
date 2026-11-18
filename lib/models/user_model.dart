@@ -86,7 +86,9 @@ class UserModel {
   String password;
   String displayName;
   String roleTitle;
-  final String roleType; // manager, accountant, followup, custom
+  final String roleType; // manager, accountant, followup, nurse, custom
+  final String? caregiverId; // المعرف المرتبط بمقدم الخدمة / الممرض
+  final String? phone; // رقم الهاتف
   UserPermissions permissions;
 
   UserModel({
@@ -97,7 +99,11 @@ class UserModel {
     required this.roleTitle,
     required this.roleType,
     required this.permissions,
+    this.caregiverId,
+    this.phone,
   });
+
+  bool get isNurse => roleType == 'nurse';
 
   UserModel copyWith({
     String? id,
@@ -107,6 +113,8 @@ class UserModel {
     String? roleTitle,
     String? roleType,
     UserPermissions? permissions,
+    String? caregiverId,
+    String? phone,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -116,6 +124,8 @@ class UserModel {
       roleTitle: roleTitle ?? this.roleTitle,
       roleType: roleType ?? this.roleType,
       permissions: permissions ?? this.permissions,
+      caregiverId: caregiverId ?? this.caregiverId,
+      phone: phone ?? this.phone,
     );
   }
 
@@ -128,6 +138,8 @@ class UserModel {
       'roleTitle': roleTitle,
       'roleType': roleType,
       'permissions': permissions.toMap(),
+      'caregiverId': caregiverId,
+      'phone': phone,
     };
   }
 
@@ -139,6 +151,8 @@ class UserModel {
       displayName: map['displayName'] ?? '',
       roleTitle: map['roleTitle'] ?? '',
       roleType: map['roleType'] ?? 'custom',
+      caregiverId: map['caregiverId'],
+      phone: map['phone'],
       permissions: map['permissions'] != null
           ? UserPermissions.fromMap(Map<String, dynamic>.from(map['permissions']))
           : const UserPermissions(),

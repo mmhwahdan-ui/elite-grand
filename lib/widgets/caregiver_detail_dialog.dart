@@ -6,6 +6,7 @@ import '../models/caregiver_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import 'add_edit_caregiver_dialog.dart';
+import 'nurse_account_dialog.dart';
 
 class CaregiverDetailDialog extends StatelessWidget {
   final CaregiverModel caregiver;
@@ -402,6 +403,91 @@ class CaregiverDetailDialog extends StatelessWidget {
                               'لم يتم تسجيل عملاء سابقين له حتى الآن',
                               style: TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Cairo'),
                             ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // System Login Account & SMS Section
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: caregiver.hasLoginAccount ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: caregiver.hasLoginAccount ? Colors.teal.shade300 : Colors.grey.shade300,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                caregiver.hasLoginAccount ? Icons.verified_user : Icons.no_accounts_outlined,
+                                size: 18,
+                                color: caregiver.hasLoginAccount ? Colors.teal : Colors.grey,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                caregiver.hasLoginAccount ? 'حساب الدخول في النظام (مفعّل)' : 'حساب الدخول في النظام (غير مفعّل بعد)',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Cairo',
+                                  fontSize: 13,
+                                  color: caregiver.hasLoginAccount ? Colors.teal.shade900 : Colors.blueGrey,
+                                ),
+                              ),
+                              const Spacer(),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => NurseAccountDialog(caregiver: caregiver),
+                                  );
+                                },
+                                icon: const Icon(Icons.sms_outlined, size: 14),
+                                label: Text(
+                                  caregiver.hasLoginAccount ? 'إرسال SMS / تعديل' : 'إنشاء حساب + SMS',
+                                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.teal,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (caregiver.hasLoginAccount) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'اسم المستخدم: ${caregiver.loginUsername ?? "غير محدد"}',
+                                    style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'كلمة المرور: ${caregiver.loginPassword ?? "123"}',
+                                    style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.blueGrey),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (caregiver.lastSmsSentAt != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  'تاريخ آخر إرسال SMS: ${DateFormat('yyyy/MM/dd - hh:mm a').format(caregiver.lastSmsSentAt!)}',
+                                  style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.grey.shade600),
+                                ),
+                              ),
                           ],
                         ],
                       ),

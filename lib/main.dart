@@ -6,6 +6,7 @@ import 'services/storage_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/nurse_portal_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +49,9 @@ class EliteGrandApp extends StatelessWidget {
         builder: (context, provider, _) {
           if (provider.currentUser == null) {
             return const LoginScreen();
+          }
+          if (provider.isNurse) {
+            return const NursePortalScreen();
           }
           return const HomeScreen();
         },

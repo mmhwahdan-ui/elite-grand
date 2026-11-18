@@ -30,12 +30,16 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
   late TextEditingController _currentClientController;
   late TextEditingController _newPastClientController;
   late TextEditingController _notesController;
+  late TextEditingController _loginUsernameController;
+  late TextEditingController _loginPasswordController;
 
   String _shiftPreference = 'both'; // 'hours12', 'hours24', 'both'
   double _rating = 5.0;
   bool _isBlocked = false;
   bool _hasWorkedWithUs = false;
   bool _isCurrentlyWorking = false;
+  bool _enableLoginAccount = false;
+  bool _sendSmsOnSave = true;
   List<String> _pastClients = [];
 
   bool _isSaving = false;
@@ -66,6 +70,13 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
     );
     _newPastClientController = TextEditingController();
     _notesController = TextEditingController(text: c?.notes ?? '');
+    _enableLoginAccount = c?.hasLoginAccount ?? false;
+    _loginUsernameController = TextEditingController(
+      text: c?.loginUsername ?? (c?.phone.isNotEmpty == true ? c!.phone.replaceAll(RegExp(r'[^0-9]'), '') : ''),
+    );
+    _loginPasswordController = TextEditingController(
+      text: c?.loginPassword ?? '123456',
+    );
 
     if (c != null) {
       _shiftPreference = c.shiftPreference;
@@ -96,6 +107,8 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
     _currentClientController.dispose();
     _newPastClientController.dispose();
     _notesController.dispose();
+    _loginUsernameController.dispose();
+    _loginPasswordController.dispose();
     super.dispose();
   }
 
@@ -143,7 +156,7 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
 
       if (widget.caregiver == null) {
         // Add new
-        final newCaregiver = CaregiverModel(
+        var newCaregiver = CaregiverModel(
           id: 'cg_${DateTime.now().millisecondsSinceEpoch}',
           code: code,
           name: name,
@@ -165,11 +178,22 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
           currentClientName: currentClientName,
           notes: notes.isNotEmpty ? notes : null,
           createdBy: provider.currentUser?.username ?? 'shimaa',
+          hasLoginAccount: _enableLoginAccount,
+          loginUsername: _enableLoginAccount ? _loginUsernameController.text.trim() : null,
+          loginPassword: _enableLoginAccount ? _loginPasswordController.text.trim() : null,
         );
         await provider.addCaregiver(newCaregiver);
+        if (_enableLoginAccount) {
+          await provider.createOrUpdateNurseAccount(
+            caregiver: newCaregiver,
+            username: _loginUsernameController.text.trim(),
+            password: _loginPasswordController.text.trim(),
+            sendSms: _sendSmsOnSave,
+          );
+        }
       } else {
         // Update existing
-        final updated = widget.caregiver!.copyWith(
+        var updated = widget.caregiver!.copyWith(
           code: code,
           name: name,
           nationalId: nationalId,
@@ -189,8 +213,21 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
           isCurrentlyWorking: _isCurrentlyWorking,
           currentClientName: currentClientName,
           notes: notes.isNotEmpty ? notes : null,
+          hasLoginAccount: _enableLoginAccount,
+          loginUsername: _enableLoginAccount ? _loginUsernameController.text.trim() : null,
+          loginPassword: _enableLoginAccount ? _loginPasswordController.text.trim() : null,
         );
         await provider.updateCaregiver(updated);
+        if (_enableLoginAccount) {
+          await provider.createOrUpdateNurseAccount(
+            caregiver: updated,
+            username: _loginUsernameController.text.trim(),
+            password: _loginPasswordController.text.trim(),
+            sendSms: _sendSmsOnSave,
+          );
+        } else if (widget.caregiver!.hasLoginAccount) {
+          await provider.deleteNurseAccount(updated.id);
+        }
       }
 
       if (mounted) {
@@ -871,6 +908,112 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                   filled: true,
                                   fillColor: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // 10. Nurse System Login Account & SMS
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: _enableLoginAccount ? Colors.teal.shade50.withOpacity(0.4) : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _enableLoginAccount ? Colors.teal.shade400 : Colors.grey.shade300,
+                            width: _enableLoginAccount ? 1.5 : 1.0,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  _enableLoginAccount ? Icons.verified_user : Icons.no_accounts_outlined,
+                                  color: _enableLoginAccount ? Colors.teal : Colors.grey,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'تفعيل حساب دخول في النظام للممرض (بوابة التمريض)',
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', fontSize: 13),
+                                      ),
+                                      Text(
+                                        'يسمح له بالدخول لمتابعة حالته فقط وحساباته دون رؤية أسعار وتعاملات العميل',
+                                        style: TextStyle(fontSize: 11, color: Colors.grey, fontFamily: 'Cairo'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Switch(
+                                  value: _enableLoginAccount,
+                                  activeColor: Colors.teal,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _enableLoginAccount = val;
+                                      if (val) {
+                                        if (_loginUsernameController.text.trim().isEmpty) {
+                                          _loginUsernameController.text = _phoneController.text.trim().isNotEmpty
+                                              ? _phoneController.text.trim().replaceAll(RegExp(r'[^0-9]'), '')
+                                              : _codeController.text.trim().toLowerCase().replaceAll('-', '');
+                                        }
+                                        if (_loginPasswordController.text.trim().isEmpty) {
+                                          _loginPasswordController.text = '123456';
+                                        }
+                                      }
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                            if (_enableLoginAccount) ...[
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _loginUsernameController,
+                                      decoration: InputDecoration(
+                                        labelText: 'اسم المستخدم للدخول (Username) *',
+                                        prefixIcon: const Icon(Icons.person_outline, color: Colors.teal),
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _loginPasswordController,
+                                      decoration: InputDecoration(
+                                        labelText: 'كلمة المرور (Password) *',
+                                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.teal),
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              CheckboxListTile(
+                                value: _sendSmsOnSave,
+                                onChanged: (v) => setState(() => _sendSmsOnSave = v ?? true),
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                title: const Text(
+                                  'إرسال رسالة SMS للممرض ببيانات الدخول ورابط النظام فور الحفظ',
+                                  style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],

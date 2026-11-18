@@ -5,6 +5,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/add_edit_caregiver_dialog.dart';
 import '../widgets/caregiver_detail_dialog.dart';
+import '../widgets/nurse_account_dialog.dart';
 
 class CaregiversScreen extends StatefulWidget {
   const CaregiversScreen({super.key});
@@ -411,7 +412,12 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                                       if (canManage && !isZezo) ...[
                                         PopupMenuButton<String>(
                                           onSelected: (val) async {
-                                            if (val == 'edit') {
+                                            if (val == 'account') {
+                                              showDialog(
+                                                context: context,
+                                                builder: (_) => NurseAccountDialog(caregiver: caregiver),
+                                              );
+                                            } else if (val == 'edit') {
                                               showDialog(
                                                 context: context,
                                                 builder: (_) => AddEditCaregiverDialog(caregiver: caregiver),
@@ -427,6 +433,19 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                                             }
                                           },
                                           itemBuilder: (ctx) => [
+                                            PopupMenuItem(
+                                              value: 'account',
+                                              child: Row(
+                                                children: [
+                                                  const Icon(Icons.sms_outlined, color: Colors.teal, size: 18),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    caregiver.hasLoginAccount ? 'حساب الدخول وإرسال SMS' : 'إنشاء حساب دخول + SMS',
+                                                    style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, color: Colors.teal, fontWeight: FontWeight.bold),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                             const PopupMenuItem(
                                               value: 'edit',
                                               child: Row(
@@ -584,6 +603,62 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                                           label: '${provider.getCaregiverPastClients(caregiver.name).length} عميل سابق',
                                           color: Colors.purple,
                                         ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  const Divider(height: 1),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      if (caregiver.hasLoginAccount) ...[
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.verified_user, color: Colors.teal, size: 16),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'حساب النظام: ${caregiver.loginUsername ?? "مفعل"}',
+                                              style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal),
+                                            ),
+                                          ],
+                                        ),
+                                        TextButton.icon(
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (_) => NurseAccountDialog(caregiver: caregiver),
+                                            );
+                                          },
+                                          icon: const Icon(Icons.sms, size: 14, color: Colors.teal),
+                                          label: const Text('إرسال SMS / إدارة الحساب', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.teal)),
+                                        ),
+                                      ] else ...[
+                                        const Row(
+                                          children: [
+                                            Icon(Icons.no_accounts_outlined, color: Colors.grey, size: 16),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'لم يتم إنشاء حساب دخول بعد',
+                                              style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey),
+                                            ),
+                                          ],
+                                        ),
+                                        if (canManage && !isZezo)
+                                          OutlinedButton.icon(
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (_) => NurseAccountDialog(caregiver: caregiver),
+                                              );
+                                            },
+                                            icon: const Icon(Icons.person_add_alt_1, size: 14, color: Colors.teal),
+                                            label: const Text('إنشاء حساب + SMS', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.teal, fontWeight: FontWeight.bold)),
+                                            style: OutlinedButton.styleFrom(
+                                              side: const BorderSide(color: Colors.teal),
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            ),
+                                          ),
+                                      ],
                                     ],
                                   ),
                                 ],

@@ -15,6 +15,7 @@ import 'nurse_accounts_screen.dart';
 import 'partner_settlement_screen.dart';
 import 'caregivers_screen.dart';
 import 'team_chat_screen.dart';
+import 'nurse_portal_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,6 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
+    if (provider.isNurse) {
+      return const NursePortalScreen();
+    }
     final currentUser = provider.currentUser;
 
     // Determine available navigation tabs based on user permissions

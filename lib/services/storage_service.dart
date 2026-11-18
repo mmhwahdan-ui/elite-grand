@@ -19,6 +19,7 @@ class StorageService {
   static const String _keyExpenses = 'eg_expenses_data';
   static const String _keyCurrentUser = 'eg_current_user_id';
   static const String _keyCloudEndpoint = 'eg_cloud_endpoint';
+  static const String _keySmsGatewayEndpoint = 'eg_sms_gateway_endpoint';
   static const String _keyLastSync = 'eg_last_sync_time';
   static const String _keyDeletedIds = 'eg_deleted_ids';
   static const String _keyOpeningBalances = 'eg_opening_balances';
@@ -90,6 +91,19 @@ class StorageService {
 
   Future<void> setCloudEndpoint(String endpoint) async {
     await prefs.setString(_keyCloudEndpoint, endpoint);
+  }
+
+  // SMS Gateway endpoint
+  String? getSmsGatewayEndpoint() {
+    return prefs.getString(_keySmsGatewayEndpoint);
+  }
+
+  Future<void> setSmsGatewayEndpoint(String? endpoint) async {
+    if (endpoint == null || endpoint.trim().isEmpty) {
+      await prefs.remove(_keySmsGatewayEndpoint);
+    } else {
+      await prefs.setString(_keySmsGatewayEndpoint, endpoint.trim());
+    }
   }
 
   // Last Sync Time

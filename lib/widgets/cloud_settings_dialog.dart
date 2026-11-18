@@ -14,6 +14,7 @@ class CloudSettingsDialog extends StatefulWidget {
 
 class _CloudSettingsDialogState extends State<CloudSettingsDialog> {
   late TextEditingController _endpointController;
+  late TextEditingController _smsGatewayController;
 
   @override
   void initState() {
@@ -22,11 +23,15 @@ class _CloudSettingsDialogState extends State<CloudSettingsDialog> {
     _endpointController = TextEditingController(
       text: provider.cloudSyncService.cloudEndpoint ?? '',
     );
+    _smsGatewayController = TextEditingController(
+      text: provider.smsGatewayEndpoint ?? '',
+    );
   }
 
   @override
   void dispose() {
     _endpointController.dispose();
+    _smsGatewayController.dispose();
     super.dispose();
   }
 
@@ -133,6 +138,24 @@ class _CloudSettingsDialogState extends State<CloudSettingsDialog> {
                   ),
                 ),
                 const SizedBox(height: 14),
+                const Text(
+                  'رابط بوابة الرسائل القصيرة SMS Gateway (اختياري للإرسال المباشر):',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'Cairo'),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _smsGatewayController,
+                  decoration: InputDecoration(
+                    hintText: 'https://api.mysmsgateway.com/send (أو يترك فارغاً للإرسال من الموبايل)',
+                    hintStyle: const TextStyle(fontSize: 11, fontFamily: 'Cairo'),
+                    prefixIcon: const Icon(Icons.sms_outlined),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => _smsGatewayController.clear(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
                 // Quick Guide Card
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -187,12 +210,14 @@ class _CloudSettingsDialogState extends State<CloudSettingsDialog> {
                       child: ElevatedButton(
                         onPressed: () async {
                           final url = _endpointController.text.trim();
+                          final smsUrl = _smsGatewayController.text.trim();
                           await provider.setCloudEndpoint(url);
+                          await provider.setSmsGatewayEndpoint(smsUrl);
                           if (context.mounted) {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('تم حفظ رابط السحابة وبدء المزامنة التلقائية', style: TextStyle(fontFamily: 'Cairo')),
+                                content: Text('تم حفظ الإعدادات ورابط السحابة وبوابة SMS', style: TextStyle(fontFamily: 'Cairo')),
                                 backgroundColor: AppTheme.accent,
                               ),
                             );
