@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
@@ -7,6 +7,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import 'add_edit_caregiver_dialog.dart';
 import 'nurse_account_dialog.dart';
+import '../services/location_service.dart';
 
 class CaregiverDetailDialog extends StatelessWidget {
   final CaregiverModel caregiver;
@@ -233,6 +234,50 @@ class CaregiverDetailDialog extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Field GPS Live Location Banner
+                    if (caregiver.hasLocation) ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.green.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.my_location_rounded, color: Colors.green, size: 22),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'آخر موقع جغرافي مسجل (GPS 📍)',
+                                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF14532D)),
+                                  ),
+                                  Text(
+                                    'دقة الموقع: ' + (caregiver.lastLocationAccuracy?.toStringAsFixed(0) ?? '10') + 'م • التوقيت: ' + (caregiver.lastLocationUpdate != null ? DateFormat('yyyy/MM/dd hh:mm a').format(caregiver.lastLocationUpdate!) : ''),
+                                    style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.green.shade800),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () => LocationService.openMapUrl(caregiver.locationMapsUrl!),
+                              icon: const Icon(Icons.map, size: 16),
+                              label: const Text('فتح الخريطة', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green.shade700,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     // Grid / Cards for Key Properties
                     Row(
                       children: [

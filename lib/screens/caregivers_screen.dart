@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/caregiver_model.dart';
 import '../providers/app_provider.dart';
@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/add_edit_caregiver_dialog.dart';
 import '../widgets/caregiver_detail_dialog.dart';
 import '../widgets/nurse_account_dialog.dart';
+import '../services/location_service.dart';
 
 class CaregiversScreen extends StatefulWidget {
   const CaregiversScreen({super.key});
@@ -562,7 +563,16 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                                     spacing: 8,
                                     runSpacing: 6,
                                     children: [
-                                      // Phone
+                                       // Live GPS Location
+                                       if (caregiver.hasLocation)
+                                         _buildTag(
+                                           icon: Icons.my_location_rounded,
+                                           label: 'موقع GPS 📍',
+                                           color: Colors.green,
+                                           bold: true,
+                                           onTap: () => LocationService.openMapUrl(caregiver.locationMapsUrl!),
+                                         ),
+                                       // Phone
                                       if (caregiver.phone.isNotEmpty)
                                         _buildTag(
                                           icon: Icons.phone,
@@ -765,8 +775,9 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
     required String label,
     required Color color,
     bool bold = false,
+    VoidCallback? onTap,
   }) {
-    return Container(
+    final tag = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
@@ -787,9 +798,22 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
             ),
           ),
+          if (onTap != null) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.open_in_new, size: 11, color: color),
+          ],
         ],
       ),
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: tag,
+      );
+    }
+    return tag;
   }
 
   void _showBlockDialog(BuildContext context, AppProvider provider, CaregiverModel caregiver) {

@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../services/location_service.dart';
 import '../widgets/add_edit_client_dialog.dart';
 import '../widgets/pricing_dialog.dart';
 import '../widgets/start_service_dialog.dart';
@@ -744,13 +745,15 @@ class ClientDetailScreen extends StatelessWidget {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
+                                      Wrap(
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        spacing: 6,
+                                        runSpacing: 4,
                                         children: [
                                           Text(
                                             dateFormat.format(day.date),
                                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'Cairo'),
                                           ),
-                                          const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
@@ -763,7 +766,6 @@ class ClientDetailScreen extends StatelessWidget {
                                               style: TextStyle(fontSize: 10, color: Colors.blue.shade900, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
@@ -783,8 +785,7 @@ class ClientDetailScreen extends StatelessWidget {
                                               ],
                                             ),
                                           ),
-                                          if (day.timeRangeDisplay.isNotEmpty) ...[
-                                            const SizedBox(width: 8),
+                                          if (day.timeRangeDisplay.isNotEmpty)
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                               decoration: BoxDecoration(
@@ -804,7 +805,52 @@ class ClientDetailScreen extends StatelessWidget {
                                                 ],
                                               ),
                                             ),
-                                          ],
+                                          if (day.hasGpsCheckIn)
+                                            InkWell(
+                                              onTap: () => LocationService.openMapUrl(day.checkInMapsUrl!),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green.shade50,
+                                                  borderRadius: BorderRadius.circular(6),
+                                                  border: Border.all(color: Colors.green.shade300),
+                                                ),
+                                                child: const Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.location_on, size: 11, color: Colors.green),
+                                                    SizedBox(width: 3),
+                                                    Text(
+                                                      'حضور GPS 📍',
+                                                      style: TextStyle(fontSize: 10, color: Colors.green, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          if (day.hasGpsCheckOut)
+                                            InkWell(
+                                              onTap: () => LocationService.openMapUrl(day.checkOutMapsUrl!),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue.shade50,
+                                                  borderRadius: BorderRadius.circular(6),
+                                                  border: Border.all(color: Colors.blue.shade300),
+                                                ),
+                                                child: const Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.flag_rounded, size: 11, color: Colors.blue),
+                                                    SizedBox(width: 3),
+                                                    Text(
+                                                      'انصراف GPS 🏁',
+                                                      style: TextStyle(fontSize: 10, color: Colors.blue, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                       const SizedBox(height: 4),

@@ -1,4 +1,4 @@
-import 'caregivers_screen.dart';
+﻿import 'caregivers_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -7,6 +7,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/export_service.dart';
 import '../widgets/edit_service_day_dialog.dart';
+import '../services/location_service.dart';
 
 class NurseAccountsScreen extends StatefulWidget {
   const NurseAccountsScreen({super.key});
@@ -331,6 +332,33 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                       : 'كشف حساب تفصيلي - ورديات وسلف ومستحقات',
                                   style: const TextStyle(fontSize: 11, color: Colors.grey, fontFamily: 'Cairo'),
                                 ),
+                                if (caregiver != null && caregiver.hasLocation) ...[
+                                  const SizedBox(height: 4),
+                                  InkWell(
+                                    onTap: () => LocationService.openMapUrl(caregiver.locationMapsUrl!),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.shade50,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: Colors.green.shade300),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.location_on, size: 12, color: Colors.green),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'آخر موقع GPS مباشر 📍 (' + (caregiver.lastLocationUpdate != null ? DateFormat('yyyy/MM/dd hh:mm a').format(caregiver.lastLocationUpdate!) : '') + ')',
+                                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.open_in_new, size: 10, color: Colors.green),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ],
@@ -443,7 +471,61 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                                   child: const Icon(Icons.calendar_month, color: Colors.teal, size: 20),
                                                 ),
                                                 title: Text('${s.clientName} (${s.shiftTypeArabic})', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', fontSize: 13)),
-                                                subtitle: Text('التاريخ: ${dateFormat.format(s.date)}${s.timeRangeDisplay.isNotEmpty ? " • " + s.timeRangeDisplay : ""}${s.notes.isNotEmpty ? " • " + s.notes : ""}', style: const TextStyle(fontSize: 11, fontFamily: 'Cairo')),
+                                                subtitle: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text('التاريخ: ' + dateFormat.format(s.date) + (s.timeRangeDisplay.isNotEmpty ? ' • ' + s.timeRangeDisplay : '') + (s.notes.isNotEmpty ? ' • ' + s.notes : ''), style: const TextStyle(fontSize: 11, fontFamily: 'Cairo')),
+                                                    if (s.hasGpsCheckIn || s.hasGpsCheckOut) ...[
+                                                      const SizedBox(height: 4),
+                                                      Wrap(
+                                                        spacing: 6,
+                                                        runSpacing: 4,
+                                                        children: [
+                                                          if (s.hasGpsCheckIn)
+                                                            InkWell(
+                                                              onTap: () => LocationService.openMapUrl(s.checkInMapsUrl!),
+                                                              child: Container(
+                                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.green.shade50,
+                                                                  borderRadius: BorderRadius.circular(4),
+                                                                  border: Border.all(color: Colors.green.shade300),
+                                                                ),
+                                                                child: const Row(
+                                                                  mainAxisSize: MainAxisSize.min,
+                                                                  children: [
+                                                                    Icon(Icons.location_on, size: 10, color: Colors.green),
+                                                                    SizedBox(width: 2),
+                                                                    Text('حضور GPS 📍', style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: Colors.green, fontWeight: FontWeight.bold)),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          if (s.hasGpsCheckOut)
+                                                            InkWell(
+                                                              onTap: () => LocationService.openMapUrl(s.checkOutMapsUrl!),
+                                                              child: Container(
+                                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.blue.shade50,
+                                                                  borderRadius: BorderRadius.circular(4),
+                                                                  border: Border.all(color: Colors.blue.shade300),
+                                                                ),
+                                                                child: const Row(
+                                                                  mainAxisSize: MainAxisSize.min,
+                                                                  children: [
+                                                                    Icon(Icons.flag_rounded, size: 10, color: Colors.blue),
+                                                                    SizedBox(width: 2),
+                                                                    Text('انصراف GPS 🏁', style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: Colors.blue, fontWeight: FontWeight.bold)),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
                                                 trailing: Row(
                                                    mainAxisSize: MainAxisSize.min,
                                                    children: [
@@ -748,28 +830,45 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                       children: [
                                         Text(nurse, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Cairo')),
                                         const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
-                                              child: Text('$days يوم عمل', style: TextStyle(color: Colors.blue.shade900, fontSize: 11, fontFamily: 'Cairo')),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(color: Colors.teal.shade50, borderRadius: BorderRadius.circular(4)),
-                                              child: Text('المستحق: ${earned.toStringAsFixed(0)} ج.م', style: TextStyle(color: Colors.teal.shade900, fontSize: 11, fontFamily: 'Cairo')),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            if (advances > 0)
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(4)),
-                                                child: Text('سلف: ${advances.toStringAsFixed(0)} ج.م', style: TextStyle(color: Colors.amber.shade900, fontSize: 11, fontFamily: 'Cairo')),
-                                              ),
-                                          ],
-                                        ),
+                                         Wrap(
+                                           spacing: 6,
+                                           runSpacing: 4,
+                                           crossAxisAlignment: WrapCrossAlignment.center,
+                                           children: [
+                                             Container(
+                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                               decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
+                                               child: Text('$days يوم عمل', style: TextStyle(color: Colors.blue.shade900, fontSize: 11, fontFamily: 'Cairo')),
+                                             ),
+                                             Container(
+                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                               decoration: BoxDecoration(color: Colors.teal.shade50, borderRadius: BorderRadius.circular(4)),
+                                               child: Text('المستحق: ' + earned.toStringAsFixed(0) + ' ج.م', style: TextStyle(color: Colors.teal.shade900, fontSize: 11, fontFamily: 'Cairo')),
+                                             ),
+                                             if (advances > 0)
+                                               Container(
+                                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                 decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(4)),
+                                                 child: Text('سلف: ' + advances.toStringAsFixed(0) + ' ج.م', style: TextStyle(color: Colors.amber.shade900, fontSize: 11, fontFamily: 'Cairo')),
+                                               ),
+                                             if (provider.findCaregiverByName(nurse)?.hasLocation == true)
+                                               InkWell(
+                                                 onTap: () => LocationService.openMapUrl(provider.findCaregiverByName(nurse)!.locationMapsUrl!),
+                                                 child: Container(
+                                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                   decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.green.shade300)),
+                                                   child: const Row(
+                                                     mainAxisSize: MainAxisSize.min,
+                                                     children: [
+                                                       Icon(Icons.location_on, size: 10, color: Colors.green),
+                                                       SizedBox(width: 2),
+                                                       Text('موقع GPS 📍', style: TextStyle(color: Colors.green, fontSize: 10, fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                                                     ],
+                                                   ),
+                                                 ),
+                                               ),
+                                           ],
+                                         ),
                                       ],
                                     ),
                                   ),

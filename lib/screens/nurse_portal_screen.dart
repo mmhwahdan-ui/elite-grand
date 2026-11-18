@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,7 @@ import '../models/caregiver_model.dart';
 import '../models/service_day_model.dart';
 import '../models/nurse_transaction_model.dart';
 import '../models/case_offer_model.dart';
+import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 
@@ -22,19 +24,48 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
   late TabController _tabController;
   final TextEditingController _chatTextCtrl = TextEditingController();
   final ScrollController _chatScrollCtrl = ScrollController();
+  Timer? _locationTimer;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pingNurseLocation();
+    });
+    // Periodic light ping every 10 minutes to maintain location without battery drain
+    _locationTimer = Timer.periodic(const Duration(minutes: 10), (_) {
+      _pingNurseLocation();
+    });
   }
 
   @override
   void dispose() {
+    _locationTimer?.cancel();
     _tabController.dispose();
     _chatTextCtrl.dispose();
     _chatScrollCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pingNurseLocation() async {
+    if (!mounted) return;
+    try {
+      final provider = context.read<AppProvider>();
+      final caregiver = provider.currentNurseCaregiver;
+      if (caregiver == null) return;
+      final loc = await LocationService.getCurrentLocation();
+      if (loc != null && mounted) {
+        await provider.updateCaregiverLiveLocation(
+          caregiverId: caregiver.id,
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          accuracy: loc.accuracy,
+        );
+      }
+    } catch (_) {
+      // Quietly ignore any location ping failure to avoid disturbing the nurse
+    }
   }
 
   void _showChangePasswordDialog(BuildContext context, AppProvider provider) {
@@ -131,234 +162,592 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
   void _showRecordShiftDialog(BuildContext context, AppProvider provider, ClientModel client, CaregiverModel caregiver) {
     DateTime selectedDate = DateTime.now();
     String shiftType = client.serviceType;
-    final startCtrl = TextEditingController(text: '08:00 ص');
+    final startCtrl = TextEditingController(text: DateFormat('hh:mm a').format(DateTime.now()));
     final endCtrl = TextEditingController(text: '08:00 م');
     final hoursCtrl = TextEditingController(text: '12');
     final notesCtrl = TextEditingController();
     bool isSaving = false;
 
+    GeoLocationResult? currentLocation;
+    bool isFetchingLocation = true;
+    String locationStatusText = 'جاري التحقق من الموقع الجغرافي عبر الأقمار الصناعية (GPS)...';
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDlgState) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.timer_outlined, color: Colors.teal),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'تسجيل حضور واستلام وردية',
-                        style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        'للحالة: ${client.name}',
-                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+        builder: (context, setDlgState) {
+          // Trigger location fetch once
+          if (isFetchingLocation && currentLocation == null && locationStatusText.startsWith('جاري')) {
+            LocationService.getCurrentLocation().then((loc) {
+              setDlgState(() {
+                currentLocation = loc;
+                isFetchingLocation = false;
+                if (loc != null) {
+                  locationStatusText = 'تم تحديد الموقع بنجاح: دقة (${loc.accuracy?.toStringAsFixed(0) ?? "10"}م) • سيتم إثبات الحضور بمقر الحالة';
+                } else {
+                  locationStatusText = 'لم نتمكن من تحديد الموقع تلقائياً (تأكد من تفعيل خدمة الـ GPS بالهاتف)';
+                }
+              });
+            }).catchError((_) {
+              setDlgState(() {
+                isFetchingLocation = false;
+                locationStatusText = 'تعذر الوصول للموقع الجغرافي (تأكد من تفعيل إذن الموقع)';
+              });
+            });
+          }
+
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
                 children: [
-                  // Date Picker
-                  ListTile(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    leading: const Icon(Icons.calendar_today, color: AppTheme.primary),
-                    title: const Text('تاريخ الوردية:', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
-                    subtitle: Text(
-                      DateFormat('yyyy/MM/dd').format(selectedDate),
-                      style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                    trailing: const Text('تغيير', style: TextStyle(fontFamily: 'Cairo', color: AppTheme.primary)),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime.now().subtract(const Duration(days: 30)),
-                        lastDate: DateTime.now().add(const Duration(days: 1)),
-                      );
-                      if (picked != null) {
-                        setDlgState(() => selectedDate = picked);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Shift Type
-                  DropdownButtonFormField<String>(
-                    value: shiftType,
-                    decoration: const InputDecoration(
-                      labelText: 'نوع الوردية',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'hours12', child: Text('وردية 12 ساعة', style: TextStyle(fontFamily: 'Cairo'))),
-                      DropdownMenuItem(value: 'hours24', child: Text('إقامة 24 ساعة', style: TextStyle(fontFamily: 'Cairo'))),
-                      DropdownMenuItem(value: 'hours8', child: Text('وردية 8 ساعات', style: TextStyle(fontFamily: 'Cairo'))),
-                      DropdownMenuItem(value: 'hours10', child: Text('وردية 10 ساعات', style: TextStyle(fontFamily: 'Cairo'))),
-                      DropdownMenuItem(value: 'custom', child: Text('ساعات مخصصة', style: TextStyle(fontFamily: 'Cairo'))),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDlgState(() {
-                          shiftType = val;
-                          if (val == 'hours24') hoursCtrl.text = '24';
-                          if (val == 'hours12') hoursCtrl.text = '12';
-                          if (val == 'hours8') hoursCtrl.text = '8';
-                          if (val == 'hours10') hoursCtrl.text = '10';
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Times
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: startCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'وقت الاستلام',
-                            hintText: '08:00 ص',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: endCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'وقت التسليم',
-                            hintText: '08:00 م',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Hours
-                  TextField(
-                    controller: hoursCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'عدد ساعات العمل الفعلية',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Notes / Patient Health Report
-                  TextField(
-                    controller: notesCtrl,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'التقرير التمريضي وملاحظات الحالة (اختياري)',
-                      hintText: 'العلامات الحيوية، الأدوية، الإجراءات المنفذة...',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Privacy Note
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.teal.shade50,
+                      shape: BoxShape.circle,
                     ),
-                    child: Row(
+                    child: const Icon(Icons.timer_outlined, color: Colors.teal),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline, size: 16, color: Colors.blue),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'يوميتك المستحقة: ${(client.nurseDailyPrice > 0 ? client.nurseDailyPrice : caregiver.dailyPrice).toStringAsFixed(0)} ج.م تضاف فوراً لرصيدك.',
-                            style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.blue.shade900),
-                          ),
+                        const Text(
+                          'تسجيل حضور واستلام وردية (GPS 📍)',
+                          style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        Text(
+                          'للحالة: ${client.name}',
+                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.grey),
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isSaving ? null : () => Navigator.pop(ctx),
-                child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // GPS Verification Box
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isFetchingLocation
+                            ? Colors.amber.shade50
+                            : (currentLocation != null ? Colors.green.shade50 : Colors.orange.shade50),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isFetchingLocation
+                              ? Colors.amber.shade300
+                              : (currentLocation != null ? Colors.green.shade400 : Colors.orange.shade300),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          if (isFetchingLocation)
+                            const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber),
+                            )
+                          else
+                            Icon(
+                              currentLocation != null ? Icons.my_location_rounded : Icons.location_off_outlined,
+                              color: currentLocation != null ? Colors.green.shade700 : Colors.orange.shade700,
+                              size: 20,
+                            ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  currentLocation != null ? 'إثبات حضور جغرافي موثق (GPS)' : 'الموقع الجغرافي للوردية',
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: currentLocation != null ? Colors.green.shade900 : Colors.grey.shade900,
+                                  ),
+                                ),
+                                Text(
+                                  locationStatusText,
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: 10,
+                                    color: currentLocation != null ? Colors.green.shade800 : Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!isFetchingLocation && currentLocation == null)
+                            IconButton(
+                              icon: const Icon(Icons.refresh, size: 18),
+                              tooltip: 'إعادة محاولة GPS',
+                              onPressed: () {
+                                setDlgState(() {
+                                  isFetchingLocation = true;
+                                  locationStatusText = 'جاري إعادة فحص موقعك الجغرافي...';
+                                });
+                                LocationService.getCurrentLocation().then((loc) {
+                                  setDlgState(() {
+                                    currentLocation = loc;
+                                    isFetchingLocation = false;
+                                    if (loc != null) {
+                                      locationStatusText = 'تم تحديد الموقع بنجاح: دقة (${loc.accuracy?.toStringAsFixed(0) ?? "10"}م)';
+                                    } else {
+                                      locationStatusText = 'تعذر التحديد التلقائي';
+                                    }
+                                  });
+                                });
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Date Picker
+                    ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      leading: const Icon(Icons.calendar_today, color: AppTheme.primary),
+                      title: const Text('تاريخ الوردية:', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                      subtitle: Text(
+                        DateFormat('yyyy/MM/dd').format(selectedDate),
+                        style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      trailing: const Text('تغيير', style: TextStyle(fontFamily: 'Cairo', color: AppTheme.primary)),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                          lastDate: DateTime.now().add(const Duration(days: 1)),
+                        );
+                        if (picked != null) {
+                          setDlgState(() => selectedDate = picked);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Shift Type
+                    DropdownButtonFormField<String>(
+                      value: shiftType,
+                      decoration: const InputDecoration(
+                        labelText: 'نوع الوردية',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'hours12', child: Text('وردية 12 ساعة', style: TextStyle(fontFamily: 'Cairo'))),
+                        DropdownMenuItem(value: 'hours24', child: Text('إقامة 24 ساعة', style: TextStyle(fontFamily: 'Cairo'))),
+                        DropdownMenuItem(value: 'hours8', child: Text('وردية 8 ساعات', style: TextStyle(fontFamily: 'Cairo'))),
+                        DropdownMenuItem(value: 'hours10', child: Text('وردية 10 ساعات', style: TextStyle(fontFamily: 'Cairo'))),
+                        DropdownMenuItem(value: 'custom', child: Text('ساعات مخصصة', style: TextStyle(fontFamily: 'Cairo'))),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDlgState(() {
+                            shiftType = val;
+                            if (val == 'hours24') hoursCtrl.text = '24';
+                            if (val == 'hours12') hoursCtrl.text = '12';
+                            if (val == 'hours8') hoursCtrl.text = '8';
+                            if (val == 'hours10') hoursCtrl.text = '10';
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Times
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: startCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'وقت الاستلام',
+                              hintText: '08:00 ص',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: endCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'وقت التسليم المتوقع',
+                              hintText: '08:00 م',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Hours
+                    TextField(
+                      controller: hoursCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'عدد ساعات العمل الفعلية',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Notes / Patient Health Report
+                    TextField(
+                      controller: notesCtrl,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'التقرير التمريضي وملاحظات الحالة (اختياري)',
+                        hintText: 'العلامات الحيوية، الأدوية، الإجراءات المنفذة...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Privacy Note
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'يوميتك المستحقة: ${(client.nurseDailyPrice > 0 ? client.nurseDailyPrice : caregiver.dailyPrice).toStringAsFixed(0)} ج.م تضاف فوراً لرصيدك.',
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.blue.shade900),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              ElevatedButton.icon(
-                onPressed: isSaving
-                    ? null
-                    : () async {
-                        setDlgState(() => isSaving = true);
-                        try {
-                          final hours = double.tryParse(hoursCtrl.text.trim()) ?? 12.0;
-                          await provider.nurseRecordShiftAttendance(
-                            clientId: client.id,
-                            date: selectedDate,
-                            shiftType: shiftType,
-                            startTime: startCtrl.text.trim(),
-                            endTime: endCtrl.text.trim(),
-                            hoursCount: hours,
-                            notes: notesCtrl.text.trim(),
-                          );
-                          if (context.mounted) {
-                            Navigator.pop(ctx);
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                  child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+                ),
+                ElevatedButton.icon(
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          setDlgState(() => isSaving = true);
+                          try {
+                            final hours = double.tryParse(hoursCtrl.text.trim()) ?? 12.0;
+                            await provider.nurseRecordShiftAttendance(
+                              clientId: client.id,
+                              date: selectedDate,
+                              shiftType: shiftType,
+                              startTime: startCtrl.text.trim(),
+                              endTime: endCtrl.text.trim(),
+                              hoursCount: hours,
+                              notes: notesCtrl.text.trim(),
+                              checkInLatitude: currentLocation?.latitude,
+                              checkInLongitude: currentLocation?.longitude,
+                              checkInAccuracy: currentLocation?.accuracy,
+                              checkInAt: DateTime.now(),
+                            );
+                            if (context.mounted) {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('تم تسجيل حضور الوردية وتوثيق موقعك الجغرافي بنجاح 📍', style: TextStyle(fontFamily: 'Cairo')),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            setDlgState(() => isSaving = false);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('تم تسجيل حضور الوردية بنجاح وإثبات مستحقاتك في حسابك', style: TextStyle(fontFamily: 'Cairo')),
-                                backgroundColor: Colors.green,
+                              SnackBar(
+                                content: Text('خطأ: $e', style: const TextStyle(fontFamily: 'Cairo')),
+                                backgroundColor: Colors.red,
                               ),
                             );
                           }
-                        } catch (e) {
-                          setDlgState(() => isSaving = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('خطأ: $e', style: const TextStyle(fontFamily: 'Cairo')),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                icon: isSaving
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.check, size: 18),
-                label: const Text('تأكيد حضور الوردية', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
+                        },
+                  icon: isSaving
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.check, size: 18),
+                  label: const Text('تأكيد حضور الوردية (GPS 📍)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showCheckOutDialog(BuildContext context, AppProvider provider, ServiceDayModel shift) {
+    final handoverCtrl = TextEditingController();
+    bool isSaving = false;
+
+    GeoLocationResult? currentLocation;
+    bool isFetchingLocation = true;
+    String locationStatusText = 'جاري التحقق من موقع الانصراف عبر الأقمار الصناعية (GPS)...';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) {
+          if (isFetchingLocation && currentLocation == null && locationStatusText.startsWith('جاري')) {
+            LocationService.getCurrentLocation().then((loc) {
+              setDlgState(() {
+                currentLocation = loc;
+                isFetchingLocation = false;
+                if (loc != null) {
+                  locationStatusText = 'تم إثبات موقع الانصراف بنجاح: دقة (${loc.accuracy?.toStringAsFixed(0) ?? "10"}م)';
+                } else {
+                  locationStatusText = 'لم نتمكن من التقاط إشارة GPS (تأكد من تفعيل الموقع بالهاتف)';
+                }
+              });
+            }).catchError((_) {
+              setDlgState(() {
+                isFetchingLocation = false;
+                locationStatusText = 'تعذر الوصول للموقع الجغرافي';
+              });
+            });
+          }
+
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.flag_rounded, color: Colors.blue),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'إثبات انصراف وتسليم الوردية (GPS 🏁)',
+                          style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        Text(
+                          'للحالة: ${shift.clientName}',
+                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Summary of current shift
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'تاريخ الوردية: ${DateFormat('yyyy/MM/dd').format(shift.date)}',
+                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'وقت الحضور المسجل: ${shift.startTime?.isNotEmpty == true ? shift.startTime! : "مسجل"}',
+                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.teal),
+                          ),
+                          if (shift.hasGpsCheckIn)
+                            const Text(
+                              '✓ تم إثبات الحضور مسبقاً بمقر الحالة عبر الـ GPS',
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // GPS Status Banner
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isFetchingLocation
+                            ? Colors.amber.shade50
+                            : (currentLocation != null ? Colors.green.shade50 : Colors.orange.shade50),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isFetchingLocation
+                              ? Colors.amber.shade300
+                              : (currentLocation != null ? Colors.green.shade400 : Colors.orange.shade300),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          if (isFetchingLocation)
+                            const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber),
+                            )
+                          else
+                            Icon(
+                              currentLocation != null ? Icons.my_location_rounded : Icons.location_off_outlined,
+                              color: currentLocation != null ? Colors.green.shade700 : Colors.orange.shade700,
+                              size: 20,
+                            ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  currentLocation != null ? 'إثبات انصراف موثق جغرافياً (GPS)' : 'الموقع الجغرافي للانصراف',
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: currentLocation != null ? Colors.green.shade900 : Colors.grey.shade900,
+                                  ),
+                                ),
+                                Text(
+                                  locationStatusText,
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: 10,
+                                    color: currentLocation != null ? Colors.green.shade800 : Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!isFetchingLocation && currentLocation == null)
+                            IconButton(
+                              icon: const Icon(Icons.refresh, size: 18),
+                              tooltip: 'إعادة محاولة GPS',
+                              onPressed: () {
+                                setDlgState(() {
+                                  isFetchingLocation = true;
+                                  locationStatusText = 'جاري إعادة فحص موقعك الجغرافي...';
+                                });
+                                LocationService.getCurrentLocation().then((loc) {
+                                  setDlgState(() {
+                                    currentLocation = loc;
+                                    isFetchingLocation = false;
+                                    if (loc != null) {
+                                      locationStatusText = 'تم تحديد الموقع بنجاح: دقة (${loc.accuracy?.toStringAsFixed(0) ?? "10"}م)';
+                                    } else {
+                                      locationStatusText = 'تعذر التحديد التلقائي';
+                                    }
+                                  });
+                                });
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Handover notes
+                    TextField(
+                      controller: handoverCtrl,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'تقرير تسليم الوردية وملاحظات الانصراف (اختياري)',
+                        hintText: 'حالة المريض عند التسليم، الزميل المستلم، الملاحظات العاجلة...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                  child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+                ),
+                ElevatedButton.icon(
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          setDlgState(() => isSaving = true);
+                          try {
+                            final handoverText = handoverCtrl.text.trim();
+                            final finalNotes = handoverText.isNotEmpty
+                                ? (shift.notes.isNotEmpty ? '${shift.notes} | تقرير التسليم: $handoverText' : 'تقرير التسليم: $handoverText')
+                                : null;
+
+                            await provider.recordNurseCheckOut(
+                              serviceDayId: shift.id,
+                              endTime: DateFormat('hh:mm a').format(DateTime.now()),
+                              checkOutLatitude: currentLocation?.latitude,
+                              checkOutLongitude: currentLocation?.longitude,
+                              checkOutAt: DateTime.now(),
+                              notes: finalNotes,
+                            );
+                            if (context.mounted) {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('تم توثيق الانصراف وتسليم الوردية بنجاح 🏁', style: TextStyle(fontFamily: 'Cairo')),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            setDlgState(() => isSaving = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('خطأ: $e', style: const TextStyle(fontFamily: 'Cairo')),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                  icon: isSaving
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.check_circle_outline, size: 18),
+                  label: const Text('تأكيد الانصراف وتسليم الوردية (GPS 🏁)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade700, foregroundColor: Colors.white),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -1223,6 +1612,16 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
       );
     }
 
+    final todayShift = provider.currentNurseShifts.cast<ServiceDayModel?>().firstWhere(
+      (s) =>
+          s != null &&
+          s.clientId == client.id &&
+          s.date.year == DateTime.now().year &&
+          s.date.month == DateTime.now().month &&
+          s.date.day == DateTime.now().day,
+      orElse: () => null,
+    );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -1280,23 +1679,119 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
                         'نوع الخدمة: ${_formatServiceType(client.serviceType)} • تاريخ البدء: ${client.startDate != null ? DateFormat('yyyy/MM/dd').format(client.startDate!) : "محدد"}',
                         style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Color(0xFFCBD5E1)),
                       ),
+                      if (todayShift != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.teal.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.tealAccent),
+                              ),
+                              child: Text(
+                                'حضور اليوم: ${todayShift.startTime?.isNotEmpty == true ? todayShift.startTime! : "مسجل"} ${todayShift.hasGpsCheckIn ? "📍 GPS" : ""}',
+                                style: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.tealAccent, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            if (todayShift.hasGpsCheckOut) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.lightBlueAccent),
+                                ),
+                                child: const Text(
+                                  'انصراف: موثق GPS 🏁',
+                                  style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.lightBlueAccent, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                // Action Button: Record shift
-                ElevatedButton.icon(
-                  onPressed: caregiver != null
-                      ? () => _showRecordShiftDialog(context, provider, client, caregiver)
-                      : null,
-                  icon: const Icon(Icons.how_to_reg, size: 18),
-                  label: const Text('تسجيل حضور الوردية', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.tealAccent.shade700,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                // Action Buttons: Smart Check-In / Check-Out
+                if (todayShift == null) ...[
+                  ElevatedButton.icon(
+                    onPressed: caregiver != null
+                        ? () => _showRecordShiftDialog(context, provider, client, caregiver)
+                        : null,
+                    icon: const Icon(Icons.how_to_reg, size: 18),
+                    label: const Text('تسجيل حضور (GPS 📍)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.tealAccent.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
-                ),
+                ] else if (!todayShift.hasGpsCheckOut) ...[
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => _showCheckOutDialog(context, provider, todayShift),
+                        icon: const Icon(Icons.flag_rounded, size: 18),
+                        label: const Text('إثبات انصراف (GPS 🏁)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent.shade400,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      InkWell(
+                        onTap: caregiver != null ? () => _showRecordShiftDialog(context, provider, client, caregiver) : null,
+                        child: const Text(
+                          '+ تسجيل وردية إضافية',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.tealAccent, decoration: TextDecoration.underline),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.greenAccent),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.greenAccent, size: 14),
+                            SizedBox(width: 4),
+                            Text(
+                              'تم إثبات الوردية بالـ GPS ✓',
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      InkWell(
+                        onTap: caregiver != null ? () => _showRecordShiftDialog(context, provider, client, caregiver) : null,
+                        child: const Text(
+                          '+ تسجيل وردية أخرى',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.tealAccent, decoration: TextDecoration.underline),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -1581,13 +2076,15 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
                           backgroundColor: Colors.teal.shade50,
                           child: Text('${idx + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal)),
                         ),
-                        title: Row(
+                        title: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 4,
                           children: [
                             Text(
                               DateFormat('yyyy/MM/dd').format(s.date),
                               style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
                             ),
-                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
@@ -1596,6 +2093,40 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
                               ),
                               child: Text(s.shiftTypeArabic, style: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.blueGrey)),
                             ),
+                            if (s.hasGpsCheckIn)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade50,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.green.shade200),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.location_on, size: 10, color: Colors.green),
+                                    SizedBox(width: 2),
+                                    Text('حضور GPS', style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: Colors.green, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            if (s.hasGpsCheckOut)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.blue.shade200),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.flag_rounded, size: 10, color: Colors.blue),
+                                    SizedBox(width: 2),
+                                    Text('انصراف GPS', style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: Colors.blue, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                         subtitle: Column(
@@ -1799,6 +2330,14 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
                   label: 'الوزن والطول',
                   val: '${caregiver.weight != null ? caregiver.weight!.toStringAsFixed(0) + " كجم" : "غير مسجل"} • ${caregiver.height != null ? caregiver.height!.toStringAsFixed(0) + " سم" : ""}',
                 ),
+                if (caregiver.hasLocation) ...[
+                  const SizedBox(height: 12),
+                  _infoRow(
+                    icon: Icons.my_location_rounded,
+                    label: 'إثبات الموقع الجغرافي (GPS)',
+                    val: 'متصل ومحدث ${caregiver.lastLocationUpdate != null ? "(" + DateFormat('yyyy/MM/dd hh:mm a').format(caregiver.lastLocationUpdate!) + ")" : ""}',
+                  ),
+                ],
               ],
             ),
           ),

@@ -14,6 +14,17 @@ class ServiceDayModel {
   final String? endTime; // وقت إنهاء الخدمة والتسليم (مثلاً 08:00 م)
   final double? hoursCount; // عدد ساعات العمل الفعلي (مثلاً 12 أو 24 أو 8)
 
+  // إثبات الحضور الجغرافي بالـ GPS
+  final double? checkInLatitude;
+  final double? checkInLongitude;
+  final double? checkInAccuracy;
+  final DateTime? checkInAt;
+
+  // إثبات الانصراف الجغرافي بالـ GPS
+  final double? checkOutLatitude;
+  final double? checkOutLongitude;
+  final DateTime? checkOutAt;
+
   ServiceDayModel({
     required this.id,
     required this.clientId,
@@ -29,10 +40,25 @@ class ServiceDayModel {
     this.startTime,
     this.endTime,
     this.hoursCount,
+    this.checkInLatitude,
+    this.checkInLongitude,
+    this.checkInAccuracy,
+    this.checkInAt,
+    this.checkOutLatitude,
+    this.checkOutLongitude,
+    this.checkOutAt,
   });
 
   // Gross profit for this specific day
   double get companyDayProfit => clientPrice - nursePrice;
+
+  // هل تم إثبات الحضور بالـ GPS
+  bool get hasGpsCheckIn => checkInLatitude != null && checkInLongitude != null;
+  String? get checkInMapsUrl => hasGpsCheckIn ? 'https://www.google.com/maps?q=$checkInLatitude,$checkInLongitude' : null;
+
+  // هل تم إثبات الانصراف بالـ GPS
+  bool get hasGpsCheckOut => checkOutLatitude != null && checkOutLongitude != null;
+  String? get checkOutMapsUrl => hasGpsCheckOut ? 'https://www.google.com/maps?q=$checkOutLatitude,$checkOutLongitude' : null;
 
   String get shiftTypeArabic {
     switch (shiftType) {
@@ -79,6 +105,13 @@ class ServiceDayModel {
     String? startTime,
     String? endTime,
     double? hoursCount,
+    double? checkInLatitude,
+    double? checkInLongitude,
+    double? checkInAccuracy,
+    DateTime? checkInAt,
+    double? checkOutLatitude,
+    double? checkOutLongitude,
+    DateTime? checkOutAt,
   }) {
     return ServiceDayModel(
       id: id ?? this.id,
@@ -95,6 +128,13 @@ class ServiceDayModel {
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       hoursCount: hoursCount ?? this.hoursCount,
+      checkInLatitude: checkInLatitude ?? this.checkInLatitude,
+      checkInLongitude: checkInLongitude ?? this.checkInLongitude,
+      checkInAccuracy: checkInAccuracy ?? this.checkInAccuracy,
+      checkInAt: checkInAt ?? this.checkInAt,
+      checkOutLatitude: checkOutLatitude ?? this.checkOutLatitude,
+      checkOutLongitude: checkOutLongitude ?? this.checkOutLongitude,
+      checkOutAt: checkOutAt ?? this.checkOutAt,
     );
   }
 
@@ -114,6 +154,13 @@ class ServiceDayModel {
       if (startTime != null) 'startTime': startTime,
       if (endTime != null) 'endTime': endTime,
       if (hoursCount != null) 'hoursCount': hoursCount,
+      if (checkInLatitude != null) 'checkInLatitude': checkInLatitude,
+      if (checkInLongitude != null) 'checkInLongitude': checkInLongitude,
+      if (checkInAccuracy != null) 'checkInAccuracy': checkInAccuracy,
+      if (checkInAt != null) 'checkInAt': checkInAt!.toIso8601String(),
+      if (checkOutLatitude != null) 'checkOutLatitude': checkOutLatitude,
+      if (checkOutLongitude != null) 'checkOutLongitude': checkOutLongitude,
+      if (checkOutAt != null) 'checkOutAt': checkOutAt!.toIso8601String(),
     };
   }
 
@@ -137,6 +184,13 @@ class ServiceDayModel {
       startTime: map['startTime'],
       endTime: map['endTime'],
       hoursCount: (map['hoursCount'] as num?)?.toDouble(),
+      checkInLatitude: (map['checkInLatitude'] as num?)?.toDouble(),
+      checkInLongitude: (map['checkInLongitude'] as num?)?.toDouble(),
+      checkInAccuracy: (map['checkInAccuracy'] as num?)?.toDouble(),
+      checkInAt: map['checkInAt'] != null ? DateTime.tryParse(map['checkInAt']) : null,
+      checkOutLatitude: (map['checkOutLatitude'] as num?)?.toDouble(),
+      checkOutLongitude: (map['checkOutLongitude'] as num?)?.toDouble(),
+      checkOutAt: map['checkOutAt'] != null ? DateTime.tryParse(map['checkOutAt']) : null,
     );
   }
 }

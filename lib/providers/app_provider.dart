@@ -1188,6 +1188,10 @@ class AppProvider extends ChangeNotifier {
     String? startTime,
     String? endTime,
     double? hoursCount,
+    double? checkInLatitude,
+    double? checkInLongitude,
+    double? checkInAccuracy,
+    DateTime? checkInAt,
   }) async {
     final client = _clients.firstWhere((c) => c.id == clientId);
     final day = ServiceDayModel(
@@ -1205,17 +1209,60 @@ class AppProvider extends ChangeNotifier {
       startTime: startTime,
       endTime: endTime,
       hoursCount: hoursCount,
+      checkInLatitude: checkInLatitude,
+      checkInLongitude: checkInLongitude,
+      checkInAccuracy: checkInAccuracy,
+      checkInAt: checkInAt,
     );
 
     _serviceDays.insert(0, day);
     final timeStr = day.timeRangeDisplay.isNotEmpty ? ' (${day.timeRangeDisplay})' : '';
+    final gpsStr = day.hasGpsCheckIn ? ' [موقع جغرافي مثبت 📍]' : '';
     await _logAction(
       title: 'تسجيل يوم خدمة',
-      description: 'تم تسجيل يوم خدمة (${DateFormat('yyyy/MM/dd').format(date)}) للعميل: ${client.name} - التمريض: ${day.nurseName} - ${day.shiftTypeArabic}$timeStr',
+      description: 'تم تسجيل يوم خدمة (${DateFormat('yyyy/MM/dd').format(date)}) للعميل: ${client.name} - التمريض: ${day.nurseName} - ${day.shiftTypeArabic}$timeStr$gpsStr',
       actionType: 'service_days',
       metadata: {'clientId': clientId, 'clientName': client.name, 'nurseName': day.nurseName},
     );
     await _persistAndSync();
+  }
+
+  /// إثبات انصراف وتسليم الوردية للممرض مع إحداثيات GPS
+  Future<void> recordNurseCheckOut({
+    String? serviceDayId,
+    String? shiftId,
+    String? endTime,
+    double? checkOutLatitude,
+    double? checkOutLongitude,
+    DateTime? checkOutAt,
+    double? hoursCount,
+    String? notes,
+  }) async {
+    final targetId = serviceDayId ?? shiftId ?? '';
+    final effectiveEndTime = endTime ?? DateFormat('hh:mm a').format(DateTime.now());
+    final idx = _serviceDays.indexWhere((d) => d.id == targetId);
+    if (idx != -1) {
+      final old = _serviceDays[idx];
+      _serviceDays[idx] = old.copyWith(
+        endTime: effectiveEndTime,
+        hoursCount: hoursCount ?? old.hoursCount,
+        checkOutLatitude: checkOutLatitude,
+        checkOutLongitude: checkOutLongitude,
+        checkOutAt: checkOutAt ?? DateTime.now(),
+        notes: notes != null && notes.trim().isNotEmpty
+            ? '${old.notes.isNotEmpty ? "${old.notes} • " : ""}$notes'
+            : old.notes,
+      );
+      final gpsStr = checkOutLatitude != null ? ' [موقع جغرافي مثبت 📍]' : '';
+      await _logAction(
+        title: 'إثبات انصراف وردية (GPS)',
+        description: 'الممرض: ${old.nurseName} قام بتسليم وانصراف الوردية للعميل: ${old.clientName} (وقت الإنهاء: $effectiveEndTime)$gpsStr',
+        actionType: 'service_days',
+        metadata: {'clientId': old.clientId, 'nurseName': old.nurseName},
+      );
+      await _persistAndSync();
+      notifyListeners();
+    }
   }
 
   /// تسجيل حزمة أيام خدمة دفعة واحدة (مثلاً 4 أيام أو 5 أيام في الأسبوع مع ممرض معين)
@@ -3239,6 +3286,26 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  /// تحديث الموقع الجغرافي الحي لمقدم الخدمة (يُستدعى تلقائياً عند فتح البوابة وبشكل دوري)
+  Future<void> updateCaregiverLiveLocation({
+    required String caregiverId,
+    required double latitude,
+    required double longitude,
+    double? accuracy,
+  }) async {
+    final idx = _caregivers.indexWhere((c) => c.id == caregiverId);
+    if (idx != -1) {
+      _caregivers[idx] = _caregivers[idx].copyWith(
+        lastLatitude: latitude,
+        lastLongitude: longitude,
+        lastLocationAccuracy: accuracy,
+        lastLocationUpdate: DateTime.now(),
+      );
+      await storageService.saveCaregivers(_caregivers);
+      notifyListeners();
+    }
+  }
+
   // ==========================================
   // إمكانات وبوابة التمريض ورسائل الـ SMS
   // ==========================================
@@ -3496,6 +3563,10 @@ class AppProvider extends ChangeNotifier {
     required String endTime,
     double? hoursCount,
     required String notes,
+    double? checkInLatitude,
+    double? checkInLongitude,
+    double? checkInAccuracy,
+    DateTime? checkInAt,
   }) async {
     final cg = currentNurseCaregiver;
     if (cg == null) throw 'لا يمكن التعرف على حساب الممرض الحالي';
@@ -3521,6 +3592,10 @@ class AppProvider extends ChangeNotifier {
       startTime: startTime,
       endTime: endTime,
       hoursCount: hoursCount,
+      checkInLatitude: checkInLatitude,
+      checkInLongitude: checkInLongitude,
+      checkInAccuracy: checkInAccuracy,
+      checkInAt: checkInAt,
     );
   }
 }

@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-18T14:49:44.053Z",
+  "lastUpdated": "2026-11-18T15:28:26.635Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -2283,7 +2283,7 @@
     },
     {
       "actionType": "start_service",
-      "description": "تم بدء الخدمة للعميل: ناديه (مدة مفتوحة) - التمريض: هايدي",
+      "description": "تم بدء الخدمة للع��يل: ناديه (مدة مفتوحة) - التمريض: هايدي",
       "id": "ntf_e5384dad",
       "metadata": {
         "clientId": "cli_678010eb",
@@ -3015,7 +3015,7 @@
       "title": "تسجيل سلفة تمريض",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
-      "userRole": "مدير الحسابات والمالية"
+      "userRole": "مدير الحسابات والمال��ة"
     },
     {
       "actionType": "nurse_payout",

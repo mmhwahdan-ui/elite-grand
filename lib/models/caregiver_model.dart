@@ -26,6 +26,10 @@ class CaregiverModel {
   final String? loginUsername; // اسم المستخدم للدخول
   final String? loginPassword; // كلمة المرور للدخول
   final DateTime? lastSmsSentAt; // تاريخ ووقت آخر إرسال لرسالة SMS
+  final double? lastLatitude; // آخر خط عرض للموقع الجغرافي
+  final double? lastLongitude; // آخر خط طول للموقع الجغرافي
+  final double? lastLocationAccuracy; // دقة تحديد الموقع بالأمتار
+  final DateTime? lastLocationUpdate; // وقت آخر تحديث للموقع
 
   CaregiverModel({
     required this.id,
@@ -55,8 +59,15 @@ class CaregiverModel {
     this.loginUsername,
     this.loginPassword,
     this.lastSmsSentAt,
+    this.lastLatitude,
+    this.lastLongitude,
+    this.lastLocationAccuracy,
+    this.lastLocationUpdate,
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
+
+  bool get hasLocation => lastLatitude != null && lastLongitude != null;
+  String? get locationMapsUrl => hasLocation ? 'https://www.google.com/maps?q=$lastLatitude,$lastLongitude' : null;
 
   String get shiftPreferenceArabic {
     switch (shiftPreference) {
@@ -106,6 +117,10 @@ class CaregiverModel {
     String? loginUsername,
     String? loginPassword,
     DateTime? lastSmsSentAt,
+    double? lastLatitude,
+    double? lastLongitude,
+    double? lastLocationAccuracy,
+    DateTime? lastLocationUpdate,
   }) {
     return CaregiverModel(
       id: id ?? this.id,
@@ -135,6 +150,10 @@ class CaregiverModel {
       loginUsername: loginUsername ?? this.loginUsername,
       loginPassword: loginPassword ?? this.loginPassword,
       lastSmsSentAt: lastSmsSentAt ?? this.lastSmsSentAt,
+      lastLatitude: lastLatitude ?? this.lastLatitude,
+      lastLongitude: lastLongitude ?? this.lastLongitude,
+      lastLocationAccuracy: lastLocationAccuracy ?? this.lastLocationAccuracy,
+      lastLocationUpdate: lastLocationUpdate ?? this.lastLocationUpdate,
     );
   }
 
@@ -167,6 +186,10 @@ class CaregiverModel {
       'loginUsername': loginUsername,
       'loginPassword': loginPassword,
       'lastSmsSentAt': lastSmsSentAt?.toIso8601String(),
+      if (lastLatitude != null) 'lastLatitude': lastLatitude,
+      if (lastLongitude != null) 'lastLongitude': lastLongitude,
+      if (lastLocationAccuracy != null) 'lastLocationAccuracy': lastLocationAccuracy,
+      if (lastLocationUpdate != null) 'lastLocationUpdate': lastLocationUpdate!.toIso8601String(),
     };
   }
 
@@ -199,6 +222,10 @@ class CaregiverModel {
       loginUsername: map['loginUsername'],
       loginPassword: map['loginPassword'],
       lastSmsSentAt: map['lastSmsSentAt'] != null ? DateTime.tryParse(map['lastSmsSentAt']) : null,
+      lastLatitude: (map['lastLatitude'] as num?)?.toDouble(),
+      lastLongitude: (map['lastLongitude'] as num?)?.toDouble(),
+      lastLocationAccuracy: (map['lastLocationAccuracy'] as num?)?.toDouble(),
+      lastLocationUpdate: map['lastLocationUpdate'] != null ? DateTime.tryParse(map['lastLocationUpdate']) : null,
     );
   }
 }
