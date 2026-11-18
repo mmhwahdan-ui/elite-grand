@@ -626,6 +626,22 @@ class AppProvider extends ChangeNotifier {
       _knownInstructionIds.add(i.id);
     }
 
+    // مزامنة إحداثيات الـ GPS لمقدمي الخدمة من آخر وردية تم تسجيلها جغرافياً في حال عدم تسجيلها مسبقاً
+    for (var i = 0; i < _caregivers.length; i++) {
+      if (_caregivers[i].lastLatitude == null) {
+        final withLoc = _serviceDays.where((d) => isNurseNameMatch(d.nurseName, _caregivers[i].name) && d.checkInLatitude != null).toList();
+        if (withLoc.isNotEmpty) {
+          final latest = withLoc.first;
+          _caregivers[i] = _caregivers[i].copyWith(
+            lastLatitude: latest.checkInLatitude,
+            lastLongitude: latest.checkInLongitude,
+            lastLocationAccuracy: latest.checkInAccuracy,
+            lastLocationUpdate: latest.checkInAt ?? latest.createdAt,
+          );
+        }
+      }
+    }
+
     // Ensure all default users have 123 as password
     for (var u in _users) {
       if (u.password.isEmpty || u.password == '123456') {
@@ -1312,6 +1328,17 @@ class AppProvider extends ChangeNotifier {
             ? '${old.notes.isNotEmpty ? "${old.notes} • " : ""}$notes'
             : old.notes,
       );
+      if (checkOutLatitude != null && checkOutLongitude != null) {
+        final cgIdx = _caregivers.indexWhere((c) => isNurseNameMatch(c.name, old.nurseName));
+        if (cgIdx != -1) {
+          _caregivers[cgIdx] = _caregivers[cgIdx].copyWith(
+            lastLatitude: checkOutLatitude,
+            lastLongitude: checkOutLongitude,
+            lastLocationUpdate: checkOutAt ?? DateTime.now(),
+          );
+          await storageService.saveCaregivers(_caregivers);
+        }
+      }
       final gpsStr = checkOutLatitude != null ? ' [موقع جغرافي مثبت 📍]' : '';
       await _logAction(
         title: 'إثبات انصراف وردية (GPS)',
@@ -3842,5 +3869,14 @@ class AppProvider extends ChangeNotifier {
       checkInAccuracy: checkInAccuracy,
       checkInAt: checkInAt,
     );
+
+    if (checkInLatitude != null && checkInLongitude != null) {
+      await updateCaregiverLiveLocation(
+        caregiverId: cg.id,
+        latitude: checkInLatitude,
+        longitude: checkInLongitude,
+        accuracy: checkInAccuracy,
+      );
+    }
   }
 }

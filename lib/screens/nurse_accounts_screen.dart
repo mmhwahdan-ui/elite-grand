@@ -1,4 +1,4 @@
-﻿import 'caregivers_screen.dart';
+import 'caregivers_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -878,22 +878,46 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                                  decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(4)),
                                                  child: Text('سلف: ' + advances.toStringAsFixed(0) + ' ج.م', style: TextStyle(color: Colors.amber.shade900, fontSize: 11, fontFamily: 'Cairo')),
                                                ),
-                                             if (provider.findCaregiverByName(nurse)?.hasLocation == true)
-                                               InkWell(
-                                                 onTap: () => LocationService.openMapUrl(provider.findCaregiverByName(nurse)!.locationMapsUrl!),
-                                                 child: Container(
-                                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                   decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.green.shade300)),
-                                                   child: const Row(
-                                                     mainAxisSize: MainAxisSize.min,
-                                                     children: [
-                                                       Icon(Icons.location_on, size: 10, color: Colors.green),
-                                                       SizedBox(width: 2),
-                                                       Text('موقع GPS 📍', style: TextStyle(color: Colors.green, fontSize: 10, fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
-                                                     ],
-                                                   ),
-                                                 ),
-                                               ),
+                                              if (provider.findCaregiverByName(nurse) != null)
+                                                Builder(
+                                                  builder: (context) {
+                                                    final cgItem = provider.findCaregiverByName(nurse)!;
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        if (cgItem.hasLocation) {
+                                                          LocationService.openMapUrl(cgItem.locationMapsUrl!);
+                                                        } else {
+                                                          final query = cgItem.residenceArea.isNotEmpty ? cgItem.residenceArea : (cgItem.address.isNotEmpty ? cgItem.address : cgItem.name);
+                                                          LocationService.openMapUrl('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}');
+                                                        }
+                                                      },
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                        decoration: BoxDecoration(
+                                                          color: cgItem.hasLocation ? Colors.green.shade50 : const Color(0xFFF0FDFA),
+                                                          borderRadius: BorderRadius.circular(4),
+                                                          border: Border.all(color: cgItem.hasLocation ? Colors.green.shade300 : const Color(0xFF99F6E4)),
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            Icon(cgItem.hasLocation ? Icons.my_location_rounded : Icons.location_on, size: 10, color: cgItem.hasLocation ? Colors.green : const Color(0xFF0F766E)),
+                                                            const SizedBox(width: 2),
+                                                            Text(
+                                                              'موقع GPS 📍',
+                                                              style: TextStyle(
+                                                                color: cgItem.hasLocation ? Colors.green : const Color(0xFF0F766E),
+                                                                fontSize: 10,
+                                                                fontFamily: 'Cairo',
+                                                                fontWeight: FontWeight.bold,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
                                               if (provider.findCaregiverByName(nurse) != null)
                                                 InkWell(
                                                   onTap: () async {

@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-18T16:29:06.632Z",
+  "lastUpdated": "2026-11-18T16:47:30.880Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -317,7 +317,7 @@
       "updatedAt": "2026-11-10T16:04:03.882"
     },
     {
-      "address": "رابعه العدويه مدينه نصر",
+      "address": "رابعه الع��ويه مدينه نصر",
       "createdAt": "2026-11-10T15:50:49.543",
       "createdBy": "wahdan",
       "dailyPrice": 450,
@@ -413,6 +413,26 @@
       "startDate": "2026-11-14T00:00:00.000",
       "status": "active",
       "updatedAt": "2026-11-14T22:34:21.581"
+    },
+    {
+      "address": "7 شارع الراعي الزيتون",
+      "createdAt": "2026-11-18T18:31:10.670",
+      "createdBy": "wahdan",
+      "dailyPrice": 100,
+      "healthCondition": "مسن",
+      "id": "cli_73334dfe",
+      "isExistingClient": false,
+      "name": "مصطفى وهدان",
+      "notes": "",
+      "nurseAssigned": "شيماء حسن الحاكم",
+      "nurseDailyPrice": 100,
+      "openingBalance": 0,
+      "phone": "0226786449",
+      "serviceType": "hours12",
+      "status": "active",
+      "updatedAt": "2026-11-18T18:31:57.404",
+      "endDate": "2026-11-18T00:00:00.000",
+      "startDate": "2026-11-18T00:00:00.000"
     }
   ],
   "payments": [
@@ -1408,6 +1428,38 @@
       "nursePrice": 700,
       "recordedBy": "wahdan",
       "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_73334dfe",
+      "clientName": "مصطفى وهدان",
+      "clientPrice": 100,
+      "createdAt": "2026-11-18T18:31:57.406",
+      "date": "2026-11-18T00:00:00.000",
+      "id": "day_5500c75d",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (1 يوم)",
+      "nurseName": "شيماء حسن الحاكم",
+      "nursePrice": 100,
+      "recordedBy": "wahdan",
+      "shiftType": "hours12"
+    },
+    {
+      "clientId": "cli_73334dfe",
+      "clientName": "مصطفى وهدان",
+      "clientPrice": 100,
+      "createdAt": "2026-11-18T18:33:47.513",
+      "date": "2026-11-18T18:33:30.373",
+      "endTime": "06:38 PM",
+      "hoursCount": 12,
+      "id": "day_f4d8fa2b",
+      "notes": "",
+      "nurseName": "شيماء حسن الحاكم",
+      "nursePrice": 100,
+      "recordedBy": "01033408925",
+      "shiftType": "hours12",
+      "startTime": "08:00 ص",
+      "checkOutAt": "2026-11-18T18:38:44.910",
+      "checkOutLatitude": 30.079597880058223,
+      "checkOutLongitude": 31.376492935683956
     }
   ],
   "nurseTransactions": [
@@ -2233,7 +2285,7 @@
         "clientName": "عمرو"
       },
       "timestamp": "2026-11-10T15:59:25.532",
-      "title": "تسجيل تحصيل ��قدية",
+      "title": "تسجيل تحصيل نقدية",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"
@@ -2299,7 +2351,7 @@
     },
     {
       "actionType": "add_client",
-      "description": "تم تسجيل العميل: عمرو (السعر ال��ومي: 550 ج.م - يومية التمريض: 450 ج.م)",
+      "description": "تم تسجيل العميل: عمرو (السعر اليومي: 550 ج.م - يومية التمريض: 450 ج.م)",
       "id": "ntf_1ee1194c",
       "metadata": {
         "clientName": "عمرو",
@@ -3194,7 +3246,7 @@
         "name": "زينب محمد عبد الحميد احمد خير الله"
       },
       "timestamp": "2026-11-18T16:13:34.383",
-      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "title": "إضافة مقدم ��دمة بقاعدة البيانات",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"
@@ -3226,6 +3278,78 @@
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
       "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "add_client",
+      "description": "تم تسجيل العميل: مصطفى وهدان (السعر اليومي: 100 ج.م - يومية التمريض: 100 ج.م)",
+      "id": "ntf_d76afff7",
+      "metadata": {
+        "clientName": "مصطفى وهدان",
+        "dailyPrice": 100
+      },
+      "timestamp": "2026-11-18T18:31:10.671",
+      "title": "إضافة عميل جديد",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "start_service",
+      "description": "تم بدء الخدمة للعميل: مصطفى وهدان (من 2026/11/18 إلى 2026/11/18) - التمريض: شيماء حسن الحاكم",
+      "id": "ntf_9ed91b80",
+      "metadata": {
+        "clientId": "cli_73334dfe",
+        "clientName": "مصطفى وهدان"
+      },
+      "timestamp": "2026-11-18T18:31:57.425",
+      "title": "بدء خدمة عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل 1 يوم خدمة للعميل: مصطفى وهدان - التمريض: شيماء حسن الحاكم (hours12)",
+      "id": "ntf_7e399eec",
+      "metadata": {
+        "clientId": "cli_73334dfe",
+        "clientName": "مصطفى وهدان",
+        "daysCount": 1
+      },
+      "timestamp": "2026-11-18T18:31:57.406",
+      "title": "تسجيل أيام الخدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تسجيل يوم خدمة (2026/11/18) للعميل: مصطفى وهدان - التمريض: شيماء حسن الحاكم - وردية 12 ساعة (من 08:00 ص إلى 08:00 م)",
+      "id": "ntf_7abe36b7",
+      "metadata": {
+        "clientId": "cli_73334dfe",
+        "clientName": "مصطفى وهدان",
+        "nurseName": "شيماء حسن الحاكم"
+      },
+      "timestamp": "2026-11-18T18:33:47.515",
+      "title": "تسجيل يوم خدمة",
+      "userId": "usr_cg_cg_1794991670881",
+      "userName": "شيماء حسن الحاكم",
+      "userRole": "طاقم تمريض / مقدم خدمة"
+    },
+    {
+      "actionType": "service_days",
+      "description": "الممرض: شيماء حسن الحاكم قام بتسليم وانصراف الوردية للعميل: مصطفى وهدان (وقت الإنهاء: 06:38 PM) [موقع جغرافي مثبت 📍]",
+      "id": "ntf_a634ec75",
+      "metadata": {
+        "clientId": "cli_73334dfe",
+        "nurseName": "شيماء حسن الحاكم"
+      },
+      "timestamp": "2026-11-18T18:38:44.912",
+      "title": "إثبات انصراف وردية (GPS)",
+      "userId": "usr_cg_cg_1794991670881",
+      "userName": "شيماء حسن الحاكم",
+      "userRole": "طاقم تمريض / مقدم خدمة"
     }
   ]
 }

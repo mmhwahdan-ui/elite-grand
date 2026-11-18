@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/caregiver_model.dart';
 import '../providers/app_provider.dart';
@@ -577,20 +577,94 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                                     const SizedBox(height: 10),
                                   ],
 
+                                  // GPS Location Banner with "فتح الخريطة"
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: caregiver.hasLocation ? Colors.green.shade50 : const Color(0xFFF0FDFA),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: caregiver.hasLocation ? Colors.green.shade200 : const Color(0xFF99F6E4)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          caregiver.hasLocation ? Icons.my_location_rounded : Icons.location_on,
+                                          size: 16,
+                                          color: caregiver.hasLocation ? Colors.green.shade700 : const Color(0xFF0F766E),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            caregiver.hasLocation
+                                                ? 'موقع GPS 📍: إحداثيات مباشرة مسجلة عبر الهاتف'
+                                                : 'موقع GPS 📍: ${caregiver.residenceArea.isNotEmpty ? caregiver.residenceArea : "موقع السكن مسجل"}',
+                                            style: TextStyle(
+                                              fontFamily: 'Cairo',
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: caregiver.hasLocation ? Colors.green.shade900 : const Color(0xFF115E59),
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        InkWell(
+                                          onTap: () {
+                                            if (caregiver.hasLocation) {
+                                              LocationService.openMapUrl(caregiver.locationMapsUrl!);
+                                            } else {
+                                              final query = caregiver.residenceArea.isNotEmpty
+                                                  ? caregiver.residenceArea
+                                                  : (caregiver.address.isNotEmpty ? caregiver.address : caregiver.name);
+                                              LocationService.openMapUrl('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}');
+                                            }
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: caregiver.hasLocation ? Colors.green.shade700 : const Color(0xFF0F766E),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.map, size: 12, color: Colors.white),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  'فتح الخريطة',
+                                                  style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
                                   // Specs & Attributes Row
                                   Wrap(
                                     spacing: 8,
                                     runSpacing: 6,
                                     children: [
                                        // Live GPS Location
-                                       if (caregiver.hasLocation)
-                                         _buildTag(
-                                           icon: Icons.my_location_rounded,
-                                           label: 'موقع GPS 📍',
-                                           color: Colors.green,
-                                           bold: true,
-                                           onTap: () => LocationService.openMapUrl(caregiver.locationMapsUrl!),
-                                         ),
+                                       _buildTag(
+                                         icon: caregiver.hasLocation ? Icons.my_location_rounded : Icons.location_on,
+                                         label: caregiver.hasLocation ? 'موقع GPS مباشر 📍' : 'موقع GPS 📍',
+                                         color: caregiver.hasLocation ? Colors.green : Colors.teal,
+                                         bold: true,
+                                         onTap: () {
+                                           if (caregiver.hasLocation) {
+                                             LocationService.openMapUrl(caregiver.locationMapsUrl!);
+                                           } else {
+                                             final query = caregiver.residenceArea.isNotEmpty
+                                                 ? caregiver.residenceArea
+                                                 : (caregiver.address.isNotEmpty ? caregiver.address : caregiver.name);
+                                             LocationService.openMapUrl('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}');
+                                           }
+                                         },
+                                       ),
                                        // Phone
                                       if (caregiver.phone.isNotEmpty)
                                         _buildTag(
@@ -716,11 +790,32 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                                           elevation: 1,
                                         ),
                                       ),
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          if (caregiver.hasLocation) {
+                                            LocationService.openMapUrl(caregiver.locationMapsUrl!);
+                                          } else {
+                                            final query = caregiver.residenceArea.isNotEmpty
+                                                ? caregiver.residenceArea
+                                                : (caregiver.address.isNotEmpty ? caregiver.address : caregiver.name);
+                                            LocationService.openMapUrl('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}');
+                                          }
+                                        },
+                                        icon: const Icon(Icons.map_rounded, size: 15),
+                                        label: const Text('فتح الخريطة 🗺️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: caregiver.hasLocation ? Colors.green.shade700 : const Color(0xFF0F766E),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          elevation: 1,
+                                        ),
+                                      ),
                                       OutlinedButton.icon(
                                         onPressed: () => _showCaregiverLocationDialog(context, caregiver),
                                         icon: Icon(Icons.location_on, size: 15, color: caregiver.hasLocation ? Colors.green.shade700 : Colors.teal.shade700),
                                         label: Text(
-                                          caregiver.hasLocation ? 'موقع GPS مباشر 📍' : 'تحديد الموقع الجغرافي 📍',
+                                          caregiver.hasLocation ? 'فحص GPS المباشر 📍' : 'تحديد موقع GPS 📍',
                                           style: TextStyle(
                                             fontFamily: 'Cairo',
                                             fontSize: 11,
@@ -1044,7 +1139,7 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                   },
                   icon: const Icon(Icons.map, size: 18),
                   label: const Text(
-                    'فتح الموقع المباشر على خرائط Google 🗺️',
+                    'فتح الخريطة (إحداثيات GPS المباشرة) 🗺️',
                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -1092,7 +1187,7 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                   },
                   icon: const Icon(Icons.search, size: 18),
                   label: const Text(
-                    'البحث عن عنوان سكنه على خرائط Google 🗺️',
+                    'فتح الخريطة (موقع السكن والمنطقة) 🗺️',
                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
