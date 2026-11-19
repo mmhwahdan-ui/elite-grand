@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
@@ -380,8 +380,8 @@ class ClientDetailScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _buildDetailTile(
-                              'نوع الوردية',
-                              client.serviceTypeArabic,
+                              'نوع ونظام الوردية',
+                              '${client.serviceTypeArabic} (${client.scheduleDescriptionArabic})',
                               Icons.access_time,
                               AppTheme.primary,
                             ),

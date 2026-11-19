@@ -34,6 +34,7 @@ class StorageService {
   static const String _keyChatMessages = 'eg_chat_messages_data';
   static const String _keyCaseOffers = 'eg_case_offers_data';
   static const String _keyManagementInstructions = 'eg_management_instructions_data';
+  static const String _keyLastThursdayAlertDate = 'eg_last_thursday_alert_date';
 
   final SharedPreferences prefs;
 
@@ -418,5 +419,13 @@ class StorageService {
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
       ),
     ];
+  }
+
+  String? loadLastThursdayAlertDate() {
+    return prefs.getString(_keyLastThursdayAlertDate);
+  }
+
+  Future<void> saveLastThursdayAlertDate(String dateStr) async {
+    await prefs.setString(_keyLastThursdayAlertDate, dateStr);
   }
 }

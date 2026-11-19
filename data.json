@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-18T17:54:50.132Z",
+  "lastUpdated": "2026-11-19T09:09:09.677Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -138,7 +138,9 @@
     "day_5ce0facd",
     "cli_73334dfe",
     "day_f4d8fa2b",
-    "day_5500c75d"
+    "day_5500c75d",
+    "day_090aa9a5",
+    "cg_1795031375004"
   ],
   "openingBalances": {
     "bank": 0,
@@ -402,12 +404,12 @@
       "createdAt": "2026-11-14T22:32:52.025",
       "createdBy": "wahdan",
       "dailyPrice": 900,
-      "endDate": "2026-11-19T00:00:00.000",
+      "endDate": "2026-11-26T00:00:00.000",
       "healthCondition": "مسن",
       "id": "cli_19d0c98d",
       "isExistingClient": false,
       "name": "احمد وصفي",
-      "notes": "مطلوب بديل يوم الخميس القادم",
+      "notes": "مطلوب بديل يوم الخميس القادم\n[2026/11/18] تم تمديد/تعديل مدة الخدمة",
       "nurseAssigned": "زينب",
       "nurseDailyPrice": 700,
       "openingBalance": 0,
@@ -415,7 +417,7 @@
       "serviceType": "hours24",
       "startDate": "2026-11-14T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-14T22:34:21.581"
+      "updatedAt": "2026-11-18T20:59:54.136"
     }
   ],
   "payments": [
@@ -850,6 +852,17 @@
       "paymentChannel": "bank",
       "recordedBy": "zezo",
       "title": "صرف مستحقات تمريض: محمود"
+    },
+    {
+      "amount": 2250,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-19T09:49:51.836",
+      "expenseDate": "2026-11-19T09:47:39.882",
+      "id": "exp_a9ab2ac3",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: نهى"
     }
   ],
   "serviceDays": [
@@ -1397,20 +1410,9 @@
       "nurseName": "زينب",
       "nursePrice": 700,
       "recordedBy": "wahdan",
-      "shiftType": "hours24"
-    },
-    {
-      "clientId": "cli_19d0c98d",
-      "clientName": "احمد وصفي",
-      "clientPrice": 900,
-      "createdAt": "2026-11-14T22:34:21.582",
-      "date": "2026-11-14T00:00:00.000",
-      "id": "day_090aa9a5",
-      "notes": "تسجيل آلي للمدة المحددة للتعاقد (6 يوم)",
-      "nurseName": "زينب",
-      "nursePrice": 700,
-      "recordedBy": "wahdan",
-      "shiftType": "hours24"
+      "shiftType": "hours24",
+      "endTime": "08:00 م",
+      "startTime": "08:00 م"
     }
   ],
   "nurseTransactions": [
@@ -1677,6 +1679,17 @@
       "paymentChannel": "bank",
       "recordedBy": "zezo",
       "type": "payout"
+    },
+    {
+      "amount": 2250,
+      "createdAt": "2026-11-19T09:49:51.836",
+      "date": "2026-11-19T09:47:39.882",
+      "id": "ntr_a9ab2ac3",
+      "notes": "",
+      "nurseName": "نهى",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
     }
   ],
   "partnerLoans": [
@@ -1915,6 +1928,72 @@
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
       "username": "01068561497"
+    },
+    {
+      "caregiverId": "cg_1795029639463",
+      "displayName": "رشا سيد سيد محمد",
+      "id": "usr_cg_cg_1795029639463",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
+      "phone": "01007794327",
+      "roleTitle": "طاقم تمريض / مقدم خدمة",
+      "roleType": "nurse",
+      "username": "01007794327"
+    },
+    {
+      "caregiverId": "cg_1795030078696",
+      "displayName": "امال علي فتحي",
+      "id": "usr_cg_cg_1795030078696",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
+      "phone": "01040103657",
+      "roleTitle": "طاقم تمريض / مقدم خدمة",
+      "roleType": "nurse",
+      "username": "01040103657"
+    },
+    {
+      "caregiverId": "cg_1795031375004",
+      "displayName": "مني",
+      "id": "usr_cg_cg_1795031375004",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
+      "phone": "01096551478",
+      "roleTitle": "طاقم تمريض / مقدم خدمة",
+      "roleType": "nurse",
+      "username": "01096551478"
     }
   ],
   "notifications": [
@@ -3106,7 +3185,7 @@
       "title": "تسجيل سلفة تمريض",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
-      "userRole": "مدير الحس��بات والمالية"
+      "userRole": "مدير الحسابات والمالية"
     },
     {
       "actionType": "nurse_payout",
@@ -3506,7 +3585,7 @@
     },
     {
       "actionType": "edit_client",
-      "description": "تم تعديل بيانات العميل: ناديه",
+      "description": "تم تعديل بيانات العميل: ��اديه",
       "id": "ntf_c399b71d",
       "metadata": {
         "clientId": "cli_678010eb",
@@ -3517,6 +3596,206 @@
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم حذف يوم خدمة للعميل: احمد وصفي (التمريض: زينب)",
+      "id": "ntf_67b121b5",
+      "timestamp": "2026-11-18T20:17:49.169",
+      "title": "حذف يوم خدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "service_days",
+      "description": "تم تعديل وردية العميل: احمد وصفي - الممرض: زينب - إقامة 24 ساعة (من 08:00 م إلى 08:00 م)",
+      "id": "ntf_0fb3fcc5",
+      "metadata": {
+        "clientId": "cli_19d0c98d",
+        "nurseName": "زينب"
+      },
+      "timestamp": "2026-11-18T20:25:07.706",
+      "title": "تعديل وردية / تبديل ممرض",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "extend_service",
+      "description": "تم تعديل/تمديد مدة خدمة العميل: احمد وصفي (2026/11/26)",
+      "id": "ntf_e8270486",
+      "metadata": {
+        "clientId": "cli_19d0c98d",
+        "clientName": "احمد وصفي"
+      },
+      "timestamp": "2026-11-18T20:59:54.139",
+      "title": "تمديد / تعديل مدة الخدمة",
+      "userId": "usr_shimaa",
+      "userName": "أ/ شيماء",
+      "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "add_caregiver",
+      "description": "أ/ وهدان قام بإضافة: رشا سيد سيد محمد (كود: CG-005) - السعر: 300 ج",
+      "id": "ntf_9dbd401f",
+      "metadata": {
+        "caregiverId": "cg_1795029639463",
+        "name": "رشا سيد سيد محمد"
+      },
+      "timestamp": "2026-11-18T21:20:39.464",
+      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: رشا سيد سيد محمد (اسم المستخدم: 01007794327) وإرسال رسالة SMS",
+      "id": "ntf_a611832f",
+      "timestamp": "2026-11-18T21:20:40.435",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: امال علي فتحي (اسم المستخدم: 01040103657) وإرسال رسالة SMS",
+      "id": "ntf_e5235f7f",
+      "timestamp": "2026-11-18T21:28:00.405",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "add_caregiver",
+      "description": "أ/ وهدان قام بإضافة: امال علي فتحي (كود: CG-006) - السعر: 300 ج",
+      "id": "ntf_8c08480c",
+      "metadata": {
+        "caregiverId": "cg_1795030078696",
+        "name": "امال علي فتحي"
+      },
+      "timestamp": "2026-11-18T21:27:58.697",
+      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: زينب محمد عبد الحميد احمد خير الله (اسم المستخدم: cg002) وإرسال رسالة SMS",
+      "id": "ntf_f3801b3d",
+      "timestamp": "2026-11-18T21:36:37.911",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_shimaa",
+      "userName": "أ/ شيماء",
+      "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: زينب محمد عبد الحميد احمد خير الله (اسم المستخدم: cg002) وإرسال رسالة SMS",
+      "id": "ntf_29295bf0",
+      "timestamp": "2026-11-18T21:36:32.825",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_shimaa",
+      "userName": "أ/ شيماء",
+      "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "edit_caregiver",
+      "description": "أ/ شيماء قام بتعديل بيانات: زينب محمد عبد الحميد احمد خير الله (كود: CG-002)",
+      "id": "ntf_b911494a",
+      "metadata": {
+        "caregiverId": "cg_1795011214381",
+        "name": "زينب محمد عبد الحميد احمد خير الله"
+      },
+      "timestamp": "2026-11-18T21:36:25.081",
+      "title": "تعديل ملف مقدم خدمة",
+      "userId": "usr_shimaa",
+      "userName": "أ/ شيماء",
+      "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "edit_caregiver",
+      "description": "أ/ شيماء قام بتعديل بيانات: زينب محمد عبد الحميد احمد خير الله (كود: CG-002)",
+      "id": "ntf_a1ad318d",
+      "metadata": {
+        "caregiverId": "cg_1795011214381",
+        "name": "زينب محمد عبد الحميد احمد خير الله"
+      },
+      "timestamp": "2026-11-18T21:36:24.963",
+      "title": "تعديل ملف مقدم خدمة",
+      "userId": "usr_shimaa",
+      "userName": "أ/ شيماء",
+      "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "add_caregiver",
+      "description": "أ/ شيماء قام بإضافة: مني (كود: CG-007) - السعر: 400 ج",
+      "id": "ntf_620d74c4",
+      "metadata": {
+        "caregiverId": "cg_1795030575687",
+        "name": "مني"
+      },
+      "timestamp": "2026-11-18T21:36:15.692",
+      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "userId": "usr_shimaa",
+      "userName": "أ/ شيماء",
+      "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "add_caregiver",
+      "description": "أ/ شيماء قام بإضافة: مني (كود: CG-007) - السعر: 400 ج",
+      "id": "ntf_09468310",
+      "metadata": {
+        "caregiverId": "cg_1795031375004",
+        "name": "مني"
+      },
+      "timestamp": "2026-11-18T21:49:35.007",
+      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "userId": "usr_shimaa",
+      "userName": "أ/ شيماء",
+      "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "nurse_account",
+      "description": "تم تفعيل حساب النظام للممرض: مني (اسم المستخدم: 01096551478) وإرسال رسالة SMS",
+      "id": "ntf_c87ed59e",
+      "timestamp": "2026-11-18T21:49:43.564",
+      "title": "حساب تمريض ورسالة SMS",
+      "userId": "usr_shimaa",
+      "userName": "أ/ شيماء",
+      "userRole": "مديرة المتابعة والتشغيل"
+    },
+    {
+      "actionType": "delete_caregiver",
+      "description": "أ/ وهدان قام بحذف: مني (كود: CG-007)",
+      "id": "ntf_252cd1df",
+      "metadata": {
+        "caregiverId": "cg_1795031375004",
+        "name": "مني"
+      },
+      "timestamp": "2026-11-18T21:50:56.688",
+      "title": "حذف مقدم خدمة",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: نهى بمبلغ 2250 ج.م (الحساب البنكي)",
+      "id": "ntf_cae5dd74",
+      "metadata": {
+        "amount": 2250,
+        "nurseName": "نهى"
+      },
+      "timestamp": "2026-11-19T09:49:51.836",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
     }
   ]
 }

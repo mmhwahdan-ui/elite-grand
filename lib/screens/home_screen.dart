@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../providers/app_provider.dart';
 import '../services/cloud_sync_service.dart';
+import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/cloud_settings_dialog.dart';
 import '../widgets/notifications_dialog.dart';
@@ -11,6 +12,7 @@ import 'revenues_screen.dart';
 import 'expenses_screen.dart';
 import 'financial_reports_screen.dart';
 import 'users_permissions_screen.dart';
+import 'weekly_monthly_settlement_screen.dart';
 import 'login_screen.dart';
 import 'nurse_accounts_screen.dart';
 import 'partner_settlement_screen.dart';
@@ -349,6 +351,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 4),
 
+            // Weekly & Monthly Settlement button
+            IconButton(
+              icon: const Icon(Icons.event_available_rounded, color: Colors.white),
+              tooltip: 'تقفيل الحساب الأسبوعي والشهري (دورة الخميس) 🔔',
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
+              },
+            ),
+            const SizedBox(width: 4),
+
             // Financial Reports & Periodic Net Profit button
             IconButton(
               icon: const Icon(Icons.analytics_outlined, color: Colors.white),
@@ -393,6 +405,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
                 } else if (val == 'settlement') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnerSettlementScreen()));
+                } else if (val == 'weekly_settlement') {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
                 } else if (val == 'reports') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
                 }
@@ -505,6 +519,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const PopupMenuItem(
+                  value: 'weekly_settlement',
+                  child: Row(
+                    children: [
+                      Icon(Icons.event_available_rounded, color: Colors.amber, size: 20),
+                      SizedBox(width: 8),
+                      Text('تقفيل الحساب الأسبوعي والشهري (دورة الخميس) 🔔', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
                   value: 'reports',
                   child: Row(
                     children: [
@@ -518,9 +542,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        body: IndexedStack(
-          index: _currentIndex,
-          children: screens,
+        body: Column(
+          children: [
+            if (provider.showThursdayBanner)
+              _buildThursdaySettlementBanner(context, provider),
+            Expanded(
+              child: IndexedStack(
+                index: _currentIndex,
+                children: screens,
+              ),
+            ),
+          ],
         ),
         bottomNavigationBar: destinations.length > 1
             ? NavigationBar(
@@ -534,6 +566,74 @@ class _HomeScreenState extends State<HomeScreen> {
                 destinations: destinations,
               )
             : null,
+      ),
+    );
+  }
+
+  Widget _buildThursdaySettlementBanner(BuildContext context, AppProvider provider) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF3C7),
+        border: Border(
+          bottom: BorderSide(color: Colors.amber.shade400, width: 1.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade200,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.notifications_active, color: Color(0xFFB45309), size: 20),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '🔔 تنبيه تقفيل الحساب الأسبوعي (اليوم الخميس)',
+                  style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
+                ),
+                Text(
+                  'موعد انتهاء الخدمة الأسبوعية وتقفيل حسابات الورديات ومستحقات مقدمي الخدمة والعملاء.',
+                  style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Color(0xFF78350F)),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly'),
+                ),
+              );
+            },
+            icon: const Icon(Icons.table_chart_outlined, size: 16),
+            label: const Text('فتح كشف التقفيل 📊', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB45309),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+          ),
+          const SizedBox(width: 6),
+          IconButton(
+            icon: const Icon(Icons.volume_up, color: Color(0xFF92400E), size: 20),
+            tooltip: 'تشغيل نغمة التنبيه 🔊',
+            onPressed: () => SoundService.playWeeklySettlementSound(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Color(0xFF92400E), size: 18),
+            tooltip: 'إخفاء التنبيه',
+            onPressed: () => provider.dismissThursdayBanner(),
+          ),
+        ],
       ),
     );
   }

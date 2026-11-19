@@ -143,6 +143,19 @@ class _PricingDialogState extends State<PricingDialog> {
                             style: const TextStyle(fontSize: 12, color: AppTheme.primary, fontFamily: 'Cairo', fontWeight: FontWeight.w600),
                           ),
                         ],
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.shade50,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.teal.shade200),
+                          ),
+                          child: Text(
+                            'نظام الخدمة: ${widget.client.scheduleDescriptionArabic} • ${widget.client.settlementFrequencyArabic}',
+                            style: const TextStyle(fontSize: 11, color: Colors.teal, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -290,10 +303,17 @@ class _PricingDialogState extends State<PricingDialog> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          'الحسبة: ($clientPrice ج.م سعر العميل) - ($nursePrice ج.م يومية الممرض) = $dailyProfit ج.م صافي ربح الشركة يومياً.',
+Text(
+                          'الحسبة اليومية: ($clientPrice ج.م سعر العميل) - ($nursePrice ج.م يومية الممرض) = $dailyProfit ج.م صافي ربح الشركة يومياً.',
                           style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontFamily: 'Cairo'),
                         ),
+                        if (widget.client.daysPerWeek < 7) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'المستحق أسبوعياً (${widget.client.daysPerWeek} أيام): ${(widget.client.daysPerWeek * clientPrice).toStringAsFixed(0)} ج.م للعميل • ${(widget.client.daysPerWeek * nursePrice).toStringAsFixed(0)} ج.م للتمريض • أرباح الشركة: ${(widget.client.daysPerWeek * dailyProfit).toStringAsFixed(0)} ج.م',
+                            style: const TextStyle(fontSize: 11, color: Colors.teal, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ],
                     ),
                   ),

@@ -16,4 +16,7 @@ class SoundService {
 
   /// صوت عالي مميز لرسالة خاصة من الإدارة لمقدم الخدمة
   static void playAdminMessageSound() => playNotificationSound('admin_message');
+
+  /// صوت عالي مميز لتقفيل الحساب الأسبوعي يوم الخميس
+  static void playWeeklySettlementSound() => playNotificationSound('weekly_settlement');
 }

@@ -37,6 +37,26 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
 
   int get _selectedDaysCount {
     if (_endDate.isBefore(_startDate)) return 1;
+    if (widget.client.serviceScheduleType == 'custom_days') {
+      if (widget.client.activeWeekdays.isNotEmpty) {
+        int count = 0;
+        DateTime cur = _startDate;
+        while (!cur.isAfter(_endDate)) {
+          if (widget.client.activeWeekdays.contains(cur.weekday)) {
+            count++;
+          }
+          cur = cur.add(const Duration(days: 1));
+        }
+        return count > 0 ? count : 1;
+      } else if (widget.client.daysPerWeek > 0 && widget.client.daysPerWeek < 7) {
+        final totalDays = _endDate.difference(_startDate).inDays + 1;
+        final weeks = totalDays ~/ 7;
+        final rem = totalDays % 7;
+        final extra = rem > widget.client.daysPerWeek ? widget.client.daysPerWeek : rem;
+        final res = (weeks * widget.client.daysPerWeek) + extra;
+        return res > 0 ? res : 1;
+      }
+    }
     return _endDate.difference(_startDate).inDays + 1;
   }
 
@@ -144,7 +164,7 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                               ],
                             ),
                             Text(
-                              '${widget.client.serviceTypeArabic} | سعر اليوم: ${widget.client.dailyPrice.toStringAsFixed(0)} ج.م | يومية التمريض: ${widget.client.nurseDailyPrice.toStringAsFixed(0)} ج.م',
+                              '${widget.client.serviceTypeArabic} | ${widget.client.scheduleDescriptionArabic} | سعر اليوم: ${widget.client.dailyPrice.toStringAsFixed(0)} ج.م | يومية التمريض: ${widget.client.nurseDailyPrice.toStringAsFixed(0)} ج.م',
                               style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontFamily: 'Cairo'),
                             ),
                           ],

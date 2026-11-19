@@ -34,6 +34,12 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
   late TextEditingController _nurseDailyPriceController;
   late String _serviceType;
 
+  // Weekly Service Schedule & Settlement
+  late String _serviceScheduleType; // 'all_week', 'custom_days'
+  late int _daysPerWeek; // 4, 5, 6, 7
+  late List<int> _activeWeekdays;
+  late String _settlementFrequency; // 'weekly', 'monthly'
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +65,10 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
       text: (c != null && c.nurseDailyPrice > 0) ? c.nurseDailyPrice.toStringAsFixed(0) : '',
     );
     _serviceType = c?.serviceType ?? 'hours12';
+    _serviceScheduleType = c?.serviceScheduleType ?? 'all_week';
+    _daysPerWeek = c?.daysPerWeek ?? 7;
+    _activeWeekdays = List<int>.from(c?.activeWeekdays ?? [1, 2, 3, 4, 5, 6, 7]);
+    _settlementFrequency = c?.settlementFrequency ?? 'weekly';
   }
 
   @override
@@ -79,6 +89,62 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
     if (!_isExistingClient) return 0.0;
     final amt = double.tryParse(_openingAmountController.text.trim()) ?? 0.0;
     return _isCreditForClient ? amt.abs() : -amt.abs();
+  }
+
+  Widget _buildDaysCountChip(int count, String label, List<int> defaultDays) {
+    final isSel = _daysPerWeek == count;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _daysPerWeek = count;
+            _activeWeekdays = List<int>.from(defaultDays);
+          });
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSel ? Colors.teal.shade50 : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: isSel ? Colors.teal : Colors.grey.shade300, width: isSel ? 1.5 : 1),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 11,
+                fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                color: isSel ? Colors.teal.shade900 : Colors.grey.shade800,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeekdayToggleChip(int weekday, String label) {
+    final isChecked = _activeWeekdays.contains(weekday);
+    return FilterChip(
+      label: Text(label, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: isChecked ? FontWeight.bold : FontWeight.normal)),
+      selected: isChecked,
+      selectedColor: Colors.teal.shade100,
+      checkmarkColor: Colors.teal,
+      onSelected: (val) {
+        setState(() {
+          if (val) {
+            if (!_activeWeekdays.contains(weekday)) _activeWeekdays.add(weekday);
+          } else {
+            if (_activeWeekdays.length > 1) {
+              _activeWeekdays.remove(weekday);
+            }
+          }
+          _daysPerWeek = _activeWeekdays.length;
+        });
+      },
+    );
   }
 
   @override
@@ -522,6 +588,194 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                     const SizedBox(height: 14),
                   ],
 
+                  // 3. Weekly Service Schedule & Days (نظام وتكرار الخدمة الأسبوعي)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.teal.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.calendar_month, color: Colors.teal, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'نظام وتكرار الخدمة الأسبوعي: *',
+                              style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.teal),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _serviceScheduleType = 'all_week';
+                                    _daysPerWeek = 7;
+                                    _activeWeekdays = [1, 2, 3, 4, 5, 6, 7];
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: _serviceScheduleType == 'all_week' ? Colors.teal : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: _serviceScheduleType == 'all_week' ? Colors.teal : Colors.grey.shade300),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'طوال الأسبوع (7 أيام مستمرة)',
+                                      style: TextStyle(
+                                        fontFamily: 'Cairo',
+                                        fontSize: 11,
+                                        fontWeight: _serviceScheduleType == 'all_week' ? FontWeight.bold : FontWeight.normal,
+                                        color: _serviceScheduleType == 'all_week' ? Colors.white : Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _serviceScheduleType = 'custom_days';
+                                    if (_daysPerWeek == 7) {
+                                      _daysPerWeek = 5;
+                                      _activeWeekdays = [6, 7, 1, 2, 3]; // السبت للأربعاء
+                                    }
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: _serviceScheduleType == 'custom_days' ? Colors.teal : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: _serviceScheduleType == 'custom_days' ? Colors.teal : Colors.grey.shade300),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'أيام محددة (4 أو 5 أيام أسبوعياً)',
+                                      style: TextStyle(
+                                        fontFamily: 'Cairo',
+                                        fontSize: 11,
+                                        fontWeight: _serviceScheduleType == 'custom_days' ? FontWeight.bold : FontWeight.normal,
+                                        color: _serviceScheduleType == 'custom_days' ? Colors.white : Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        if (_serviceScheduleType == 'custom_days') ...[
+                          const SizedBox(height: 10),
+                          const Text(
+                            'اختر عدد الأيام في الأسبوع:',
+                            style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              _buildDaysCountChip(4, '4 أيام أسبوعياً', [6, 7, 1, 2]),
+                              const SizedBox(width: 6),
+                              _buildDaysCountChip(5, '5 أيام أسبوعياً', [6, 7, 1, 2, 3]),
+                              const SizedBox(width: 6),
+                              _buildDaysCountChip(6, '6 أيام أسبوعياً', [6, 7, 1, 2, 3, 4]),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'حدد أيام الخدمة الفعلية بالأسبوع:',
+                            style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.blueGrey),
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              _buildWeekdayToggleChip(6, 'السبت'),
+                              _buildWeekdayToggleChip(7, 'الأحد'),
+                              _buildWeekdayToggleChip(1, 'الإثنين'),
+                              _buildWeekdayToggleChip(2, 'الثلاثاء'),
+                              _buildWeekdayToggleChip(3, 'الأربعاء'),
+                              _buildWeekdayToggleChip(4, 'الخميس'),
+                              _buildWeekdayToggleChip(5, 'الجمعة'),
+                            ],
+                          ),
+                        ],
+
+                        const SizedBox(height: 10),
+                        // Settlement Frequency
+                        Row(
+                          children: [
+                            const Text(
+                              'دورة التقفيل المالي:',
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            const Spacer(),
+                            ChoiceChip(
+                              label: const Text('تقفيل أسبوعي (كل خميس) 🔔', style: TextStyle(fontFamily: 'Cairo', fontSize: 10)),
+                              selected: _settlementFrequency == 'weekly',
+                              selectedColor: Colors.amber.shade200,
+                              onSelected: (val) {
+                                if (val) setState(() => _settlementFrequency = 'weekly');
+                              },
+                            ),
+                            const SizedBox(width: 6),
+                            ChoiceChip(
+                              label: const Text('تقفيل شهري 🗓️', style: TextStyle(fontFamily: 'Cairo', fontSize: 10)),
+                              selected: _settlementFrequency == 'monthly',
+                              selectedColor: Colors.blue.shade200,
+                              onSelected: (val) {
+                                if (val) setState(() => _settlementFrequency = 'monthly');
+                              },
+                            ),
+                          ],
+                        ),
+
+                        if (clientPrice > 0) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.teal.shade300),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'المستحق أسبوعياً: ${(_daysPerWeek * clientPrice).toStringAsFixed(0)} ج.م ($_daysPerWeek أيام)',
+                                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal),
+                                ),
+                                if (nursePrice > 0)
+                                  Text(
+                                    'مستحق التمريض: ${(_daysPerWeek * nursePrice).toStringAsFixed(0)} ج.م',
+                                    style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey.shade700),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
                   // Nurse Assigned
                   TextFormField(
                     controller: _nurseController,
@@ -666,6 +920,10 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                                   dailyPrice: cPrice,
                                   nurseDailyPrice: nPrice,
                                   serviceType: _serviceType,
+                                  serviceScheduleType: _serviceScheduleType,
+                                  daysPerWeek: _daysPerWeek,
+                                  activeWeekdays: _activeWeekdays,
+                                  settlementFrequency: _settlementFrequency,
                                 );
                                 await provider.editClient(updated);
                               } else {
@@ -681,6 +939,10 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                                   dailyPrice: cPrice,
                                   nurseDailyPrice: nPrice,
                                   serviceType: _serviceType,
+                                  serviceScheduleType: _serviceScheduleType,
+                                  daysPerWeek: _daysPerWeek,
+                                  activeWeekdays: _activeWeekdays,
+                                  settlementFrequency: _settlementFrequency,
                                 );
                               }
                               if (context.mounted) {

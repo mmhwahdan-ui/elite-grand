@@ -9,6 +9,7 @@ import '../services/export_service.dart';
 import '../widgets/edit_service_day_dialog.dart';
 import '../services/location_service.dart';
 import 'nurse_portal_screen.dart';
+import 'weekly_monthly_settlement_screen.dart';
 
 class NurseAccountsScreen extends StatefulWidget {
   const NurseAccountsScreen({super.key});
@@ -738,6 +739,13 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
           title: const Text('حسابات وأطقم التمريض والسلف', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
           actions: [
             IconButton(
+              icon: const Icon(Icons.event_available_rounded),
+              tooltip: 'تقفيل الحساب الأسبوعي والشهري (دورة الخميس) 🔔',
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
+              },
+            ),
+            IconButton(
               icon: const Icon(Icons.download),
               tooltip: 'تصدير كشف التمريض لإكسيل',
               onPressed: () {
@@ -796,12 +804,30 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly'),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.event_available, color: Colors.white, size: 18),
+                    label: const Text('تقفيل حسابات الخميس 🔔', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
                     onPressed: () => _showAddTransactionDialog(context),
                     icon: const Icon(Icons.add, color: Colors.white, size: 18),
                     label: const Text('تسجيل سلفة / دفعة', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accent,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),

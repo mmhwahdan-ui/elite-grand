@@ -18,6 +18,7 @@ import '../models/caregiver_model.dart';
 import '../models/chat_message_model.dart';
 import '../models/case_offer_model.dart';
 import '../models/management_instruction_model.dart';
+import '../models/settlement_report_model.dart';
 import '../services/storage_service.dart';
 import '../services/cloud_sync_service.dart';
 
@@ -108,6 +109,55 @@ class AppProvider extends ChangeNotifier {
     _notifications.clear();
     await storageService.saveNotifications(_notifications);
     notifyListeners();
+  }
+
+  bool _hasDismissedThursdayBanner = false;
+
+  bool get isTodayThursday => DateTime.now().weekday == DateTime.thursday;
+
+  bool get showThursdayBanner => isTodayThursday && !_hasDismissedThursdayBanner && (isAdmin || isManager || isFollowup || isAccountant);
+
+  void dismissThursdayBanner() {
+    _hasDismissedThursdayBanner = true;
+    notifyListeners();
+  }
+
+  /// فحص وإطلاق تنبيه صوتي وإشعار للإدارة يوم الخميس لتقفيل الحساب الأسبوعي
+  Future<void> checkThursdayWeeklySettlementAlert({bool forcePlaySound = false}) async {
+    final now = DateTime.now();
+    final isThursday = now.weekday == DateTime.thursday;
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+
+    final lastAlert = storageService.loadLastThursdayAlertDate();
+    final shouldAlertToday = isThursday && (lastAlert != todayStr);
+
+    if (shouldAlertToday || forcePlaySound) {
+      if (_soundAlertsEnabled) {
+        SoundService.playWeeklySettlementSound();
+      }
+
+      if (shouldAlertToday) {
+        await storageService.saveLastThursdayAlertDate(todayStr);
+
+        final notifId = 'ntf_thu_$todayStr';
+        if (!_notifications.any((n) => n.id == notifId)) {
+          final notif = AppNotificationModel(
+            id: notifId,
+            title: '🔔 تنبيه تقفيل الحساب الأسبوعي (يوم الخميس)',
+            description: 'اليوم موعد انتهاء دورة الخدمة الأسبوعية وتقفيل حسابات الورديات ومستحقات مقدمي الخدمة والعملاء.',
+            actionType: 'weekly_settlement',
+            userId: _currentUser?.id ?? 'sys_settlement',
+            userName: 'النظام الآلي للشركة',
+            userRole: 'التنبيهات الإدارية',
+            timestamp: now,
+          );
+          _notifications.insert(0, notif);
+          _unreadNotificationCount++;
+          await storageService.saveNotifications(_notifications);
+        }
+      }
+      notifyListeners();
+    }
   }
 
   // Opening Balances Getters
@@ -682,6 +732,10 @@ class AppProvider extends ChangeNotifier {
       await syncWithCloud(silent: true);
     });
 
+    if (_currentUser != null && (isAdmin || isManager || isFollowup || isAccountant)) {
+      checkThursdayWeeklySettlementAlert();
+    }
+
     notifyListeners();
   }
 
@@ -780,6 +834,9 @@ class AppProvider extends ChangeNotifier {
 
     _currentUser = foundUser;
     await storageService.setCurrentUserId(foundUser.id);
+    if (isAdmin || isManager || isFollowup || isAccountant) {
+      checkThursdayWeeklySettlementAlert();
+    }
     notifyListeners();
     return true;
   }
@@ -899,6 +956,10 @@ class AppProvider extends ChangeNotifier {
     double dailyPrice = 0.0,
     double nurseDailyPrice = 0.0,
     String serviceType = 'hours12',
+    String serviceScheduleType = 'all_week',
+    int daysPerWeek = 7,
+    List<int> activeWeekdays = const [1, 2, 3, 4, 5, 6, 7],
+    String settlementFrequency = 'weekly',
   }) async {
     final hasPricing = dailyPrice > 0;
     final newClient = ClientModel(
@@ -914,6 +975,10 @@ class AppProvider extends ChangeNotifier {
       dailyPrice: dailyPrice,
       nurseDailyPrice: nurseDailyPrice,
       serviceType: serviceType,
+      serviceScheduleType: serviceScheduleType,
+      daysPerWeek: daysPerWeek,
+      activeWeekdays: activeWeekdays,
+      settlementFrequency: settlementFrequency,
       status: hasPricing ? 'ready_to_start' : 'pending_pricing',
       createdBy: _currentUser?.username ?? 'shimaa',
       createdAt: DateTime.now(),
@@ -1004,12 +1069,19 @@ class AppProvider extends ChangeNotifier {
       if (!isOpenEnded && end != null && nurse != null && nurse.trim().isNotEmpty) {
         final startNorm = DateTime(start.year, start.month, start.day);
         final endNorm = DateTime(end.year, end.month, end.day);
-        final int days = endNorm.difference(startNorm).inDays + 1;
-        if (days > 0) {
-          final List<DateTime> dates = [];
-          for (int i = 0; i < days; i++) {
-            dates.add(startNorm.add(Duration(days: i)));
+        final List<DateTime> dates = [];
+        DateTime cur = startNorm;
+        while (!cur.isAfter(endNorm)) {
+          bool isActiveDay = true;
+          if (current.serviceScheduleType == 'custom_days' && current.activeWeekdays.isNotEmpty) {
+            isActiveDay = current.activeWeekdays.contains(cur.weekday);
           }
+          if (isActiveDay) {
+            dates.add(cur);
+          }
+          cur = cur.add(const Duration(days: 1));
+        }
+        if (dates.isNotEmpty) {
           await recordBatchServiceDays(
             clientId: clientId,
             dates: dates,
@@ -1017,7 +1089,7 @@ class AppProvider extends ChangeNotifier {
             shiftType: current.serviceType,
             clientPrice: current.dailyPrice,
             nursePrice: current.nurseDailyPrice,
-            notes: 'تسجيل آلي للمدة المحددة للتعاقد ($days يوم)',
+            notes: 'تسجيل آلي للمدة المحددة للتعاقد (${dates.length} يوم - ${current.scheduleDescriptionArabic})',
           );
         }
       }
@@ -2149,22 +2221,35 @@ class AppProvider extends ChangeNotifier {
       if (isNurseNameMatch(c.nurseAssigned, nurseName)) {
         final clientLogged = _serviceDays.where((d) => d.clientId == c.id);
         if (clientLogged.isEmpty && c.startDate != null) {
-          final int days = getClientServedDaysCount(c);
           final startNorm = DateTime(c.startDate!.year, c.startDate!.month, c.startDate!.day);
-          for (int i = 0; i < days; i++) {
-            list.add(ServiceDayModel(
-              id: 'calc_${c.id}_$i',
-              clientId: c.id,
-              clientName: c.name,
-              date: startNorm.add(Duration(days: i)),
-              nurseName: c.nurseAssigned ?? nurseName,
-              shiftType: c.serviceType,
-              clientPrice: c.dailyPrice,
-              nursePrice: c.nurseDailyPrice,
-              notes: 'حساب طبقاً للمدة المحددة بالتعاقد',
-              recordedBy: c.createdBy,
-              createdAt: c.createdAt,
-            ));
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          final endLimit = c.endDate != null ? DateTime(c.endDate!.year, c.endDate!.month, c.endDate!.day) : today;
+
+          DateTime cur = startNorm;
+          int i = 0;
+          while (!cur.isAfter(endLimit)) {
+            bool isActiveDay = true;
+            if (c.serviceScheduleType == 'custom_days' && c.activeWeekdays.isNotEmpty) {
+              isActiveDay = c.activeWeekdays.contains(cur.weekday);
+            }
+            if (isActiveDay) {
+              list.add(ServiceDayModel(
+                id: 'calc_${c.id}_$i',
+                clientId: c.id,
+                clientName: c.name,
+                date: cur,
+                nurseName: c.nurseAssigned ?? nurseName,
+                shiftType: c.serviceType,
+                clientPrice: c.dailyPrice,
+                nursePrice: c.nurseDailyPrice,
+                notes: 'حساب طبقاً للمدة وجدول الخدمة الأسبوعي (${c.scheduleDescriptionArabic})',
+                recordedBy: c.createdBy,
+                createdAt: c.createdAt,
+              ));
+              i++;
+            }
+            cur = cur.add(const Duration(days: 1));
           }
         }
       }
@@ -2236,6 +2321,137 @@ class AppProvider extends ChangeNotifier {
   /// إذا كان سالباً: الممرض أخذ سلف أكثر من مستحقاته وعليه للشركة!
   double getNurseRemainingBalance(String nurseName) {
     return getNurseTotalEarned(nurseName) - getNurseTotalReceived(nurseName);
+  }
+
+  /// تقرير كشف تقفيل الحسابات الأسبوعي أو الشهري لمقدمي الخدمة والعملاء
+  WeeklyMonthlySettlementReport getSettlementReportData({
+    required DateTime startDate,
+    required DateTime endDate,
+    String periodType = 'weekly',
+    String? customTitle,
+  }) {
+    final startNorm = DateTime(startDate.year, startDate.month, startDate.day);
+    final endNorm = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+
+    final dateFormat = DateFormat('yyyy/MM/dd');
+    final title = customTitle ??
+        (periodType == 'weekly'
+            ? 'كشف التقفيل الأسبوعي لمقدمي الخدمة والعملاء (المنتهي بالخميس ${dateFormat.format(endDate)})'
+            : 'كشف التقفيل الشهري لمقدمي الخدمة والعملاء (${dateFormat.format(startNorm)} - ${dateFormat.format(endDate)})');
+
+    // 1. أطقم التمريض
+    final List<CaregiverSettlementItem> caregiverItems = [];
+    final allNurses = allNurseNames;
+
+    for (var nurse in allNurses) {
+      final allShifts = getNurseShifts(nurse);
+      final periodShifts = allShifts.where((s) {
+        final d = DateTime(s.date.year, s.date.month, s.date.day);
+        return !d.isBefore(startNorm) && !d.isAfter(endNorm);
+      }).toList();
+
+      final allTrans = getNurseTransactions(nurse);
+      final periodTrans = allTrans.where((t) {
+        final d = DateTime(t.date.year, t.date.month, t.date.day);
+        return !d.isBefore(startNorm) && !d.isAfter(endNorm);
+      }).toList();
+
+      final earned = periodShifts.fold(0.0, (sum, s) => sum + s.nursePrice);
+      final advances = periodTrans.where((t) => t.type == 'advance').fold(0.0, (sum, t) => sum + t.amount);
+      final payouts = periodTrans.where((t) => t.type == 'payout').fold(0.0, (sum, t) => sum + t.amount);
+      final periodNetDue = earned - advances - payouts;
+      final allTimeRem = getNurseRemainingBalance(nurse);
+
+      final clientNames = periodShifts.map((s) => s.clientName).toSet().toList();
+      final cg = findCaregiverByName(nurse);
+
+      if (periodShifts.isNotEmpty || advances > 0 || payouts > 0 || allTimeRem.abs() > 0.01) {
+        caregiverItems.add(CaregiverSettlementItem(
+          nurseName: nurse,
+          nurseCode: cg?.code,
+          nursePhone: cg?.phone,
+          clientNames: clientNames,
+          shiftsCount: periodShifts.length,
+          dailyRate: periodShifts.isNotEmpty ? periodShifts.first.nursePrice : (cg?.dailyPrice ?? 0.0),
+          totalEarned: earned,
+          advances: advances,
+          payouts: payouts,
+          periodNetDue: periodNetDue,
+          allTimeRemaining: allTimeRem,
+          shifts: periodShifts,
+        ));
+      }
+    }
+
+    // 2. العملاء والحالات
+    final List<ClientSettlementItem> clientItems = [];
+
+    for (var client in _clients) {
+      final allLoggedDays = getClientServiceDays(client.id);
+      final periodLoggedDays = allLoggedDays.where((d) {
+        final dt = DateTime(d.date.year, d.date.month, d.date.day);
+        return !dt.isBefore(startNorm) && !dt.isAfter(endNorm);
+      }).toList();
+
+      int daysInPeriod = 0;
+      double periodAccrued = 0.0;
+
+      if (periodLoggedDays.isNotEmpty) {
+        daysInPeriod = periodLoggedDays.length;
+        periodAccrued = periodLoggedDays.fold(0.0, (sum, d) => sum + d.clientPrice);
+      } else if (client.startDate != null) {
+        final cStart = DateTime(client.startDate!.year, client.startDate!.month, client.startDate!.day);
+        final now = DateTime.now();
+        final cEnd = client.endDate != null ? DateTime(client.endDate!.year, client.endDate!.month, client.endDate!.day) : DateTime(now.year, now.month, now.day);
+
+        final effectiveStart = cStart.isAfter(startNorm) ? cStart : startNorm;
+        final effectiveEnd = cEnd.isBefore(endNorm) ? cEnd : endNorm;
+
+        if (!effectiveStart.isAfter(effectiveEnd)) {
+          DateTime cur = effectiveStart;
+          while (!cur.isAfter(effectiveEnd)) {
+            bool isActiveDay = true;
+            if (client.serviceScheduleType == 'custom_days' && client.activeWeekdays.isNotEmpty) {
+              isActiveDay = client.activeWeekdays.contains(cur.weekday);
+            }
+            if (isActiveDay) {
+              daysInPeriod++;
+            }
+            cur = cur.add(const Duration(days: 1));
+          }
+          periodAccrued = daysInPeriod * client.dailyPrice;
+        }
+      }
+
+      final periodPayments = _payments.where((p) {
+        final d = DateTime(p.paymentDate.year, p.paymentDate.month, p.paymentDate.day);
+        return p.clientId == client.id && !d.isBefore(startNorm) && !d.isAfter(endNorm);
+      }).fold(0.0, (sum, p) => sum + p.amount);
+
+      final periodRemaining = periodAccrued - periodPayments;
+      final allTimeBalance = getClientBalance(client);
+
+      if (daysInPeriod > 0 || periodPayments > 0 || client.status == 'active' || allTimeBalance.abs() > 0.01) {
+        clientItems.add(ClientSettlementItem(
+          client: client,
+          daysServedInPeriod: daysInPeriod,
+          dailyPrice: client.dailyPrice,
+          periodAccruedCost: periodAccrued,
+          periodCollected: periodPayments,
+          periodRemaining: periodRemaining,
+          allTimeBalance: allTimeBalance,
+        ));
+      }
+    }
+
+    return WeeklyMonthlySettlementReport(
+      startDate: startNorm,
+      endDate: endNorm,
+      periodType: periodType,
+      title: title,
+      caregivers: caregiverItems,
+      clients: clientItems,
+    );
   }
 
   /// تسجيل سلفة أو دفعة مستحقات للممرض

@@ -470,7 +470,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${client.serviceTypeArabic} | سعر العميل: ${client.dailyPrice > 0 ? '${client.dailyPrice.toStringAsFixed(0)} ج.م/يوم' : 'بانتظار التسعير'}',
+                          '${client.serviceTypeArabic} • ${client.scheduleDescriptionArabic} | سعر العميل: ${client.dailyPrice > 0 ? '${client.dailyPrice.toStringAsFixed(0)} ج.م/يوم' : 'بانتظار التسعير'}',
                           style: TextStyle(fontSize: 11, color: Colors.grey.shade900, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                         ),
                         if (client.nurseDailyPrice > 0)

@@ -5,6 +5,7 @@ import '../models/expense_model.dart';
 import '../models/payment_model.dart';
 import '../models/partner_settlement_model.dart';
 import '../models/period_financial_summary.dart';
+import '../models/settlement_report_model.dart';
 import '../providers/app_provider.dart';
 
 import 'export_stub.dart'
@@ -858,5 +859,118 @@ class ExportService {
 
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
     _saveExcel(excel, 'سجل_سلف_الشركاء_إيليت_جراند_$dateStr.xlsx');
+  }
+
+  static Future<void> exportSettlementReportToExcel(WeeklyMonthlySettlementReport report) async {
+    final excel = Excel.createExcel();
+
+    // Sheet 1: تقفيل التمريض
+    final nurseSheet = _createSheet(excel, 'تقفيل مستحقات التمريض');
+    final nurseHeaders = [
+      'اسم الممرض',
+      'كود الممرض',
+      'رقم الهاتف',
+      'الحالات المنفذة',
+      'عدد الورديات',
+      'اليومية (ج.م)',
+      'إجمالي المستحق (ج.م)',
+      'السلف المنصرفة (ج.م)',
+      'المسدد في الفترة (ج.م)',
+      'صافي المتبقي للصرف (ج.م)',
+      'الرصيد التراكمي الشامل (ج.م)',
+    ];
+    nurseSheet.appendRow(nurseHeaders.map(_cell).toList());
+    _styleRow(nurseSheet, nurseSheet.maxRows - 1, nurseHeaders.length, _headerStyle);
+
+    for (var cg in report.caregivers) {
+      final row = [
+        cg.nurseName,
+        cg.nurseCode ?? '',
+        cg.nursePhone ?? '',
+        cg.clientNames.join('، '),
+        cg.shiftsCount,
+        cg.dailyRate,
+        cg.totalEarned,
+        cg.advances,
+        cg.payouts,
+        cg.periodNetDue,
+        cg.allTimeRemaining,
+      ];
+      nurseSheet.appendRow(row.map(_cell).toList());
+    }
+
+    final nurseTotalRow = [
+      'الإجمالي',
+      '',
+      '',
+      '',
+      report.totalShiftsCount,
+      '',
+      report.totalCaregiverEarned,
+      report.totalCaregiverAdvances,
+      report.totalCaregiverPayouts,
+      report.totalCaregiverNetPayable,
+      '',
+    ];
+    nurseSheet.appendRow(nurseTotalRow.map(_cell).toList());
+    _styleRow(nurseSheet, nurseSheet.maxRows - 1, nurseHeaders.length, _totalRowStyle);
+
+    // Sheet 2: تقفيل العملاء
+    final clientSheet = _createSheet(excel, 'تقفيل حسابات العملاء');
+    final clientHeaders = [
+      'اسم العميل',
+      'رقم الهاتف',
+      'العنوان',
+      'نظام الخدمة',
+      'دورة التقفيل',
+      'الممرض المسند',
+      'أيام الخدمة بالفترة',
+      'سعر اليوم (ج.م)',
+      'قيمة الخدمة للفترة (ج.م)',
+      'التحصيلات المسددة (ج.م)',
+      'باقي الحساب للفترة (ج.م)',
+      'الرصيد التراكمي الشامل (ج.م)',
+    ];
+    clientSheet.appendRow(clientHeaders.map(_cell).toList());
+    _styleRow(clientSheet, clientSheet.maxRows - 1, clientHeaders.length, _headerStyle);
+
+    for (var cl in report.clients) {
+      final row = [
+        cl.client.name,
+        cl.client.phone,
+        cl.client.address,
+        cl.client.scheduleDescriptionArabic,
+        cl.client.settlementFrequencyArabic,
+        cl.client.nurseAssigned ?? '',
+        cl.daysServedInPeriod,
+        cl.dailyPrice,
+        cl.periodAccruedCost,
+        cl.periodCollected,
+        cl.periodRemaining,
+        cl.allTimeBalance,
+      ];
+      clientSheet.appendRow(row.map(_cell).toList());
+    }
+
+    final clientTotalRow = [
+      'الإجمالي',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      report.totalClientAccruedCost,
+      report.totalClientCollected,
+      report.totalClientRemaining,
+      '',
+    ];
+    clientSheet.appendRow(clientTotalRow.map(_cell).toList());
+    _styleRow(clientSheet, clientSheet.maxRows - 1, clientHeaders.length, _totalRowStyle);
+
+    final dateStr = DateFormat('yyyyMMdd').format(report.endDate);
+    final prefix = report.periodType == 'weekly' ? 'كشف_تقفيل_الخميس_الأسبوعي' : 'كشف_التقفيل_الشهري';
+    _saveExcel(excel, '${prefix}_إيليت_جراند_$dateStr.xlsx');
   }
 }

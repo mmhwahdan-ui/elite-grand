@@ -129,6 +129,13 @@
           // Loud Urgent Attention Alert for Admin message to Nurse (A5 -> E6)
           playTone(880.00, now, 0.25, 0.90, 'triangle');
           playTone(1318.51, now + 0.14, 0.55, 0.95, 'sine');
+        } else if (type === 'weekly_settlement') {
+          // Thursday Weekly Settlement Alert: Distinct Multi-Tone Cash & Accounting Bell
+          playTone(523.25, now, 0.18, 0.85, 'triangle'); // C5
+          playTone(659.25, now + 0.12, 0.18, 0.85, 'triangle'); // E5
+          playTone(783.99, now + 0.24, 0.20, 0.90, 'triangle'); // G5
+          playTone(1046.50, now + 0.36, 0.30, 0.95, 'sine'); // C6
+          playTone(1318.51, now + 0.50, 0.60, 0.95, 'sine'); // E6
         } else {
           // Loud Bright 3-Tone Chime
           playTone(659.25, now, 0.28, 0.80, 'triangle');
