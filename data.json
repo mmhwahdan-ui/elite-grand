@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-19T09:09:09.677Z",
+  "lastUpdated": "2026-11-19T09:10:12.839Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -2926,7 +2926,7 @@
       "id": "ntf_543ff6c8",
       "metadata": {
         "amount": 2550,
-        "nurseName": "هايدي"
+        "nurseName": "هايد��"
       },
       "timestamp": "2026-11-12T12:43:25.520",
       "title": "صرف مستحقات تمريض",
@@ -3585,7 +3585,7 @@
     },
     {
       "actionType": "edit_client",
-      "description": "تم تعديل بيانات العميل: ��اديه",
+      "description": "تم تعديل بيانات العميل: ناديه",
       "id": "ntf_c399b71d",
       "metadata": {
         "clientId": "cli_678010eb",
