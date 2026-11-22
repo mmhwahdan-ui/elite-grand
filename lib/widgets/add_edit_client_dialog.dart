@@ -29,6 +29,11 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
   late bool _isCreditForClient;
   late TextEditingController _openingAmountController;
 
+  // مستحقات أو مديونية مقدم الخدمة السابقة
+  late TextEditingController _nurseOpeningBalanceController;
+  String _nurseBalanceType = 'zero'; // 'due', 'debt', 'zero'
+  bool _hasInitializedNurseBalance = false;
+
   // Optional direct pricing if user has permission
   late TextEditingController _dailyPriceController;
   late TextEditingController _nurseDailyPriceController;
@@ -50,6 +55,7 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
     _healthConditionController = TextEditingController(text: c?.healthCondition ?? '');
     _nurseController = TextEditingController(text: c?.nurseAssigned ?? '');
     _notesController = TextEditingController(text: c?.notes ?? '');
+    _nurseOpeningBalanceController = TextEditingController(text: '0');
 
     _isExistingClient = c?.isExistingClient ?? false;
     final opBal = c?.openingBalance ?? 0.0;
@@ -80,6 +86,7 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
     _nurseController.dispose();
     _notesController.dispose();
     _openingAmountController.dispose();
+    _nurseOpeningBalanceController.dispose();
     _dailyPriceController.dispose();
     _nurseDailyPriceController.dispose();
     super.dispose();
@@ -870,6 +877,143 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 10),
+
+                      // Caregiver Live Financial Status & Previous Dues Card
+                      Builder(builder: (context) {
+                        final nurseEarned = provider.getNurseTotalEarned(matchedCaregiver.name);
+                        final nurseAdvances = provider.getNurseTotalAdvances(matchedCaregiver.name);
+                        final nurseRemaining = provider.getNurseRemainingBalance(matchedCaregiver.name);
+
+                        if (!_hasInitializedNurseBalance) {
+                          _hasInitializedNurseBalance = true;
+                          if (matchedCaregiver.openingBalance > 0) {
+                            _nurseBalanceType = 'due';
+                            _nurseOpeningBalanceController.text = matchedCaregiver.openingBalance.toStringAsFixed(0);
+                          } else if (matchedCaregiver.openingBalance < 0) {
+                            _nurseBalanceType = 'debt';
+                            _nurseOpeningBalanceController.text = matchedCaregiver.openingBalance.abs().toStringAsFixed(0);
+                          }
+                        }
+
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: nurseRemaining > 0
+                                ? const Color(0xFFF0FDF4)
+                                : (nurseRemaining < 0 ? Colors.red.shade50 : const Color(0xFFF8FAFC)),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: nurseRemaining > 0
+                                  ? Colors.green.shade300
+                                  : (nurseRemaining < 0 ? Colors.red.shade200 : const Color(0xFFCBD5E1)),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'رصيد ومستحقات الممرض (${matchedCaregiver.name}):',
+                                    style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12),
+                                  ),
+                                  Text(
+                                    nurseRemaining > 0
+                                        ? 'له مستحق: ${nurseRemaining.toStringAsFixed(0)} ج.م'
+                                        : (nurseRemaining < 0
+                                            ? 'عليه سلف/مديونية: ${nurseRemaining.abs().toStringAsFixed(0)} ج.م'
+                                            : 'خالص (0 ج.م)'),
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: nurseRemaining > 0
+                                          ? Colors.green.shade800
+                                          : (nurseRemaining < 0 ? Colors.red.shade800 : Colors.blueGrey),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                'إجمالي ما استحقه: ${nurseEarned.toStringAsFixed(0)} ج.م | إجمالي السلف والخصومات: ${nurseAdvances.toStringAsFixed(0)} ج.م',
+                                style: TextStyle(fontSize: 10, fontFamily: 'Cairo', color: Colors.grey.shade700),
+                              ),
+                              const Divider(height: 12),
+                              const Text(
+                                'تعديل رصيد أو مستحقات الممرض السابقة عن خدمة قديمة:',
+                                style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ChoiceChip(
+                                      label: const Center(
+                                        child: Text('مستحق له (+)', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.bold)),
+                                      ),
+                                      selected: _nurseBalanceType == 'due',
+                                      selectedColor: Colors.green.shade100,
+                                      onSelected: (val) {
+                                        if (val) setState(() => _nurseBalanceType = 'due');
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: ChoiceChip(
+                                      label: const Center(
+                                        child: Text('مديونية عليه (-)', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5)),
+                                      ),
+                                      selected: _nurseBalanceType == 'debt',
+                                      selectedColor: Colors.red.shade100,
+                                      onSelected: (val) {
+                                        if (val) setState(() => _nurseBalanceType = 'debt');
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: ChoiceChip(
+                                      label: const Center(
+                                        child: Text('خالص (0)', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5)),
+                                      ),
+                                      selected: _nurseBalanceType == 'zero',
+                                      onSelected: (val) {
+                                        if (val) {
+                                          setState(() {
+                                            _nurseBalanceType = 'zero';
+                                            _nurseOpeningBalanceController.text = '0';
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (_nurseBalanceType != 'zero') ...[
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _nurseOpeningBalanceController,
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  decoration: InputDecoration(
+                                    labelText: _nurseBalanceType == 'due'
+                                        ? 'مستحقات سابقة للممرض (خدمة قديمة لم يحصلها)'
+                                        : 'مديونية / سلفة سابقة على الممرض',
+                                    suffixText: 'ج.م',
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    border: const OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }),
                     ],
                   ],
                   const SizedBox(height: 14),
@@ -945,6 +1089,16 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                                   settlementFrequency: _settlementFrequency,
                                 );
                               }
+
+                              // Update caregiver opening balance if adjusted
+                              if (matchedCaregiver != null && _nurseBalanceType != 'zero') {
+                                final val = double.tryParse(_nurseOpeningBalanceController.text.trim()) ?? 0.0;
+                                if (val > 0) {
+                                  final op = _nurseBalanceType == 'due' ? val.abs() : -val.abs();
+                                  await provider.updateCaregiver(matchedCaregiver.copyWith(openingBalance: op));
+                                }
+                              }
+
                               if (context.mounted) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(

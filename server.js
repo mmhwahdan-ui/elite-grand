@@ -276,6 +276,9 @@ const server = http.createServer((req, res) => {
 
   // --- Static Web Files Serving ---
   let reqPath = decodeURI(urlPath);
+  if (reqPath.startsWith('/elite-grand')) {
+    reqPath = reqPath.replace(/^\/elite-grand/, '');
+  }
   if (reqPath === '/' || reqPath === '') {
     reqPath = '/index.html';
   }
@@ -298,6 +301,9 @@ const server = http.createServer((req, res) => {
       }
       res.writeHead(200, {
         'Content-Type': contentType,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       });
       res.end(content);
     });
