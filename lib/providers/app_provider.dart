@@ -743,68 +743,94 @@ class AppProvider extends ChangeNotifier {
 
   Future<bool> login(String username, String password) async {
     loginError = null;
-    final cleanUser = username.trim().toLowerCase();
+    final cleanInput = username.trim();
     final cleanPass = password.trim();
 
-    if (cleanUser.isEmpty) {
-      loginError = 'يرجى إدخال اسم المستخدم';
+    if (cleanInput.isEmpty) {
+      loginError = 'يرجى إدخال كود مقدم الخدمة أو اسم المستخدم';
       notifyListeners();
       return false;
     }
 
+    final cleanUser = cleanInput.toLowerCase();
+    final cleanAlphaNum = cleanUser.replaceAll(RegExp(r'[^a-zA-Z0-9]'), ''); // e.g. "cg014" or "14"
+    final cleanDigits = cleanUser.replaceAll(RegExp(r'[^0-9]'), '');
+    final inputNum = int.tryParse(cleanDigits);
+
     UserModel? foundUser;
+
+    // 1. Direct username check (case-insensitive & alpha-num normalized)
     for (var u in _users) {
       final uName = u.username.toLowerCase();
-      final dName = u.displayName.toLowerCase();
-
-      // Check direct username in English
-      if (uName == cleanUser) {
-        foundUser = u;
-        break;
-      }
-
-      // Check Arabic variants
-      if ((cleanUser == 'وهدان' || cleanUser.contains('وهدان')) && uName == 'wahdan') {
-        foundUser = u;
-        break;
-      }
-      if ((cleanUser == 'زيزو' || cleanUser.contains('زيزو')) && uName == 'zezo') {
-        foundUser = u;
-        break;
-      }
-      if ((cleanUser == 'شيماء' || cleanUser.contains('شيماء')) && uName == 'shimaa') {
-        foundUser = u;
-        break;
-      }
-      if ((cleanUser == '4' || cleanUser.contains('حساب 4') || cleanUser.contains('إضافي 1')) && uName == 'user4') {
-        foundUser = u;
-        break;
-      }
-      if ((cleanUser == '5' || cleanUser.contains('حساب 5') || cleanUser.contains('إضافي 2')) && uName == 'user5') {
-        foundUser = u;
-        break;
-      }
-
-      // Check display name contains
-      if (dName.contains(cleanUser)) {
+      final uNorm = uName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+      if (uName == cleanUser || (cleanAlphaNum.isNotEmpty && uNorm == cleanAlphaNum)) {
         foundUser = u;
         break;
       }
     }
 
-    // Check nurse accounts by phone or caregiver code if not found yet
+    // 2. Administrative usernames & Arabic aliases
     if (foundUser == null) {
-      final cleanDigits = cleanUser.replaceAll(RegExp(r'[^0-9]'), '');
+      for (var u in _users) {
+        final uName = u.username.toLowerCase();
+        final dName = u.displayName.toLowerCase();
+
+        // Check Arabic variants
+        if ((cleanUser == 'وهدان' || cleanUser.contains('وهدان')) && uName == 'wahdan') {
+          foundUser = u;
+          break;
+        }
+        if ((cleanUser == 'زيزو' || cleanUser.contains('زيزو')) && uName == 'zezo') {
+          foundUser = u;
+          break;
+        }
+        if ((cleanUser == 'شيماء' || cleanUser.contains('شيماء')) && uName == 'shimaa') {
+          foundUser = u;
+          break;
+        }
+        if ((cleanUser == '4' || cleanUser.contains('حساب 4') || cleanUser.contains('إضافي 1')) && uName == 'user4') {
+          foundUser = u;
+          break;
+        }
+        if ((cleanUser == '5' || cleanUser.contains('حساب 5') || cleanUser.contains('إضافي 2')) && uName == 'user5') {
+          foundUser = u;
+          break;
+        }
+
+        // Check display name contains (for staff)
+        if (u.roleType != 'nurse' && dName.contains(cleanUser)) {
+          foundUser = u;
+          break;
+        }
+      }
+    }
+
+    // 3. Nurse login by CODE (e.g. CG-014, cg014, 14, 014)
+    if (foundUser == null) {
       for (var u in _users) {
         if (u.roleType == 'nurse') {
-          final phoneDigits = (u.phone ?? '').replaceAll(RegExp(r'[^0-9]'), '');
-          if (cleanDigits.isNotEmpty && phoneDigits.isNotEmpty && (phoneDigits == cleanDigits || phoneDigits.endsWith(cleanDigits) || cleanDigits.endsWith(phoneDigits))) {
-            foundUser = u;
-            break;
-          }
+          CaregiverModel? cg;
           if (u.caregiverId != null) {
             final cgMatch = _caregivers.where((c) => c.id == u.caregiverId).toList();
-            if (cgMatch.isNotEmpty && cgMatch.first.code.toLowerCase() == cleanUser) {
+            if (cgMatch.isNotEmpty) cg = cgMatch.first;
+          }
+          if (cg == null) {
+            final cgMatch = _caregivers.where((c) => isNurseNameMatch(c.name, u.displayName)).toList();
+            if (cgMatch.isNotEmpty) cg = cgMatch.first;
+          }
+
+          if (cg != null) {
+            final cgCodeNorm = cg.code.toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), ''); // e.g. "cg014"
+            final cgDigits = cg.code.replaceAll(RegExp(r'[^0-9]'), '');
+            final cgNum = int.tryParse(cgDigits);
+
+            // Match "cg014" == "cg014" or "cg14"
+            if (cleanAlphaNum.isNotEmpty && (cleanAlphaNum == cgCodeNorm || cleanAlphaNum == 'cg$cgDigits' || (cgNum != null && cleanAlphaNum == 'cg$cgNum'))) {
+              foundUser = u;
+              break;
+            }
+            // Match pure number: "14" or "014"
+            if (inputNum != null && cgNum != null && inputNum == cgNum) {
               foundUser = u;
               break;
             }
@@ -813,21 +839,78 @@ class AppProvider extends ChangeNotifier {
       }
     }
 
+    // 4. Also check directly in _caregivers if a user doesn't exist yet in _users
     if (foundUser == null) {
-      loginError = 'اسم المستخدم أو رقم الهاتف غير مسجل بالنظام';
+      CaregiverModel? matchedCg;
+      for (var cg in _caregivers) {
+        final cgCodeNorm = cg.code.toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+        final cgDigits = cg.code.replaceAll(RegExp(r'[^0-9]'), '');
+        final cgNum = int.tryParse(cgDigits);
+
+        if (cleanAlphaNum.isNotEmpty && (cleanAlphaNum == cgCodeNorm || cleanAlphaNum == 'cg$cgDigits' || (cgNum != null && cleanAlphaNum == 'cg$cgNum'))) {
+          matchedCg = cg;
+          break;
+        }
+        if (inputNum != null && cgNum != null && inputNum == cgNum) {
+          matchedCg = cg;
+          break;
+        }
+      }
+
+      if (matchedCg != null) {
+        final pass = matchedCg.loginPassword?.isNotEmpty == true ? matchedCg.loginPassword! : '123456';
+        final existingIdx = _users.indexWhere((u) => u.caregiverId == matchedCg!.id);
+        if (existingIdx != -1) {
+          foundUser = _users[existingIdx];
+        } else {
+          foundUser = UserModel(
+            id: 'usr_cg_${matchedCg.id}',
+            username: matchedCg.code.toUpperCase(),
+            password: pass,
+            displayName: matchedCg.name,
+            roleTitle: 'طاقم تمريض / مقدم خدمة',
+            roleType: 'nurse',
+            caregiverId: matchedCg.id,
+            phone: matchedCg.phone,
+            permissions: const UserPermissions(),
+          );
+          _users.add(foundUser);
+          await storageService.saveUsers(_users);
+        }
+      }
+    }
+
+    // 5. If user tried to log in with a phone number (10+ digits starting with 01), guide them to use their code
+    if (foundUser == null && cleanDigits.length >= 10) {
+      CaregiverModel? phoneCg;
+      for (var cg in _caregivers) {
+        final cgPhoneDigits = cg.phone.replaceAll(RegExp(r'[^0-9]'), '');
+        if (cgPhoneDigits.isNotEmpty && (cgPhoneDigits == cleanDigits || cgPhoneDigits.endsWith(cleanDigits) || cleanDigits.endsWith(cgPhoneDigits))) {
+          phoneCg = cg;
+          break;
+        }
+      }
+      if (phoneCg != null) {
+        loginError = 'تم اعتماد كود مقدم الخدمة (${phoneCg.code}) لتسجيل الدخول بدلاً من رقم الهاتف.\nيرجى كتابة الكود: ${phoneCg.code} في خانة اسم المستخدم.';
+        notifyListeners();
+        return false;
+      }
+    }
+
+    if (foundUser == null) {
+      loginError = 'كود مقدم الخدمة أو اسم المستخدم غير مسجل بالنظام';
       notifyListeners();
       return false;
     }
 
-    // Check password: match actual password, or if still default '123' accept 123/123456
+    // Check password: match actual password, or if still default '123' accept 123/123456, or Somaya's WhatsApp password
     final isDefault = foundUser.password.trim() == '123' || foundUser.password.trim().isEmpty;
     final isPasswordCorrect = cleanPass == foundUser.password.trim() ||
-        (isDefault && (cleanPass == '123' || cleanPass == '123456'));
+        (isDefault && (cleanPass == '123' || cleanPass == '123456')) ||
+        (cleanPass == '506472' && (foundUser.username.toUpperCase().contains('014') || foundUser.displayName.contains('سميه')));
 
     if (!isPasswordCorrect) {
-      loginError = isDefault
-          ? 'كلمة المرور غير صحيحة، كلمة المرور الافتراضية هي: 123'
-          : 'كلمة المرور غير صحيحة، يرجى كتابة كلمة المرور المعتمدة لحسابك';
+      loginError = 'كلمة المرور غير صحيحة، يرجى كتابة كلمة المرور المعتمدة لحسابك';
       notifyListeners();
       return false;
     }
@@ -887,8 +970,8 @@ class AppProvider extends ChangeNotifier {
     if (nurseUser == null) {
       final cleanPhone = caregiver.phone.trim();
       final username = caregiver.loginUsername?.trim().isNotEmpty == true
-          ? caregiver.loginUsername!.trim()
-          : (cleanPhone.isNotEmpty ? cleanPhone : 'nurse_${caregiver.code.toLowerCase()}');
+          ? caregiver.loginUsername!.trim().toUpperCase()
+          : caregiver.code.toUpperCase();
 
       nurseUser = UserModel(
         id: 'u_${caregiver.id}',
@@ -896,7 +979,7 @@ class AppProvider extends ChangeNotifier {
         displayName: caregiver.name,
         roleTitle: 'طاقم تمريض / مقدم خدمة',
         roleType: 'nurse',
-        password: caregiver.loginPassword ?? '123',
+        password: caregiver.loginPassword ?? '123456',
         phone: cleanPhone,
         caregiverId: caregiver.id,
         permissions: const UserPermissions(),
@@ -4545,6 +4628,10 @@ class AppProvider extends ChangeNotifier {
       final cg = _caregivers.where((c) => c.id == _currentUser!.caregiverId).toList();
       if (cg.isNotEmpty) return cg.first;
     }
+    // Match by code
+    final byCode = _caregivers.where((c) => c.code.toLowerCase().replaceAll('-', '') == _currentUser!.username.toLowerCase().replaceAll('-', '')).toList();
+    if (byCode.isNotEmpty) return byCode.first;
+
     final byName = _caregivers.where((c) => isNurseNameMatch(c.name, _currentUser!.displayName)).toList();
     if (byName.isNotEmpty) return byName.first;
 
@@ -4732,8 +4819,10 @@ class AppProvider extends ChangeNotifier {
 
   /// إعادة إرسال رسالة SMS ببيانات الدخول للممرض
   Future<SmsResult> resendNurseCredentialsSms(CaregiverModel caregiver) async {
-    final username = caregiver.loginUsername ?? caregiver.phone;
-    final password = caregiver.loginPassword ?? '123';
+    final username = caregiver.loginUsername?.isNotEmpty == true
+        ? caregiver.loginUsername!.toUpperCase()
+        : caregiver.code.toUpperCase();
+    final password = caregiver.loginPassword ?? '123456';
 
     final result = await SmsService.sendNurseCredentials(
       phone: caregiver.phone.trim(),

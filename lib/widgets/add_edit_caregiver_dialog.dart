@@ -82,7 +82,9 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
     _notesController = TextEditingController(text: c?.notes ?? '');
     _enableLoginAccount = c?.hasLoginAccount ?? false;
     _loginUsernameController = TextEditingController(
-      text: c?.loginUsername ?? (c?.phone.isNotEmpty == true ? c!.phone.replaceAll(RegExp(r'[^0-9]'), '') : ''),
+      text: c?.loginUsername?.isNotEmpty == true
+          ? c!.loginUsername!.toUpperCase()
+          : (c != null && c.code.isNotEmpty ? c.code.toUpperCase() : _codeController.text.trim().toUpperCase()),
     );
     _loginPasswordController = TextEditingController(
       text: c?.loginPassword ?? '123456',
@@ -1010,9 +1012,9 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
                                       _enableLoginAccount = val;
                                       if (val) {
                                         if (_loginUsernameController.text.trim().isEmpty) {
-                                          _loginUsernameController.text = _phoneController.text.trim().isNotEmpty
-                                              ? _phoneController.text.trim().replaceAll(RegExp(r'[^0-9]'), '')
-                                              : _codeController.text.trim().toLowerCase().replaceAll('-', '');
+                                          _loginUsernameController.text = _codeController.text.trim().isNotEmpty
+                                              ? _codeController.text.trim().toUpperCase()
+                                              : provider.generateNextCaregiverCode();
                                         }
                                         if (_loginPasswordController.text.trim().isEmpty) {
                                           _loginPasswordController.text = '123456';
@@ -1031,8 +1033,10 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
                                     child: TextFormField(
                                       controller: _loginUsernameController,
                                       decoration: InputDecoration(
-                                        labelText: 'اسم المستخدم للدخول (Username) *',
-                                        prefixIcon: const Icon(Icons.person_outline, color: Colors.teal),
+                                        labelText: 'كود مقدم الخدمة للدخول (Code) *',
+                                        prefixIcon: const Icon(Icons.badge_outlined, color: Colors.teal),
+                                        helperText: 'الدخول يتم بالكود فقط',
+                                        helperStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.teal),
                                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                         filled: true,
                                         fillColor: Colors.white,

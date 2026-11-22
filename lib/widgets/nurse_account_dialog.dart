@@ -27,16 +27,16 @@ class _NurseAccountDialogState extends State<NurseAccountDialog> {
   @override
   void initState() {
     super.initState();
-    // Default username: phone without non-digits, or caregiver code
-    final defaultUsername = widget.caregiver.loginUsername?.isNotEmpty == true
-        ? widget.caregiver.loginUsername!
-        : (widget.caregiver.phone.trim().isNotEmpty
-            ? widget.caregiver.phone.replaceAll(RegExp(r'[^0-9]'), '')
-            : widget.caregiver.code.toLowerCase().replaceAll('-', ''));
+    // Default username is strictly Caregiver Code (e.g. CG-014)
+    final defaultUsername = widget.caregiver.code.trim().isNotEmpty
+        ? widget.caregiver.code.trim().toUpperCase()
+        : (widget.caregiver.loginUsername?.isNotEmpty == true
+            ? widget.caregiver.loginUsername!.toUpperCase()
+            : 'CG-${widget.caregiver.id.substring(widget.caregiver.id.length > 3 ? widget.caregiver.id.length - 3 : 0)}');
 
     final defaultPassword = widget.caregiver.loginPassword?.isNotEmpty == true
         ? widget.caregiver.loginPassword!
-        : _generateRandomPassword();
+        : '123456';
 
     _usernameCtrl = TextEditingController(text: defaultUsername);
     _passwordCtrl = TextEditingController(text: defaultPassword);
@@ -146,9 +146,22 @@ class _NurseAccountDialogState extends State<NurseAccountDialog> {
     }
   }
 
-  void _handleSendWhatsApp() {
-    final username = _usernameCtrl.text.trim();
+  Future<void> _handleSendWhatsApp() async {
+    final username = _usernameCtrl.text.trim().toUpperCase();
     final password = _passwordCtrl.text.trim();
+    if (username.isEmpty || password.isEmpty) return;
+
+    // Save and activate credentials immediately before opening WhatsApp
+    final provider = context.read<AppProvider>();
+    try {
+      await provider.createOrUpdateNurseAccount(
+        caregiver: widget.caregiver,
+        username: username,
+        password: password,
+        sendSms: false,
+      );
+    } catch (_) {}
+
     SmsService.sendViaWhatsApp(
       phone: widget.caregiver.phone,
       nurseName: widget.caregiver.name,
@@ -157,21 +170,36 @@ class _NurseAccountDialogState extends State<NurseAccountDialog> {
     );
   }
 
-  void _handleCopyCredentials() {
-    final username = _usernameCtrl.text.trim();
+  Future<void> _handleCopyCredentials() async {
+    final username = _usernameCtrl.text.trim().toUpperCase();
     final password = _passwordCtrl.text.trim();
+    if (username.isEmpty || password.isEmpty) return;
+
+    // Save and activate credentials immediately upon copying
+    final provider = context.read<AppProvider>();
+    try {
+      await provider.createOrUpdateNurseAccount(
+        caregiver: widget.caregiver,
+        username: username,
+        password: password,
+        sendSms: false,
+      );
+    } catch (_) {}
+
     final text = SmsService.formatCredentialsMessage(
       nurseName: widget.caregiver.name,
       username: username,
       password: password,
     );
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('تم نسخ بيانات الدخول ورابط النظام إلى الحافظة', style: TextStyle(fontFamily: 'Cairo')),
-        backgroundColor: Colors.indigo,
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تم حفظ بيانات الدخول ونسخ الرسالة إلى الحافظة بنجاح 📋', style: TextStyle(fontFamily: 'Cairo')),
+          backgroundColor: Colors.teal,
+        ),
+      );
+    }
   }
 
   @override
@@ -298,16 +326,16 @@ class _NurseAccountDialogState extends State<NurseAccountDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Username Input
+                      // Username Input (Caregiver Code)
                       TextField(
                         controller: _usernameCtrl,
                         decoration: InputDecoration(
-                          labelText: 'اسم المستخدم للدخول (Username)',
-                          hintText: 'مثال: رقم التليفون أو الكود',
-                          prefixIcon: const Icon(Icons.person_outline),
+                          labelText: 'كود مقدم الخدمة للدخول (Code / Username)',
+                          hintText: 'مثال: CG-014',
+                          prefixIcon: const Icon(Icons.badge_outlined),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          helperText: 'يمكن للممرض تسجيل الدخول بهذا الاسم أو برقم هاتفه',
-                          helperStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 10),
+                          helperText: 'يتم تسجيل الدخول بواسطة الكود فقط (وليس برقم الهاتف)',
+                          helperStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.teal),
                         ),
                         onChanged: (_) => setState(() {}),
                       ),

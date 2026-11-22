@@ -155,11 +155,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextFormField(
                                 controller: _usernameController,
                                 decoration: const InputDecoration(
-                                  labelText: 'اسم المستخدم (Username)',
-                                  hintText: 'أدخل اسم المستخدم الخاص بك',
-                                  prefixIcon: Icon(Icons.person_outline),
+                                  labelText: 'كود مقدم الخدمة أو اسم المستخدم (Code / Username)',
+                                  hintText: 'لمقدمي الخدمة: الكود (مثال: CG-014) | للموظفين: اسم المستخدم',
+                                  prefixIcon: Icon(Icons.badge_outlined),
+                                  helperText: 'تسجيل دخول التمريض يتم بكود مقدم الخدمة (وليس برقم الهاتف)',
+                                  helperStyle: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppTheme.accentBright),
                                 ),
-                                validator: (v) => v == null || v.trim().isEmpty ? 'يرجى إدخال اسم المستخدم' : null,
+                                validator: (v) => v == null || v.trim().isEmpty ? 'يرجى إدخال الكود أو اسم المستخدم' : null,
                               ),
                               const SizedBox(height: 16),
 

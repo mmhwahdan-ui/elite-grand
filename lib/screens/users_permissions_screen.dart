@@ -99,12 +99,18 @@ class UsersPermissionsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: user.isNurse ? Colors.teal.shade50 : Colors.grey.shade100,
+                  border: user.isNurse ? Border.all(color: Colors.teal.shade200) : null,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  '@${user.username}',
-                  style: const TextStyle(fontSize: 11, color: Colors.blueGrey, fontFamily: 'Cairo'),
+                  user.isNurse ? 'كود الدخول: ${user.username}' : '@${user.username}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: user.isNurse ? Colors.teal.shade800 : Colors.blueGrey,
+                    fontWeight: user.isNurse ? FontWeight.bold : FontWeight.normal,
+                    fontFamily: 'Cairo',
+                  ),
                 ),
               ),
             ],

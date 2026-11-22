@@ -178,14 +178,20 @@ class _AllUsersPasswordsDialogState extends State<AllUsersPasswordsDialog> {
                                           ),
                                           const SizedBox(width: 6),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: Colors.grey.shade200,
-                                              borderRadius: BorderRadius.circular(4),
+                                              color: user.isNurse ? Colors.teal.shade50 : Colors.grey.shade200,
+                                              border: Border.all(color: user.isNurse ? Colors.teal.shade300 : Colors.grey.shade300),
+                                              borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: Text(
-                                              '@${user.username}',
-                                              style: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.blueGrey),
+                                              user.isNurse ? 'كود الدخول: ${user.username}' : '@${user.username}',
+                                              style: TextStyle(
+                                                fontFamily: 'Cairo',
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: user.isNurse ? Colors.teal.shade800 : Colors.blueGrey,
+                                              ),
                                             ),
                                           ),
                                         ],
