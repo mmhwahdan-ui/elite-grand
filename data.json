@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-22T13:23:24.732Z",
+  "lastUpdated": "2026-11-22T13:23:59.325Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -1116,6 +1116,28 @@
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
       "username": "cg014"
+    },
+    {
+      "caregiverId": "cg_1795353804644",
+      "displayName": "محمود احمد عبد القادر شمس الدين",
+      "id": "usr_cg_cg_1795353804644",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
+      "phone": "01008747542",
+      "roleTitle": "طاقم تمريض / مقدم خدمة",
+      "roleType": "nurse",
+      "username": "01008747542"
     }
   ],
   "caregivers": [
@@ -1444,6 +1466,31 @@
       "residenceArea": "المنوفيه",
       "shiftPreference": "both",
       "updatedAt": "2026-11-22T14:34:19.613"
+    },
+    {
+      "address": "6 اكتوبر ثاني",
+      "code": "CG-007",
+      "createdAt": "2026-11-22T15:23:24.644",
+      "createdBy": "wahdan",
+      "currentClientName": "كريم الحسيني",
+      "dailyPrice": 400,
+      "hasLoginAccount": true,
+      "hasWorkedWithUs": true,
+      "id": "cg_1795353804644",
+      "isBlocked": false,
+      "isCurrentlyWorking": true,
+      "lastSmsSentAt": "2026-11-22T15:23:24.667",
+      "loginPassword": "123456",
+      "loginUsername": "01008747542",
+      "name": "محمود احمد عبد القادر شمس الدين",
+      "nationalId": "28010011605614",
+      "openingBalance": 0,
+      "phone": "01008747542",
+      "qualification": "مشرف تمريض",
+      "rating": 5,
+      "residenceArea": "الجيزه",
+      "shiftPreference": "hours12",
+      "updatedAt": "2026-11-22T15:23:24.667"
     }
   ],
   "notifications": [
@@ -2858,7 +2905,7 @@
       "timestamp": "2026-11-18T18:33:47.515",
       "title": "تسجيل يوم خدمة",
       "userId": "usr_cg_cg_1794991670881",
-      "userName": "شيماء حسن الحا��م",
+      "userName": "شيماء حسن الحاكم",
       "userRole": "طاقم تمريض / مقدم خدمة"
     },
     {
