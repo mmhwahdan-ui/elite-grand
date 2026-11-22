@@ -1663,6 +1663,7 @@ class AppProvider extends ChangeNotifier {
     required String nurseName,
     String? shiftType,
     String notes = '',
+    double? nurseOpeningBalance,
   }) async {
     final clientIndex = _clients.indexWhere((c) => c.id == clientId);
     if (clientIndex == -1 || selectedDates.isEmpty) return 0;
@@ -1709,6 +1710,22 @@ class AppProvider extends ChangeNotifier {
     );
     _clients[clientIndex] = updatedClient;
 
+    // Update Caregiver status & opening balance if specified
+    final cleanNurse = nurseName.trim().isNotEmpty ? nurseName.trim() : (client.nurseAssigned ?? '');
+    if (cleanNurse.isNotEmpty) {
+      final cgIdx = _caregivers.indexWhere((cg) => isNurseNameMatch(cg.name, cleanNurse));
+      if (cgIdx != -1) {
+        final targetCg = _caregivers[cgIdx];
+        final newCgBalance = nurseOpeningBalance ?? targetCg.openingBalance;
+        _caregivers[cgIdx] = targetCg.copyWith(
+          isCurrentlyWorking: true,
+          currentClientName: client.name,
+          openingBalance: newCgBalance,
+        );
+        await storageService.saveCaregivers(_caregivers);
+      }
+    }
+
     await storageService.saveClients(_clients);
     await storageService.saveServiceDays(_serviceDays);
 
@@ -1722,6 +1739,7 @@ class AppProvider extends ChangeNotifier {
         'datesCount': selectedDates.length,
         'newShiftsCount': createdCount,
         'nurseName': nurseName,
+        'nurseOpeningBalance': nurseOpeningBalance,
       },
     );
 

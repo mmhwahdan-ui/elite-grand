@@ -28,6 +28,7 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
   // رصيد أو مستحقات مقدم الخدمة السابقة
   late TextEditingController _nurseBalanceCtrl;
   String _nurseBalanceType = 'zero'; // 'due' (مستحقات سابقة للممرض +) | 'debt' (مديونية سابقة على الممرض -) | 'zero' (خالص 0)
+  bool _hasInitializedNurseBalance = false;
 
   @override
   void initState() {
@@ -128,6 +129,17 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
     if (selectedNurseName.isNotEmpty) {
       final list = provider.caregivers.where((c) => provider.isNurseNameMatch(c.name, selectedNurseName)).toList();
       if (list.isNotEmpty) matchedCaregiver = list.first;
+    }
+
+    if (!_hasInitializedNurseBalance && matchedCaregiver != null) {
+      _hasInitializedNurseBalance = true;
+      if (matchedCaregiver.openingBalance > 0) {
+        _nurseBalanceType = 'due';
+        _nurseBalanceCtrl.text = matchedCaregiver.openingBalance.toStringAsFixed(0);
+      } else if (matchedCaregiver.openingBalance < 0) {
+        _nurseBalanceType = 'debt';
+        _nurseBalanceCtrl.text = matchedCaregiver.openingBalance.abs().toStringAsFixed(0);
+      }
     }
 
     final nurseRemaining = selectedNurseName.isNotEmpty ? provider.getNurseRemainingBalance(selectedNurseName) : 0.0;
@@ -442,26 +454,49 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                       if (selectedNurseName.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(8),
+                            color: nurseRemaining > 0
+                                ? const Color(0xFFF0FDF4)
+                                : (nurseRemaining < 0 ? Colors.red.shade50 : const Color(0xFFF8FAFC)),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: nurseRemaining > 0
+                                  ? Colors.green.shade300
+                                  : (nurseRemaining < 0 ? Colors.red.shade200 : const Color(0xFFCBD5E1)),
+                            ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                matchedCaregiver != null ? 'كود: ${matchedCaregiver.code}' : 'ممرض محدد',
-                                style: const TextStyle(fontSize: 11, fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppTheme.primary),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    matchedCaregiver != null ? 'كود: ${matchedCaregiver.code}' : 'ممرض محدد',
+                                    style: const TextStyle(fontSize: 11, fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppTheme.primary),
+                                  ),
+                                  Text(
+                                    nurseRemaining > 0
+                                        ? 'له رصيد مستحق في النظام: ${nurseRemaining.toStringAsFixed(0)} ج.م'
+                                        : (nurseRemaining < 0
+                                            ? 'عليه سلف / مديونية: ${nurseRemaining.abs().toStringAsFixed(0)} ج.م'
+                                            : 'الرصيد في النظام: 0 ج.م (خالص)'),
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontFamily: 'Cairo',
+                                      fontWeight: FontWeight.bold,
+                                      color: nurseRemaining > 0
+                                          ? Colors.green.shade900
+                                          : (nurseRemaining < 0 ? Colors.red.shade900 : Colors.blueGrey),
+                                    ),
+                                  ),
+                                ],
                               ),
+                              const SizedBox(height: 3),
                               Text(
-                                'الرصيد: ${nurseRemaining.toStringAsFixed(0)} ج.م (مكتسب: ${nurseEarned.toStringAsFixed(0)} | سلف: ${nurseAdvances.toStringAsFixed(0)})',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontFamily: 'Cairo',
-                                  fontWeight: FontWeight.bold,
-                                  color: nurseRemaining >= 0 ? Colors.green.shade800 : Colors.red.shade800,
-                                ),
+                                'إجمالي ما استحقه: ${nurseEarned.toStringAsFixed(0)} ج.م | إجمالي السلف والخصومات: ${nurseAdvances.toStringAsFixed(0)} ج.م',
+                                style: TextStyle(fontSize: 10.5, fontFamily: 'Cairo', color: Colors.grey.shade700),
                               ),
                             ],
                           ),
