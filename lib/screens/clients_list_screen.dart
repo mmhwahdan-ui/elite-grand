@@ -11,6 +11,7 @@ import '../widgets/extend_service_dialog.dart';
 import '../widgets/stop_service_dialog.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/add_service_day_dialog.dart';
+import '../widgets/activate_weekly_service_dialog.dart';
 import 'client_detail_screen.dart';
 import 'financial_reports_screen.dart';
 
@@ -504,7 +505,18 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                 alignment: WrapAlignment.end,
                 children: [
                   // Log Shift / Service Days
-                  if (client.status == 'active' || client.status == 'ready_to_start')
+                  if (client.status == 'active' || client.status == 'ready_to_start') ...[
+                    ActionChip(
+                      avatar: const Icon(Icons.flash_on, size: 16, color: Colors.deepPurple),
+                      label: const Text('تفعيل الأسبوع ⚡', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.deepPurple, fontWeight: FontWeight.bold)),
+                      backgroundColor: Colors.deepPurple.shade50,
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => ActivateWeeklyServiceDialog(client: client),
+                        );
+                      },
+                    ),
                     ActionChip(
                       avatar: const Icon(Icons.event_available, size: 16, color: Colors.teal),
                       label: const Text('تسجيل ورديات / أيام', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.teal, fontWeight: FontWeight.bold)),
@@ -516,6 +528,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                         );
                       },
                     ),
+                  ],
                   // Start Service (Shimaa & Wahdan)
                   if (client.startDate == null && provider.canStartService)
                     ActionChip(

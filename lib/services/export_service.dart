@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import '../models/client_model.dart';
@@ -972,5 +973,33 @@ class ExportService {
     final dateStr = DateFormat('yyyyMMdd').format(report.endDate);
     final prefix = report.periodType == 'weekly' ? 'كشف_تقفيل_الخميس_الأسبوعي' : 'كشف_التقفيل_الشهري';
     _saveExcel(excel, '${prefix}_إيليت_جراند_$dateStr.xlsx');
+  }
+
+  /// تصدير نسخة احتياطية كاملة من الحسابات والبيانات المالية بصيغة JSON قبل التصفير
+  static void exportFullFinancialBackupJson(AppProvider provider) {
+    try {
+      final now = DateTime.now();
+      final dateStr = DateFormat('yyyyMMdd_HHmmss').format(now);
+      final fileName = 'elite_grand_financial_backup_$dateStr.json';
+
+      final Map<String, dynamic> backupData = {
+        'exportDate': now.toIso8601String(),
+        'appName': 'Elite Grand Medical Management System',
+        'openingBalances': provider.openingBalances,
+        'payments': provider.payments.map((p) => p.toMap()).toList(),
+        'expenses': provider.expenses.map((e) => e.toMap()).toList(),
+        'nurseTransactions': provider.nurseTransactions.map((t) => t.toMap()).toList(),
+        'serviceDays': provider.serviceDays.map((d) => d.toMap()).toList(),
+        'partnerLoans': provider.partnerLoans.map((l) => l.toMap()).toList(),
+        'partnerSettlements': provider.partnerSettlements.map((s) => s.toMap()).toList(),
+        'clientsCount': provider.clients.length,
+        'caregiversCount': provider.caregivers.length,
+        'usersCount': provider.users.length,
+      };
+
+      final jsonStr = const JsonEncoder.withIndent('  ').convert(backupData);
+      final bytes = utf8.encode(jsonStr);
+      saveAndDownloadBytes(bytes, fileName, 'application/json');
+    } catch (_) {}
   }
 }

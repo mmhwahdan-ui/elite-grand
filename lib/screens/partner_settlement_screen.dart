@@ -39,7 +39,7 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
     final monthsCtrl = TextEditingController(text: '1');
     final notesCtrl = TextEditingController();
     String repaymentType = 'single'; // 'single' or 'installments'
-    String paymentChannel = 'cash';
+    String paymentChannel = 'bank'; // الخزنة التلقائية الحساب البنكي
     DateTime selectedDate = DateTime.now();
 
     showDialog(
@@ -148,11 +148,11 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
                     value: paymentChannel,
                     decoration: const InputDecoration(border: OutlineInputBorder()),
                     items: const [
-                      DropdownMenuItem(value: 'cash', child: Text('💵 خزينة نقدية (كاش المقر)', style: TextStyle(fontFamily: 'Cairo'))),
-                      DropdownMenuItem(value: 'wallet', child: Text('📱 محفظة إلكترونية (فودافون كاش / إنستاباي)', style: TextStyle(fontFamily: 'Cairo'))),
                       DropdownMenuItem(value: 'bank', child: Text('🏦 حساب بنكي (تحويل)', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'wallet', child: Text('📱 محفظة إلكترونية (فودافون كاش / إنستاباي)', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'cash', child: Text('💵 خزينة نقدية (كاش المقر)', style: TextStyle(fontFamily: 'Cairo'))),
                     ],
-                    onChanged: (v) => setDialogState(() => paymentChannel = v ?? 'cash'),
+                    onChanged: (v) => setDialogState(() => paymentChannel = v ?? 'bank'),
                   ),
                   const SizedBox(height: 12),
 
@@ -217,7 +217,7 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
   void _showDisburseConfirmDialog(BuildContext context, Map<String, dynamic> calc) {
     final provider = context.read<AppProvider>();
     final notesCtrl = TextEditingController();
-    String paymentChannel = 'cash';
+    String paymentChannel = 'bank'; // الخزنة التلقائية الحساب البنكي
 
     final totalDisbursed = calc['totalDisbursed'] as double;
     final treasuryBefore = calc['treasuryBefore'] as double;
@@ -285,11 +285,11 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
                     value: paymentChannel,
                     decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                     items: const [
-                      DropdownMenuItem(value: 'cash', child: Text('💵 الخزينة النقدية (كاش المقر)', style: TextStyle(fontFamily: 'Cairo'))),
-                      DropdownMenuItem(value: 'wallet', child: Text('📱 المحفظة الإلكترونية (فودافون كاش / إنستاباي)', style: TextStyle(fontFamily: 'Cairo'))),
                       DropdownMenuItem(value: 'bank', child: Text('🏦 الحساب البنكي (تحويل)', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'wallet', child: Text('📱 المحفظة الإلكترونية (فودافون كاش / إنستاباي)', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'cash', child: Text('💵 الخزينة النقدية (كاش المقر)', style: TextStyle(fontFamily: 'Cairo'))),
                     ],
-                    onChanged: (v) => setDialogState(() => paymentChannel = v ?? 'cash'),
+                    onChanged: (v) => setDialogState(() => paymentChannel = v ?? 'bank'),
                   ),
                   const SizedBox(height: 12),
 
@@ -478,7 +478,7 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('صافي أرباح الشركة القابلة للتوزيع:', style: TextStyle(color: Colors.white70, fontSize: 13, fontFamily: 'Cairo')),
+                        const Text('صافي أرباح الخدمات المنفذة فعلياً (أساس الاستحقاق):', style: TextStyle(color: Colors.white70, fontSize: 13, fontFamily: 'Cairo')),
                         Row(
                           children: [
                             Text(
@@ -531,6 +531,26 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
                         const SizedBox(width: 12),
                         _buildDarkStat('باقي النقدية بالخزينة بعد الصرف', '${remainingTreasury.toStringAsFixed(0)} ج.م', Colors.greenAccent, isHighlight: true),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Color(0xFF38BDF8), size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'توزيع الأرباح معتمد حصرياً على الخدمات والورديات المنفذة فعلياً (${((calc['grossProfit'] ?? 0.0) as num).toStringAsFixed(0)} ج.م إيراد خدمات - ${((calc['totalExpenses'] ?? 0.0) as num).toStringAsFixed(0)} ج.م مصاريف) • مديونيات العملاء القائمة (${((calc['totalClientDebts'] ?? 0.0) as num).toStringAsFixed(0)} ج.م) بند تحصيل منفصل لا يعطل التوزيع.',
+                              style: const TextStyle(fontSize: 10, color: Colors.white70, fontFamily: 'Cairo'),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

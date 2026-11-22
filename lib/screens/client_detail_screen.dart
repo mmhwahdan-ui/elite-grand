@@ -11,6 +11,7 @@ import '../widgets/extend_service_dialog.dart';
 import '../widgets/stop_service_dialog.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/add_service_day_dialog.dart';
+import '../widgets/activate_weekly_service_dialog.dart';
 import '../widgets/edit_service_day_dialog.dart';
 import '../widgets/swap_caregiver_dialog.dart';
 
@@ -637,20 +638,41 @@ class ClientDetailScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => AddServiceDayDialog(client: client),
-                              );
-                            },
-                            icon: const Icon(Icons.add_circle_outline, size: 16),
-                            label: const Text('تسجيل ورديات / أيام', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            ),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => ActivateWeeklyServiceDialog(client: client),
+                                  );
+                                },
+                                icon: const Icon(Icons.flash_on, size: 16),
+                                label: const Text('تفعيل الأسبوع ⚡', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.deepPurple,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => AddServiceDayDialog(client: client),
+                                  );
+                                },
+                                icon: const Icon(Icons.add_circle_outline, size: 16),
+                                label: const Text('تسجيل ورديات / أيام', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

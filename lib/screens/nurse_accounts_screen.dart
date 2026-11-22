@@ -37,8 +37,19 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
     final amountCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
     String transType = defaultType; // 'advance' or 'payout'
-    String paymentChannel = 'cash';
+    String paymentChannel = 'bank'; // الخزنة التلقائية الحساب البنكي
     DateTime selectedDate = DateTime.now();
+
+    // Auto-detect linked client if caregiver is assigned to one
+    String? selectedClientId;
+    String? selectedClientName;
+    for (final c in provider.clients) {
+      if (provider.isNurseNameMatch(c.nurseAssigned, selectedNurse)) {
+        selectedClientId = c.id;
+        selectedClientName = c.name;
+        break;
+      }
+    }
 
     showDialog(
       context: context,
@@ -114,6 +125,14 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                           setDialogState(() {
                             selectedNurse = val;
                             customNurseCtrl.text = val;
+                            // Check matching client for the new selected nurse
+                            for (final c in provider.clients) {
+                              if (provider.isNurseNameMatch(c.nurseAssigned, val)) {
+                                selectedClientId = c.id;
+                                selectedClientName = c.name;
+                                break;
+                              }
+                            }
                           });
                         }
                       },
@@ -127,7 +146,55 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.person_outline),
                     ),
-                    onChanged: (v) => selectedNurse = v.trim(),
+                    onChanged: (v) {
+                      selectedNurse = v.trim();
+                      for (final c in provider.clients) {
+                        if (provider.isNurseNameMatch(c.nurseAssigned, selectedNurse)) {
+                          setDialogState(() {
+                            selectedClientId = c.id;
+                            selectedClientName = c.name;
+                          });
+                          break;
+                        }
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Registered Client Selection
+                  const Text('العميل المسجل في النظام المرتبط بالصرف:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'Cairo')),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String?>(
+                    value: selectedClientId,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      prefixIcon: Icon(Icons.person_pin_outlined),
+                    ),
+                    hint: const Text('اختر العميل لضبط الحسابات تلقائياً', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('عام / غير مرتبط بعميل محدد', style: TextStyle(fontFamily: 'Cairo', color: Colors.grey)),
+                      ),
+                      ...provider.clients.map((cl) {
+                        return DropdownMenuItem<String?>(
+                          value: cl.id,
+                          child: Text('${cl.name} (${cl.serviceTypeArabic})', style: const TextStyle(fontFamily: 'Cairo')),
+                        );
+                      }),
+                    ],
+                    onChanged: (val) {
+                      setDialogState(() {
+                        selectedClientId = val;
+                        if (val != null) {
+                          final match = provider.clients.firstWhere((c) => c.id == val);
+                          selectedClientName = match.name;
+                        } else {
+                          selectedClientName = null;
+                        }
+                      });
+                    },
                   ),
                   const SizedBox(height: 12),
 
@@ -154,11 +221,11 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'cash', child: Text('💵 خزينة نقدية (كاش المقر / عهدة)', style: TextStyle(fontFamily: 'Cairo'))),
-                      DropdownMenuItem(value: 'wallet', child: Text('📱 محفظة إلكترونية (فودافون كاش / إنستاباي)', style: TextStyle(fontFamily: 'Cairo'))),
                       DropdownMenuItem(value: 'bank', child: Text('🏦 حساب بنكي (تحويل)', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'wallet', child: Text('📱 محفظة إلكترونية (فودافون كاش / إنستاباي)', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'cash', child: Text('💵 خزينة نقدية (كاش المقر / عهدة)', style: TextStyle(fontFamily: 'Cairo'))),
                     ],
-                    onChanged: (v) => setDialogState(() => paymentChannel = v ?? 'cash'),
+                    onChanged: (v) => setDialogState(() => paymentChannel = v ?? 'bank'),
                   ),
                   const SizedBox(height: 12),
 
@@ -235,6 +302,8 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                     type: transType,
                     paymentChannel: paymentChannel,
                     notes: notesCtrl.text.trim(),
+                    clientId: selectedClientId,
+                    clientName: selectedClientName,
                   );
 
                   if (ctx.mounted) {
@@ -623,15 +692,27 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                                     size: 20,
                                                   ),
                                                 ),
-                                                title: Row(
+                                                title: Wrap(
+                                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                                  spacing: 6,
+                                                  runSpacing: 4,
                                                   children: [
                                                     Text(t.typeArabic, style: TextStyle(fontWeight: FontWeight.bold, color: isAdv ? Colors.amber.shade900 : Colors.purple, fontFamily: 'Cairo', fontSize: 13)),
-                                                    const SizedBox(width: 8),
                                                     Container(
                                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                       decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(4)),
                                                       child: Text(t.channelArabic, style: const TextStyle(fontSize: 10, fontFamily: 'Cairo')),
                                                     ),
+                                                    if (t.clientName != null && t.clientName!.trim().isNotEmpty)
+                                                      Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.blue.shade50,
+                                                          borderRadius: BorderRadius.circular(4),
+                                                          border: Border.all(color: Colors.blue.shade200),
+                                                        ),
+                                                        child: Text('العميل: ${t.clientName}', style: TextStyle(fontSize: 10, fontFamily: 'Cairo', color: Colors.blue.shade900, fontWeight: FontWeight.bold)),
+                                                      ),
                                                   ],
                                                 ),
                                                 subtitle: Text('التاريخ: ${dateFormat.format(t.date)} ${t.notes.isNotEmpty ? " • " + t.notes : ""}', style: const TextStyle(fontSize: 11, fontFamily: 'Cairo')),

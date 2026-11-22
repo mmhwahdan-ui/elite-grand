@@ -7,6 +7,7 @@ import '../services/export_service.dart';
 import 'nurse_accounts_screen.dart';
 import 'partner_settlement_screen.dart';
 import '../widgets/periodic_net_profit_card.dart';
+import '../widgets/financial_reset_dialog.dart';
 
 class FinancialReportsScreen extends StatelessWidget {
   const FinancialReportsScreen({super.key});
@@ -145,15 +146,37 @@ class FinancialReportsScreen extends StatelessWidget {
                     ],
                   ),
                   if (provider.canManagePermissions || provider.canEditAnyData || provider.canSetPrice)
-                    ElevatedButton.icon(
-                      onPressed: () => _showOpeningBalancesDialog(context, provider),
-                      icon: const Icon(Icons.tune, size: 16),
-                      label: const Text('أرصدة أول المدة', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => _showOpeningBalancesDialog(context, provider),
+                          icon: const Icon(Icons.tune, size: 16),
+                          label: const Text('أرصدة أول المدة', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
+                        if (provider.canManagePermissions || provider.canEditAnyData)
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => const FinancialResetDialog(),
+                              );
+                            },
+                            icon: const Icon(Icons.warning_amber_rounded, size: 16),
+                            label: const Text('تصفير الحسابات ⚠️', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red.shade700,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                          ),
+                      ],
                     ),
                 ],
               ),

@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-19T09:10:12.839Z",
+  "lastUpdated": "2026-11-22T08:33:12.608Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -140,7 +140,9 @@
     "day_f4d8fa2b",
     "day_5500c75d",
     "day_090aa9a5",
-    "cg_1795031375004"
+    "cg_1795031375004",
+    "cli_e3a85ae4",
+    "day_5577b2c5"
   ],
   "openingBalances": {
     "bank": 0,
@@ -165,7 +167,19 @@
       "serviceType": "hours12",
       "status": "active",
       "updatedAt": "2026-11-10T09:43:59.139",
-      "startDate": "2026-11-11T00:00:00.000"
+      "startDate": "2026-11-11T00:00:00.000",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "المنيل",
@@ -184,7 +198,19 @@
       "serviceType": "hours24",
       "startDate": "2026-11-07T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-10T12:33:06.110"
+      "updatedAt": "2026-11-10T12:33:06.110",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "مدينه نصر",
@@ -203,7 +229,19 @@
       "serviceType": "hours24",
       "startDate": "2026-11-07T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-18T19:15:03.019"
+      "updatedAt": "2026-11-18T19:15:03.019",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "مدينتي",
@@ -222,7 +260,19 @@
       "serviceType": "hours24",
       "startDate": "2026-11-02T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-10T11:11:22.907"
+      "updatedAt": "2026-11-10T11:11:22.907",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "اكتوبر",
@@ -241,7 +291,19 @@
       "serviceType": "hours24",
       "startDate": "2026-10-17T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-10T11:07:07.173"
+      "updatedAt": "2026-11-10T11:07:07.173",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "الاسكندريه",
@@ -259,7 +321,19 @@
       "phone": "01006690602",
       "serviceType": "hours12",
       "status": "pending_pricing",
-      "updatedAt": "2026-11-10T13:42:50.661"
+      "updatedAt": "2026-11-10T13:42:50.661",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "كوبري القبه",
@@ -278,7 +352,19 @@
       "serviceType": "hours12",
       "startDate": "2026-11-07T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-10T16:38:21.670"
+      "updatedAt": "2026-11-10T16:38:21.670",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "الف مسكن",
@@ -299,7 +385,19 @@
       "startDate": "2026-10-29T00:00:00.000",
       "status": "completed",
       "updatedAt": "2026-11-14T17:08:12.608",
-      "terminationReason": "طلب العميل إيقاف الخدمة مؤقتاً"
+      "terminationReason": "طلب العميل إيقاف الخدمة مؤقتاً",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "الزيتون",
@@ -319,7 +417,19 @@
       "serviceType": "hours12",
       "startDate": "2026-11-07T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-10T16:04:03.882"
+      "updatedAt": "2026-11-10T16:04:03.882",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "عماره 18 شارع النزهه مصر الجديده",
@@ -338,7 +448,19 @@
       "serviceType": "hours24",
       "startDate": "2026-11-07T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-18T19:29:45.386"
+      "updatedAt": "2026-11-18T19:29:45.386",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "عمار ابن ياسر",
@@ -358,7 +480,19 @@
       "serviceType": "hours12",
       "startDate": "2026-11-03T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-11T19:05:00.213"
+      "updatedAt": "2026-11-11T19:05:00.213",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "النزهه الجديد",
@@ -377,27 +511,19 @@
       "serviceType": "hours12",
       "startDate": "2026-11-10T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-10T14:52:16.778"
-    },
-    {
-      "address": "مدينة أكتوبر \nالتوسعات الشمالية\nالتعاونيات \nالحى ال  ١١",
-      "createdAt": "2026-11-11T10:40:27.929",
-      "createdBy": "shimaa",
-      "dailyPrice": 0,
-      "healthCondition": "عايزة تمريض رعاية لمريض جلطة دماغية مأثرة على الحركة والوعى والبلع ومتأسترة ومركب فاكيوم و جاسترو \nرجل ٧٧سنة",
-      "id": "cli_e3a85ae4",
-      "isExistingClient": false,
-      "name": "دكتوره مني",
-      "notes": "تم الاتفاق على 1600 في اليوم وهي بلغت انها محتاجه الخدمه التلات والاثنين فقط",
-      "nurseAssigned": "ممرض ولد",
-      "nurseDailyPrice": 0,
-      "openingBalance": 0,
-      "phone": "01001440466",
-      "serviceType": "hours12",
-      "status": "active",
-      "updatedAt": "2026-11-11T16:41:22.295",
-      "endDate": "2026-11-12T00:00:00.000",
-      "startDate": "2026-11-12T00:00:00.000"
+      "updatedAt": "2026-11-10T14:52:16.778",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     },
     {
       "address": "مدينه نصر",
@@ -417,7 +543,19 @@
       "serviceType": "hours24",
       "startDate": "2026-11-14T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-18T20:59:54.136"
+      "updatedAt": "2026-11-18T20:59:54.136",
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "daysPerWeek": 7,
+      "serviceScheduleType": "all_week",
+      "settlementFrequency": "weekly"
     }
   ],
   "payments": [
@@ -562,6 +700,42 @@
       "notes": "",
       "paymentChannel": "bank",
       "paymentDate": "2026-11-14T13:40:49.528",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 2800,
+      "clientId": "cli_2a197e89",
+      "clientName": "ابتسام",
+      "createdAt": "2026-11-22T08:48:22.616",
+      "id": "pay_f4c1fd16",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-22T08:48:15.621",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 5000,
+      "clientId": "cli_c5474aeb",
+      "clientName": "منال",
+      "createdAt": "2026-11-22T08:47:34.769",
+      "id": "pay_a564531f",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-22T08:47:21.689",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    },
+    {
+      "amount": 2750,
+      "clientId": "cli_84191f94",
+      "clientName": "عمرو",
+      "createdAt": "2026-11-22T08:46:27.701",
+      "id": "pay_1512dcca",
+      "notes": "",
+      "paymentChannel": "bank",
+      "paymentDate": "2026-11-22T08:46:18.781",
       "paymentMethod": "transfer",
       "receivedBy": "zezo"
     }
@@ -863,6 +1037,28 @@
       "paymentChannel": "bank",
       "recordedBy": "zezo",
       "title": "صرف مستحقات تمريض: نهى"
+    },
+    {
+      "amount": 4900,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-19T11:11:16.888",
+      "expenseDate": "2026-11-19T11:11:10.789",
+      "id": "exp_8f63904c",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: سحر"
+    },
+    {
+      "amount": 3500,
+      "category": "nurse_dues",
+      "createdAt": "2026-11-19T12:55:45.843",
+      "expenseDate": "2026-11-19T12:55:36.876",
+      "id": "exp_d35b80dd",
+      "notes": "",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "title": "صرف مستحقات تمريض: زينب محمد عبد الحميد احمد خير الله"
     }
   ],
   "serviceDays": [
@@ -1266,19 +1462,6 @@
       "notes": "",
       "nurseName": "هدى",
       "nursePrice": 250,
-      "recordedBy": "wahdan",
-      "shiftType": "hours12"
-    },
-    {
-      "clientId": "cli_e3a85ae4",
-      "clientName": "دكتوره مني",
-      "clientPrice": 0,
-      "createdAt": "2026-11-11T16:41:22.297",
-      "date": "2026-11-12T00:00:00.000",
-      "id": "day_5577b2c5",
-      "notes": "تسجيل آلي للمدة المحددة للتعاقد (1 يوم)",
-      "nurseName": "ممرض ولد",
-      "nursePrice": 0,
       "recordedBy": "wahdan",
       "shiftType": "hours12"
     },
@@ -1687,6 +1870,28 @@
       "id": "ntr_a9ab2ac3",
       "notes": "",
       "nurseName": "نهى",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 4900,
+      "createdAt": "2026-11-19T11:11:16.888",
+      "date": "2026-11-19T11:11:10.789",
+      "id": "ntr_8f63904c",
+      "notes": "",
+      "nurseName": "سحر",
+      "paymentChannel": "bank",
+      "recordedBy": "zezo",
+      "type": "payout"
+    },
+    {
+      "amount": 3500,
+      "createdAt": "2026-11-19T12:55:45.843",
+      "date": "2026-11-19T12:55:36.876",
+      "id": "ntr_d35b80dd",
+      "notes": "",
+      "nurseName": "زينب محمد عبد الحميد احمد خير الله",
       "paymentChannel": "bank",
       "recordedBy": "zezo",
       "type": "payout"
@@ -2926,7 +3131,7 @@
       "id": "ntf_543ff6c8",
       "metadata": {
         "amount": 2550,
-        "nurseName": "هايد��"
+        "nurseName": "هايدي"
       },
       "timestamp": "2026-11-12T12:43:25.520",
       "title": "صرف مستحقات تمريض",
@@ -3793,6 +3998,173 @@
       },
       "timestamp": "2026-11-19T09:49:51.836",
       "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: سحر بمبلغ 4900 ج.م (الحساب البنكي)",
+      "id": "ntf_b85af4c3",
+      "metadata": {
+        "amount": 4900,
+        "nurseName": "سحر"
+      },
+      "timestamp": "2026-11-19T11:11:16.888",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "nurse_payout",
+      "description": "تم صرف مستحقات تمريض للممرض: زينب محمد عبد الحميد احمد خير الله بمبلغ 3500 ج.م (الحساب البنكي)",
+      "id": "ntf_dc0b2219",
+      "metadata": {
+        "amount": 3500,
+        "nurseName": "زينب محمد عبد الحميد احمد خير الله"
+      },
+      "timestamp": "2026-11-19T12:55:45.843",
+      "title": "صرف مستحقات تمريض",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "weekly_settlement",
+      "description": "اليوم موعد انتهاء دورة الخدمة الأسبوعية وتقفيل حسابات الورديات ومستحقات مقدمي الخدمة والعملاء.",
+      "id": "ntf_thu_2026-11-19",
+      "timestamp": "2026-11-19T22:58:34.741",
+      "title": "🔔 تنبيه تقفيل الحساب الأسبوعي (يوم الخميس)",
+      "userId": "usr_shimaa",
+      "userName": "النظام الآلي للشركة",
+      "userRole": "التنبيهات الإدارية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 4500 ج.م من العميل: احمد وصفي (الحساب البنكي)",
+      "id": "ntf_98f28c27",
+      "metadata": {
+        "amount": 4500,
+        "clientId": "cli_19d0c98d",
+        "clientName": "احمد وصفي"
+      },
+      "timestamp": "2026-11-19T21:49:32.010",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "service_days",
+      "description": "الممرض: زينب قام بتسليم وانصراف الوردية للعميل: احمد وصفي (وقت الإنهاء: 09:29 PM) [موقع جغرافي مثبت 📍]",
+      "id": "ntf_b4799766",
+      "metadata": {
+        "clientId": "cli_19d0c98d",
+        "nurseName": "زينب"
+      },
+      "timestamp": "2026-11-19T21:29:48.100",
+      "title": "إثبات انصراف وردية (GPS)",
+      "userId": "usr_cg_cg_1795011214381",
+      "userName": "زينب محمد عبد الحميد احمد خير الله",
+      "userRole": "طاقم تمريض / مقدم خدمة"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2625 ج.م من العميل: يسري الاسناوي (الحساب البنكي)",
+      "id": "ntf_c5cd6698",
+      "metadata": {
+        "amount": 2625,
+        "clientId": "cli_8c0d8c7d",
+        "clientName": "يسري الاسناوي"
+      },
+      "timestamp": "2026-11-19T18:29:25.498",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 9000 ج.م من العميل: اميره (الحساب البنكي)",
+      "id": "ntf_5a189fe4",
+      "metadata": {
+        "amount": 9000,
+        "clientId": "cli_3ba3dbe3",
+        "clientName": "اميره"
+      },
+      "timestamp": "2026-11-19T18:17:25.191",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "delete_client",
+      "description": "تم حذف العميل: دكتوره مني من النظام",
+      "id": "ntf_1453fee1",
+      "timestamp": "2026-11-19T16:46:58.080",
+      "title": "حذف عميل",
+      "userId": "usr_wahdan",
+      "userName": "أ/ وهدان",
+      "userRole": "مدير الشركة (المدير العام)"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2800 ج.م من العميل: ابتسام (الحساب البنكي)",
+      "id": "ntf_b65e82cf",
+      "metadata": {
+        "amount": 2800,
+        "clientId": "cli_2a197e89",
+        "clientName": "ابتسام"
+      },
+      "timestamp": "2026-11-18T19:17:26.701",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2800 ج.م من العميل: ابتسام (الحساب البنكي)",
+      "id": "ntf_aaafd5ba",
+      "metadata": {
+        "amount": 2800,
+        "clientId": "cli_2a197e89",
+        "clientName": "ابتسام"
+      },
+      "timestamp": "2026-11-22T08:48:22.616",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 5000 ج.م من العميل: منال (الحساب البنكي)",
+      "id": "ntf_32a82672",
+      "metadata": {
+        "amount": 5000,
+        "clientId": "cli_c5474aeb",
+        "clientName": "منال"
+      },
+      "timestamp": "2026-11-22T08:47:34.769",
+      "title": "تسجيل تحصيل نقدية",
+      "userId": "usr_zezo",
+      "userName": "أ/ زيزو",
+      "userRole": "مدير الحسابات والمالية"
+    },
+    {
+      "actionType": "payment",
+      "description": "تم تحصيل مبلغ 2750 ج.م من العميل: عمرو (الحساب البنكي)",
+      "id": "ntf_4cb5980f",
+      "metadata": {
+        "amount": 2750,
+        "clientId": "cli_84191f94",
+        "clientName": "عمرو"
+      },
+      "timestamp": "2026-11-22T08:46:27.702",
+      "title": "تسجيل تحصيل نقدية",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
       "userRole": "مدير الحسابات والمالية"

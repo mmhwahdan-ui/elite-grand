@@ -21,7 +21,7 @@ class _ExpenseDialogState extends State<ExpenseDialog> {
   late TextEditingController _notesController;
   late DateTime _expenseDate;
   String _category = 'nurse_salary';
-  String _paymentChannel = 'cash'; // 'cash', 'wallet', 'bank'
+  String _paymentChannel = 'bank'; // 'bank', 'wallet', 'cash' - الافتراضي الحساب البنكي
   ClientModel? _selectedClient;
 
   @override

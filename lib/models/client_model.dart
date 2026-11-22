@@ -215,6 +215,11 @@ class ClientModel {
   bool get isWeeklySettlement => settlementFrequency == 'weekly';
   bool get isMonthlySettlement => settlementFrequency == 'monthly';
 
+  bool isActiveOnWeekday(int weekday) {
+    if (serviceScheduleType != 'custom_days') return true;
+    return activeWeekdays.contains(weekday);
+  }
+
   String get serviceTypeArabic {
     switch (serviceType) {
       case 'hours24':

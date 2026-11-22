@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../services/sound_service.dart';
 import '../services/export_service.dart';
 import '../widgets/payment_dialog.dart';
+import '../widgets/activate_weekly_service_dialog.dart';
 
 class WeeklyMonthlySettlementScreen extends StatefulWidget {
   final String initialTab; // 'weekly' or 'monthly'
@@ -87,8 +88,19 @@ class _WeeklyMonthlySettlementScreenState extends State<WeeklyMonthlySettlementS
     final amountCtrl = TextEditingController(text: defaultAmount > 0 ? defaultAmount.toStringAsFixed(0) : '');
     final notesCtrl = TextEditingController();
     String transType = defaultType;
-    String paymentChannel = 'cash';
+    String paymentChannel = 'bank'; // الخزنة التلقائية الحساب البنكي
     DateTime selectedDate = DateTime.now();
+
+    // Auto-detect linked client for this nurse
+    String? selectedClientId;
+    String? selectedClientName;
+    for (final c in provider.clients) {
+      if (provider.isNurseNameMatch(c.nurseAssigned, nurseName)) {
+        selectedClientId = c.id;
+        selectedClientName = c.name;
+        break;
+      }
+    }
 
     showDialog(
       context: context,
@@ -162,6 +174,40 @@ class _WeeklyMonthlySettlementScreenState extends State<WeeklyMonthlySettlementS
                   ),
                   const SizedBox(height: 14),
 
+                  // Registered Client Selection
+                  DropdownButtonFormField<String?>(
+                    value: selectedClientId,
+                    decoration: const InputDecoration(
+                      labelText: 'العميل المسجل المرتبط بالصرف',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person_pin_outlined),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('عام / غير محدد', style: TextStyle(fontFamily: 'Cairo', color: Colors.grey)),
+                      ),
+                      ...provider.clients.map((cl) {
+                        return DropdownMenuItem<String?>(
+                          value: cl.id,
+                          child: Text('${cl.name} (${cl.serviceTypeArabic})', style: const TextStyle(fontFamily: 'Cairo')),
+                        );
+                      }),
+                    ],
+                    onChanged: (val) {
+                      setDlgState(() {
+                        selectedClientId = val;
+                        if (val != null) {
+                          final match = provider.clients.firstWhere((c) => c.id == val);
+                          selectedClientName = match.name;
+                        } else {
+                          selectedClientName = null;
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
                   // Amount
                   TextField(
                     controller: amountCtrl,
@@ -179,14 +225,14 @@ class _WeeklyMonthlySettlementScreenState extends State<WeeklyMonthlySettlementS
                   DropdownButtonFormField<String>(
                     value: paymentChannel,
                     decoration: const InputDecoration(
-                      labelText: 'طريقة ومكان الصرف',
+                      labelText: 'طريقة ومكان الصرف (الافتراضي بنك)',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.account_balance_wallet_outlined),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'cash', child: Text('الخزينة كاش 💵', style: TextStyle(fontFamily: 'Cairo'))),
-                      DropdownMenuItem(value: 'wallet', child: Text('محفظة فودافون كاش / إنستاباي 📱', style: TextStyle(fontFamily: 'Cairo'))),
                       DropdownMenuItem(value: 'bank', child: Text('الحساب البنكي 🏦', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'wallet', child: Text('محفظة فودافون كاش / إنستاباي 📱', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'cash', child: Text('الخزينة كاش 💵', style: TextStyle(fontFamily: 'Cairo'))),
                     ],
                     onChanged: (val) {
                       if (val != null) setDlgState(() => paymentChannel = val);
@@ -230,6 +276,8 @@ class _WeeklyMonthlySettlementScreenState extends State<WeeklyMonthlySettlementS
                     notes: notesCtrl.text.trim().isNotEmpty
                         ? notesCtrl.text.trim()
                         : (transType == 'payout' ? 'تقفيل الحساب الأسبوعي (دورة الخميس)' : 'سلفة تمريض'),
+                    clientId: selectedClientId,
+                    clientName: selectedClientName,
                   );
 
                   if (ctx.mounted) {
@@ -850,21 +898,41 @@ class _WeeklyMonthlySettlementScreenState extends State<WeeklyMonthlySettlementS
                   ),
                 ),
 
-                // Quick Collect Payment Button
-                ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => PaymentDialog(preSelectedClient: c),
-                    );
-                  },
-                  icon: const Icon(Icons.credit_card, size: 16),
-                  label: const Text('تحصيل دفعة 💳', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  ),
+                // Actions: Activate week & Collect Payment
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => ActivateWeeklyServiceDialog(client: c),
+                        );
+                      },
+                      icon: const Icon(Icons.flash_on, size: 16, color: Colors.deepPurple),
+                      label: const Text('تفعيل الأسبوع ⚡', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.deepPurple, fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        side: const BorderSide(color: Colors.deepPurple),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => PaymentDialog(preSelectedClient: c),
+                        );
+                      },
+                      icon: const Icon(Icons.credit_card, size: 16),
+                      label: const Text('تحصيل دفعة 💳', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

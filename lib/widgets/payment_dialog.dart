@@ -20,7 +20,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
   late TextEditingController _amountController;
   late TextEditingController _notesController;
   late DateTime _paymentDate;
-  String _paymentChannel = 'wallet'; // 'wallet', 'bank', 'cash'
+  String _paymentChannel = 'bank'; // 'bank', 'wallet', 'cash' - الافتراضي الحساب البنكي
 
   @override
   void initState() {

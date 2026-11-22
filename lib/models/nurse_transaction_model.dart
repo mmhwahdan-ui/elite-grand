@@ -9,6 +9,8 @@ class NurseTransactionModel {
   final String paymentChannel;
   final String notes;
   final String recordedBy;
+  final String? clientId;
+  final String? clientName;
   final DateTime createdAt;
 
   NurseTransactionModel({
@@ -17,9 +19,11 @@ class NurseTransactionModel {
     required this.amount,
     required this.date,
     required this.type,
-    this.paymentChannel = 'cash',
+    this.paymentChannel = 'bank',
     this.notes = '',
     this.recordedBy = 'wahdan',
+    this.clientId,
+    this.clientName,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -56,6 +60,8 @@ class NurseTransactionModel {
       'paymentChannel': paymentChannel,
       'notes': notes,
       'recordedBy': recordedBy,
+      'clientId': clientId,
+      'clientName': clientName,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -69,9 +75,11 @@ class NurseTransactionModel {
           ? DateTime.tryParse(map['date']) ?? DateTime.now()
           : DateTime.now(),
       type: map['type'] ?? 'advance',
-      paymentChannel: map['paymentChannel'] ?? 'cash',
+      paymentChannel: map['paymentChannel'] ?? 'bank',
       notes: map['notes'] ?? '',
       recordedBy: map['recordedBy'] ?? 'wahdan',
+      clientId: map['clientId'],
+      clientName: map['clientName'],
       createdAt: map['createdAt'] != null
           ? DateTime.tryParse(map['createdAt']) ?? DateTime.now()
           : DateTime.now(),

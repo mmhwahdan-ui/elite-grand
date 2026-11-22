@@ -941,6 +941,73 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// تصفير النظام من الأرصدة المالية والبدء من جديد مع الحفاظ الكامل على العملاء ومقدمي الخدمة
+  Future<void> resetSystemFinancials({
+    required bool resetClientOpeningBalances,
+    required bool resetServiceDays,
+    String reason = 'تصفير الحسابات المالية وإعادة إدخال الأرصدة',
+  }) async {
+    if (!canManagePermissions && !canEditAnyData) {
+      throw Exception('ليس لديك صلاحية تصفير حسابات النظام');
+    }
+
+    // 1. Clear financial transactions collections
+    _payments.clear();
+    _expenses.clear();
+    _nurseTransactions.clear();
+    _partnerLoans.clear();
+    _partnerSettlements.clear();
+
+    // 2. Reset treasury opening balances to zero
+    _openingBalances = {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0};
+    await storageService.saveOpeningBalances(_openingBalances);
+
+    // 3. Reset client opening balances if requested
+    if (resetClientOpeningBalances) {
+      for (int i = 0; i < _clients.length; i++) {
+        final c = _clients[i];
+        if (c.openingBalance != 0.0 || c.isExistingClient) {
+          _clients[i] = c.copyWith(
+            openingBalance: 0.0,
+            isExistingClient: false,
+          );
+        }
+      }
+      await storageService.saveClients(_clients);
+    }
+
+    // 4. Reset service days if requested
+    if (resetServiceDays) {
+      _serviceDays.clear();
+      await storageService.saveServiceDays(_serviceDays);
+    }
+
+    // 5. Save all cleared collections
+    await storageService.savePayments(_payments);
+    await storageService.saveExpenses(_expenses);
+    await storageService.saveNurseTransactions(_nurseTransactions);
+    await storageService.savePartnerLoans(_partnerLoans);
+    await storageService.savePartnerSettlements(_partnerSettlements);
+
+    // 6. Log security audit trail
+    await _logAction(
+      title: 'تصفير الحسابات المالية للنظام',
+      description: 'تم تصفير كافة الأرصدة المالية والخزائن والمدفوعات والمصروفات وحسابات الشركاء والتمريض مع الحفاظ التام على كافة بيانات العملاء والتمريض والمستخدمين. ($reason)',
+      actionType: 'financial_reset',
+      metadata: {
+        'resetClientOpeningBalances': resetClientOpeningBalances,
+        'resetServiceDays': resetServiceDays,
+        'clientsPreserved': _clients.length,
+        'caregiversPreserved': _caregivers.length,
+        'usersPreserved': _users.length,
+      },
+    );
+
+    // 7. Persist and sync to cloud
+    await _persistAndSync();
+    notifyListeners();
+  }
+
   // --- Client Actions ---
 
   /// تسجيل عميل جديد أو حالي مع بيان الرصيد الافتتاحي ويومية الممرض
@@ -1493,6 +1560,82 @@ class AppProvider extends ChangeNotifier {
       metadata: {'clientId': clientId, 'clientName': client.name, 'daysCount': dates.length},
     );
     await _persistAndSync();
+  }
+
+  /// تفعيل الخدمة الأسبوعي لحالة عميل بأيام محددة مسبقاً وتأكيد أسعار العميل ومقدم الخدمة
+  Future<int> activateWeeklyClientService({
+    required String clientId,
+    required List<DateTime> selectedDates,
+    required double clientPrice,
+    required double nursePrice,
+    required String nurseName,
+    String? shiftType,
+    String notes = '',
+  }) async {
+    final clientIndex = _clients.indexWhere((c) => c.id == clientId);
+    if (clientIndex == -1 || selectedDates.isEmpty) return 0;
+    final client = _clients[clientIndex];
+
+    int createdCount = 0;
+    for (final date in selectedDates) {
+      final normalizedDate = DateTime(date.year, date.month, date.day);
+      final existingIndex = _serviceDays.indexWhere((d) =>
+          d.clientId == clientId &&
+          d.date.year == normalizedDate.year &&
+          d.date.month == normalizedDate.month &&
+          d.date.day == normalizedDate.day);
+
+      final dayModel = ServiceDayModel(
+        id: existingIndex != -1 ? _serviceDays[existingIndex].id : 'day_${_uuid.v4().substring(0, 8)}',
+        clientId: clientId,
+        clientName: client.name,
+        date: normalizedDate,
+        nurseName: nurseName.trim().isEmpty ? (client.nurseAssigned ?? 'ممرض') : nurseName.trim(),
+        shiftType: shiftType ?? client.serviceType,
+        clientPrice: clientPrice,
+        nursePrice: nursePrice,
+        notes: notes.trim().isNotEmpty ? notes.trim() : 'تفعيل خدمة أسبوعي',
+        recordedBy: _currentUser?.username ?? 'wahdan',
+        createdAt: DateTime.now(),
+      );
+
+      if (existingIndex != -1) {
+        _serviceDays[existingIndex] = dayModel;
+      } else {
+        _serviceDays.insert(0, dayModel);
+        createdCount++;
+      }
+    }
+
+    // Ensure client status is active and nurse is assigned with confirmed rates
+    final updatedClient = client.copyWith(
+      status: 'active',
+      nurseAssigned: nurseName.trim().isNotEmpty ? nurseName.trim() : client.nurseAssigned,
+      dailyPrice: clientPrice,
+      nurseDailyPrice: nursePrice,
+      startDate: client.startDate ?? selectedDates.first,
+    );
+    _clients[clientIndex] = updatedClient;
+
+    await storageService.saveClients(_clients);
+    await storageService.saveServiceDays(_serviceDays);
+
+    await _logAction(
+      title: 'تفعيل الخدمة الأسبوعي للعميل',
+      description: 'تم تفعيل ${selectedDates.length} ورديات أسبوعية للعميل ${client.name} مع التمريض: $nurseName (سعر العميل: $clientPrice ج.م | يومية التمريض: $nursePrice ج.م)',
+      actionType: 'activate_weekly_service',
+      metadata: {
+        'clientId': clientId,
+        'clientName': client.name,
+        'datesCount': selectedDates.length,
+        'newShiftsCount': createdCount,
+        'nurseName': nurseName,
+      },
+    );
+
+    await _persistAndSync();
+    notifyListeners();
+    return selectedDates.length;
   }
 
   /// حذف يوم خدمة محدد
@@ -2454,14 +2597,16 @@ class AppProvider extends ChangeNotifier {
     );
   }
 
-  /// تسجيل سلفة أو دفعة مستحقات للممرض
+  /// تسجيل سلفة أو دفعة مستحقات للممرض مع ربط العميل المسجل في النظام تلقائياً
   Future<void> recordNurseTransaction({
     required String nurseName,
     required double amount,
     required DateTime date,
     required String type, // 'advance' (سلفة) | 'payout' (صرف مستحقات)
-    String paymentChannel = 'cash',
+    String paymentChannel = 'bank', // الخزنة التلقائية الحساب البنكي
     String notes = '',
+    String? clientId,
+    String? clientName,
   }) async {
     final transId = 'ntr_${_uuid.v4().substring(0, 8)}';
     final newTrans = NurseTransactionModel(
@@ -2473,15 +2618,23 @@ class AppProvider extends ChangeNotifier {
       paymentChannel: paymentChannel,
       notes: notes.trim(),
       recordedBy: _currentUser?.username ?? 'wahdan',
+      clientId: clientId,
+      clientName: clientName,
       createdAt: DateTime.now(),
     );
 
     _nurseTransactions.insert(0, newTrans);
 
     // Record as company expense to maintain accurate treasury cash flow
+    final clientPart = (clientName != null && clientName.trim().isNotEmpty) ? ' (العميل: ${clientName.trim()})' : '';
     final expenseTitle = type == 'advance'
-        ? 'سلفة تمريض: ${nurseName.trim()}'
-        : 'صرف مستحقات تمريض: ${nurseName.trim()}';
+        ? 'سلفة تمريض: ${nurseName.trim()}$clientPart'
+        : 'صرف مستحقات تمريض: ${nurseName.trim()}$clientPart';
+
+    final expNotes = [
+      if (notes.trim().isNotEmpty) notes.trim(),
+      if (clientName != null && clientName.trim().isNotEmpty) 'العميل: ${clientName.trim()}',
+    ].join(' | ');
 
     final newExpense = ExpenseModel(
       id: 'exp_${transId.substring(4)}',
@@ -2490,8 +2643,9 @@ class AppProvider extends ChangeNotifier {
       amount: amount,
       expenseDate: date,
       paymentChannel: paymentChannel,
-      notes: notes.trim(),
+      notes: expNotes,
       recordedBy: _currentUser?.username ?? 'wahdan',
+      relatedClientId: clientId,
       createdAt: DateTime.now(),
     );
 
@@ -2499,9 +2653,9 @@ class AppProvider extends ChangeNotifier {
     final actTitle = type == 'advance' ? 'تسجيل سلفة تمريض' : 'صرف مستحقات تمريض';
     await _logAction(
       title: actTitle,
-      description: 'تم $actTitle للممرض: ${nurseName.trim()} بمبلغ ${amount.toStringAsFixed(0)} ج.م (${_getChannelArabic(paymentChannel)})',
+      description: 'تم $actTitle للممرض: ${nurseName.trim()} بمبلغ ${amount.toStringAsFixed(0)} ج.م (${_getChannelArabic(paymentChannel)})$clientPart',
       actionType: type == 'advance' ? 'nurse_advance' : 'nurse_payout',
-      metadata: {'nurseName': nurseName, 'amount': amount},
+      metadata: {'nurseName': nurseName, 'amount': amount, 'clientId': clientId, 'clientName': clientName},
     );
     await _persistAndSync();
   }
@@ -2684,29 +2838,52 @@ class AppProvider extends ChangeNotifier {
     final endDate = DateTime(settlementDate.year, settlementDate.month, 22, 23, 59, 59);
 
     double profit;
+    double grossProfit = 0.0;
+    double totalExpenses = 0.0;
+
     if (customNetProfit != null) {
       profit = customNetProfit;
     } else {
-      // Calculate profit from service days during period
+      // 1. Calculate profit strictly from executed service days during the period
       final periodDays = _serviceDays.where((d) =>
           d.date.isAfter(startDate.subtract(const Duration(seconds: 1))) &&
-          d.date.isBefore(endDate.add(const Duration(seconds: 1))));
+          d.date.isBefore(endDate.add(const Duration(seconds: 1)))).toList();
 
-      double grossProfit = periodDays.fold(0.0, (s, d) => s + d.companyDayProfit);
+      grossProfit = periodDays.fold(0.0, (s, d) => s + d.companyDayProfit);
 
-      // Period expenses (excluding partner payouts/loans to avoid recursion)
+      // If active clients have dates in this cycle not individually logged in _serviceDays, calculate from executed duration
+      for (var c in _clients) {
+        final clientLogged = periodDays.where((d) => d.clientId == c.id);
+        if (clientLogged.isEmpty && c.startDate != null) {
+          final cStart = DateTime(c.startDate!.year, c.startDate!.month, c.startDate!.day);
+          final cEnd = c.endDate != null ? DateTime(c.endDate!.year, c.endDate!.month, c.endDate!.day) : DateTime.now();
+          final effectiveStart = cStart.isAfter(startDate) ? cStart : startDate;
+          final effectiveEnd = cEnd.isBefore(endDate) ? cEnd : endDate;
+          if (!effectiveStart.isAfter(effectiveEnd)) {
+            final days = effectiveEnd.difference(effectiveStart).inDays + 1;
+            for (int i = 0; i < days; i++) {
+              final cur = effectiveStart.add(Duration(days: i));
+              if (c.isActiveOnWeekday(cur.weekday)) {
+                grossProfit += (c.dailyPrice - c.nurseDailyPrice);
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Period operating expenses (excluding partner payouts/loans)
       final periodExpenses = _expenses.where((e) =>
           e.category != 'partner_loan' &&
           e.category != 'partner_settlement' &&
           e.expenseDate.isAfter(startDate.subtract(const Duration(seconds: 1))) &&
           e.expenseDate.isBefore(endDate.add(const Duration(seconds: 1))));
 
-      double totalExpenses = periodExpenses.fold(0.0, (s, e) => s + e.amount);
+      totalExpenses = periodExpenses.fold(0.0, (s, e) => s + e.amount);
 
+      // Distributable profit strictly decoupled from client collection debt
       profit = (grossProfit - totalExpenses);
-      if (profit <= 0) {
-        // Fallback to overall net accrued profit if period days not separately logged
-        profit = netAccruedProfit > 0 ? netAccruedProfit : 0.0;
+      if (profit < 0) {
+        profit = 0.0;
       }
     }
 
@@ -2753,6 +2930,10 @@ class AppProvider extends ChangeNotifier {
       'startDate': startDate,
       'endDate': endDate,
       'profit': profit,
+      'grossProfit': grossProfit,
+      'totalExpenses': totalExpenses,
+      'totalClientDebts': totalClientDebtsOwedToCompany,
+      'totalClientAdvances': totalClientAdvancesHeldByCompany,
       'wahdanBase': wahdanBase,
       'wahdanAdminDeduction': wahdanAdminDeduction,
       'wahdanFinal': wahdanFinal,
@@ -2778,7 +2959,7 @@ class AppProvider extends ChangeNotifier {
   Future<void> executePartnerSettlement({
     required DateTime settlementDate,
     required double customNetProfit,
-    String paymentChannel = 'cash',
+    String paymentChannel = 'bank', // الخزنة التلقائية الحساب البنكي
     String notes = '',
   }) async {
     final calc = calculateCycle23Settlement(
