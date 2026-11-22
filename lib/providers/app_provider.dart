@@ -2497,6 +2497,21 @@ class AppProvider extends ChangeNotifier {
     return list;
   }
 
+  /// قائمة بأسماء مقدمي الخدمة المسجلين في الحالات أو الورديات ولم يتم تكويدهم في قاعدة البيانات
+  List<String> get uncodedNurseNames {
+    final uncoded = <String>{};
+    for (var n in allNurseNames) {
+      if (n == 'ممرض غير محدد' || n == 'غير محدد' || n == 'متغير') continue;
+      final cg = findCaregiverByName(n);
+      if (cg == null || cg.code.trim().isEmpty) {
+        uncoded.add(n);
+      }
+    }
+    final list = uncoded.toList();
+    list.sort();
+    return list;
+  }
+
   /// كشف ورديات ممرض معين مرتبة من الأحدث للأقدم
   List<ServiceDayModel> getNurseShifts(String nurseName) {
     final list = _serviceDays.where((d) => isNurseNameMatch(d.nurseName, nurseName)).toList();
@@ -2843,6 +2858,100 @@ class AppProvider extends ChangeNotifier {
       description: 'تم حذف معاملة للممرض: $targetNurse بقيمة ${targetAmount.toStringAsFixed(0)} ج.م',
       actionType: 'nurse_trans',
     );
+    await storageService.saveDeletedIds(_deletedIds);
+    await _persistAndSync();
+  }
+
+  /// إلغاء وتصفير حساب مقدم خدمة من حسابات وسلف التمريض بالكامل
+  /// [refundToTreasury]: إذا كان صحيحاً يتم رد المبالغ المنصرفة إلى رصيد الخزينة/البنك بحذف المصروفات المرتبطة
+  /// إذا كان خطأ يتم إبقاء المصروفات مقيدة في الخزينة كمصروف فعلي دون ردها
+  Future<void> cancelNurseAccount({
+    required String nurseName,
+    required bool refundToTreasury,
+    bool resetOpeningBalance = true,
+    bool unassignFromClients = true,
+  }) async {
+    if (!canEditAnyData) return;
+    final cleanNurse = nurseName.trim();
+    if (cleanNurse.isEmpty) return;
+
+    // 1. المعاملات المالية والسلف والمدفوعات
+    final matchingTrans = _nurseTransactions
+        .where((t) => isNurseNameMatch(t.nurseName, cleanNurse))
+        .toList();
+
+    double totalAdvances = 0.0;
+    double totalPayouts = 0.0;
+
+    for (final t in matchingTrans) {
+      if (t.type == 'advance') totalAdvances += t.amount;
+      if (t.type == 'payout') totalPayouts += t.amount;
+
+      if (!_deletedIds.contains(t.id)) {
+        _deletedIds.add(t.id);
+      }
+
+      final expId = 'exp_${t.id.substring(4)}';
+      if (refundToTreasury) {
+        // رد المبالغ إلى الخزينة/البنك بحذف المصروف المترتب عليها
+        _expenses.removeWhere((e) => e.id == expId);
+        if (!_deletedIds.contains(expId)) {
+          _deletedIds.add(expId);
+        }
+      }
+    }
+
+    _nurseTransactions.removeWhere((t) => isNurseNameMatch(t.nurseName, cleanNurse));
+
+    // 2. تصفير الرصيد الافتتاحي للممرض إن وُجد وطُلب
+    final cgIdx = _caregivers.indexWhere((cg) => isNurseNameMatch(cg.name, cleanNurse));
+    double oldOpening = 0.0;
+    if (cgIdx != -1) {
+      oldOpening = _caregivers[cgIdx].openingBalance;
+      if (resetOpeningBalance) {
+        _caregivers[cgIdx] = _caregivers[cgIdx].copyWith(
+          openingBalance: 0.0,
+          currentClientName: unassignFromClients ? '' : _caregivers[cgIdx].currentClientName,
+          isCurrentlyWorking: unassignFromClients ? false : _caregivers[cgIdx].isCurrentlyWorking,
+          updatedAt: DateTime.now(),
+        );
+      }
+    }
+
+    // 3. فك ارتباط الحالات إن طُلب
+    if (unassignFromClients) {
+      for (int i = 0; i < _clients.length; i++) {
+        if (isNurseNameMatch(_clients[i].nurseAssigned, cleanNurse)) {
+          _clients[i] = _clients[i].copyWith(
+            nurseAssigned: null,
+            updatedAt: DateTime.now(),
+          );
+        }
+      }
+      await storageService.saveClients(_clients);
+    }
+
+    final refundText = refundToTreasury
+        ? 'تم رد إجمالي المنصرف (${(totalAdvances + totalPayouts).toStringAsFixed(0)} ج.م) إلى رصيد الخزينة/البنك'
+        : 'تم الإبقاء على خصم المنصرف (${(totalAdvances + totalPayouts).toStringAsFixed(0)} ج.م) في الخزينة دون رد';
+
+    await _logAction(
+      title: 'إلغاء وتصفير حساب مقدم خدمة',
+      description: 'تم إلغاء حسابات الممرض: $cleanNurse - $refundText' +
+          (oldOpening != 0.0 ? ' - تصفير رصيد افتتاحي: ${oldOpening.toStringAsFixed(0)} ج.م' : ''),
+      actionType: 'cancel_nurse_account',
+      metadata: {
+        'nurseName': cleanNurse,
+        'refundToTreasury': refundToTreasury,
+        'totalAdvances': totalAdvances,
+        'totalPayouts': totalPayouts,
+        'oldOpeningBalance': oldOpening,
+      },
+    );
+
+    await storageService.saveNurseTransactions(_nurseTransactions);
+    await storageService.saveExpenses(_expenses);
+    await storageService.saveCaregivers(_caregivers);
     await storageService.saveDeletedIds(_deletedIds);
     await _persistAndSync();
   }

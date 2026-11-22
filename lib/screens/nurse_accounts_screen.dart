@@ -7,6 +7,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/export_service.dart';
 import '../widgets/edit_service_day_dialog.dart';
+import '../widgets/add_edit_caregiver_dialog.dart';
 import '../services/location_service.dart';
 import 'nurse_portal_screen.dart';
 import 'weekly_monthly_settlement_screen.dart';
@@ -962,6 +963,48 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
               ),
             ),
 
+            if (provider.uncodedNurseNames.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.amber.shade400),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.badge_outlined, color: Colors.amber.shade900, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'يوجد ' + provider.uncodedNurseNames.length.toString() + ' مقدم خدمة مسجل بالحالات ولم يتم تكويدهم: ' + provider.uncodedNurseNames.join('، '),
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        final firstUncoded = provider.uncodedNurseNames.first;
+                        showDialog(
+                          context: context,
+                          builder: (_) => AddEditCaregiverDialog(
+                            initialName: firstUncoded,
+                            initialClientName: provider.getCaregiverCurrentCase(firstUncoded),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber.shade800,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        minimumSize: const Size(0, 32),
+                      ),
+                      child: const Text('تكويد الآن ✍️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             // Nurse Cards List
             Expanded(
               child: filteredNurses.isEmpty

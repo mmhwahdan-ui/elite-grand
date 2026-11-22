@@ -5,6 +5,7 @@ import '../models/caregiver_model.dart';
 import '../models/client_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import 'add_edit_caregiver_dialog.dart';
 
 class ActivateWeeklyServiceDialog extends StatefulWidget {
   final ClientModel client;
@@ -414,7 +415,7 @@ class _ActivateWeeklyServiceDialogState extends State<ActivateWeeklyServiceDialo
                                 style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
                               ),
                             ),
-                            if (matchedCaregiver != null)
+                            if (matchedCaregiver != null && matchedCaregiver.code.trim().isNotEmpty) ...[
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
@@ -426,6 +427,41 @@ class _ActivateWeeklyServiceDialogState extends State<ActivateWeeklyServiceDialo
                                   style: const TextStyle(fontFamily: 'Cairo', fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primary),
                                 ),
                               ),
+                              const SizedBox(width: 4),
+                              InkWell(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => AddEditCaregiverDialog(
+                                      caregiver: matchedCaregiver,
+                                      initialName: selectedNurse,
+                                      initialClientName: widget.client.name,
+                                    ),
+                                  );
+                                },
+                                child: const Icon(Icons.edit_note, size: 18, color: Colors.blue),
+                              ),
+                            ] else ...[
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => AddEditCaregiverDialog(
+                                      initialName: selectedNurse,
+                                      initialClientName: widget.client.name,
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.badge_outlined, size: 12),
+                                label: const Text('تكويد الآن ✍️', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, fontWeight: FontWeight.bold)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.amber.shade800,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  minimumSize: const Size(0, 26),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 6),

@@ -179,6 +179,48 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
               ),
             ],
 
+            if (provider.uncodedNurseNames.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  border: Border(bottom: BorderSide(color: Colors.amber.shade300)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.badge_outlined, color: Colors.amber.shade900, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'يوجد ' + provider.uncodedNurseNames.length.toString() + ' مقدمين خدمة مسجلين بالحالات ولم يتم تكويدهم بعد: ' + provider.uncodedNurseNames.join('، '),
+                        style: TextStyle(fontSize: 12, fontFamily: 'Cairo', color: Colors.amber.shade900, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        final first = provider.uncodedNurseNames.first;
+                        showDialog(
+                          context: context,
+                          builder: (_) => AddEditCaregiverDialog(
+                            initialName: first,
+                            initialClientName: provider.getCaregiverCurrentCase(first),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add, size: 14),
+                      label: const Text('تكويد الآن ✍️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber.shade800,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        minimumSize: const Size(0, 32),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             // Top Quick Statistics Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

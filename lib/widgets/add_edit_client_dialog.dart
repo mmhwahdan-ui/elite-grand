@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/client_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import 'add_edit_caregiver_dialog.dart';
 
 class AddEditClientDialog extends StatefulWidget {
   final ClientModel? client;
@@ -822,6 +823,51 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                           },
                         );
                       }).toList(),
+                    ),
+                  ],
+                  if (_nurseController.text.trim().isNotEmpty &&
+                      _nurseController.text.trim() != 'غير محدد' &&
+                      _nurseController.text.trim() != 'متغير' &&
+                      (matchedCaregiver == null || matchedCaregiver.code.trim().isEmpty)) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, size: 18, color: Colors.amber.shade900),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'مقدم الخدمة (' + _nurseController.text.trim() + ') غير مكود بقاعدة البيانات.',
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.amber.shade900, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => AddEditCaregiverDialog(
+                                  initialName: _nurseController.text.trim(),
+                                  initialClientName: _nameController.text.trim(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.badge_outlined, size: 14),
+                            label: const Text('تكويد الآن ✍️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.amber.shade800,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              minimumSize: const Size(0, 30),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                   if (matchedCaregiver != null) ...[

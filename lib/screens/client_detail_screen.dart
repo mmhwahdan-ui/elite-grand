@@ -14,6 +14,7 @@ import '../widgets/add_service_day_dialog.dart';
 import '../widgets/activate_weekly_service_dialog.dart';
 import '../widgets/edit_service_day_dialog.dart';
 import '../widgets/swap_caregiver_dialog.dart';
+import '../widgets/add_edit_caregiver_dialog.dart';
 
 class ClientDetailScreen extends StatelessWidget {
   final String clientId;
@@ -295,6 +296,56 @@ class ClientDetailScreen extends StatelessWidget {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
+                                  ),
+                                if (client.nurseAssigned != null && client.nurseAssigned!.isNotEmpty && client.nurseAssigned != 'غير محدد' && client.nurseAssigned != 'متغير')
+                                  Builder(
+                                    builder: (context) {
+                                      final assignedCg = provider.findCaregiverByName(client.nurseAssigned!);
+                                      final isUncoded = assignedCg == null || assignedCg.code.trim().isEmpty;
+                                      return InkWell(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) => AddEditCaregiverDialog(
+                                              caregiver: assignedCg,
+                                              initialName: client.nurseAssigned,
+                                              initialClientName: client.name,
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: isUncoded ? Colors.amber.shade100 : Colors.blue.shade50,
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(
+                                              color: isUncoded ? Colors.amber.shade700 : Colors.blue.shade300,
+                                              width: 0.8,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                isUncoded ? Icons.warning_amber_rounded : Icons.badge_outlined,
+                                                size: 13,
+                                                color: isUncoded ? Colors.amber.shade900 : Colors.blue.shade900,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                isUncoded ? 'غير مكود (تكويد الآن ✍️)' : 'كود: ' + assignedCg.code + ' 📝',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: isUncoded ? Colors.amber.shade900 : Colors.blue.shade900,
+                                                  fontFamily: 'Cairo',
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                               ],
                             ),

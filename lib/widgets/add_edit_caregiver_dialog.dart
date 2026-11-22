@@ -6,8 +6,15 @@ import '../theme/app_theme.dart';
 
 class AddEditCaregiverDialog extends StatefulWidget {
   final CaregiverModel? caregiver;
+  final String? initialName;
+  final String? initialClientName;
 
-  const AddEditCaregiverDialog({super.key, this.caregiver});
+  const AddEditCaregiverDialog({
+    super.key,
+    this.caregiver,
+    this.initialName,
+    this.initialClientName,
+  });
 
   @override
   State<AddEditCaregiverDialog> createState() => _AddEditCaregiverDialogState();
@@ -51,9 +58,9 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
     final provider = Provider.of<AppProvider>(context, listen: false);
 
     _codeController = TextEditingController(
-      text: c != null ? c.code : provider.generateNextCaregiverCode(),
+      text: (c != null && c.code.isNotEmpty) ? c.code : provider.generateNextCaregiverCode(),
     );
-    _nameController = TextEditingController(text: c?.name ?? '');
+    _nameController = TextEditingController(text: c?.name ?? (widget.initialName?.trim() ?? ''));
     _nationalIdController = TextEditingController(text: c?.nationalId ?? '');
     _phoneController = TextEditingController(text: c?.phone ?? '');
     _qualificationController = TextEditingController(text: c?.qualification ?? 'بكالوريوس تمريض');
@@ -66,7 +73,10 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
     );
     _blockReasonController = TextEditingController(text: c?.blockReason ?? '');
     _currentClientController = TextEditingController(
-      text: c?.currentClientName ?? (c != null ? (provider.getCaregiverCurrentCase(c.name) ?? '') : ''),
+      text: c?.currentClientName ??
+          (c != null
+              ? (provider.getCaregiverCurrentCase(c.name) ?? '')
+              : (widget.initialClientName?.trim() ?? '')),
     );
     _newPastClientController = TextEditingController();
     _notesController = TextEditingController(text: c?.notes ?? '');
@@ -155,41 +165,80 @@ class _AddEditCaregiverDialogState extends State<AddEditCaregiverDialog> {
       final notes = _notesController.text.trim();
 
       if (widget.caregiver == null) {
-        // Add new
-        var newCaregiver = CaregiverModel(
-          id: 'cg_${DateTime.now().millisecondsSinceEpoch}',
-          code: code,
-          name: name,
-          nationalId: nationalId,
-          phone: phone,
-          qualification: qualification,
-          address: address,
-          residenceArea: residenceArea,
-          weight: weight,
-          height: height,
-          shiftPreference: _shiftPreference,
-          dailyPrice: dailyPrice,
-          rating: _rating,
-          isBlocked: _isBlocked,
-          blockReason: blockReason,
-          hasWorkedWithUs: _hasWorkedWithUs || _pastClients.isNotEmpty,
-          pastClients: _pastClients,
-          isCurrentlyWorking: _isCurrentlyWorking,
-          currentClientName: currentClientName,
-          notes: notes.isNotEmpty ? notes : null,
-          createdBy: provider.currentUser?.username ?? 'shimaa',
-          hasLoginAccount: _enableLoginAccount,
-          loginUsername: _enableLoginAccount ? _loginUsernameController.text.trim() : null,
-          loginPassword: _enableLoginAccount ? _loginPasswordController.text.trim() : null,
-        );
-        await provider.addCaregiver(newCaregiver);
-        if (_enableLoginAccount) {
-          await provider.createOrUpdateNurseAccount(
-            caregiver: newCaregiver,
-            username: _loginUsernameController.text.trim(),
-            password: _loginPasswordController.text.trim(),
-            sendSms: _sendSmsOnSave,
+        // Check if caregiver with same name already exists (e.g. was auto-created during service start)
+        final existingCg = provider.caregivers.where((cg) => provider.isNurseNameMatch(cg.name, name)).firstOrNull;
+        if (existingCg != null) {
+          var updated = existingCg.copyWith(
+            code: code.isNotEmpty ? code : existingCg.code,
+            name: name,
+            nationalId: nationalId,
+            phone: phone,
+            qualification: qualification,
+            address: address,
+            residenceArea: residenceArea,
+            weight: weight,
+            height: height,
+            shiftPreference: _shiftPreference,
+            dailyPrice: dailyPrice,
+            rating: _rating,
+            isBlocked: _isBlocked,
+            blockReason: blockReason,
+            hasWorkedWithUs: _hasWorkedWithUs || _pastClients.isNotEmpty || existingCg.hasWorkedWithUs,
+            pastClients: _pastClients.isNotEmpty ? _pastClients : existingCg.pastClients,
+            isCurrentlyWorking: _isCurrentlyWorking || existingCg.isCurrentlyWorking,
+            currentClientName: (currentClientName?.isNotEmpty ?? false) ? currentClientName : existingCg.currentClientName,
+            notes: notes.isNotEmpty ? notes : existingCg.notes,
+            hasLoginAccount: _enableLoginAccount,
+            loginUsername: _enableLoginAccount ? _loginUsernameController.text.trim() : existingCg.loginUsername,
+            loginPassword: _enableLoginAccount ? _loginPasswordController.text.trim() : existingCg.loginPassword,
+            updatedAt: DateTime.now(),
           );
+          await provider.updateCaregiver(updated);
+          if (_enableLoginAccount) {
+            await provider.createOrUpdateNurseAccount(
+              caregiver: updated,
+              username: _loginUsernameController.text.trim(),
+              password: _loginPasswordController.text.trim(),
+              sendSms: _sendSmsOnSave,
+            );
+          }
+        } else {
+          // Add new
+          var newCaregiver = CaregiverModel(
+            id: 'cg_${DateTime.now().millisecondsSinceEpoch}',
+            code: code,
+            name: name,
+            nationalId: nationalId,
+            phone: phone,
+            qualification: qualification,
+            address: address,
+            residenceArea: residenceArea,
+            weight: weight,
+            height: height,
+            shiftPreference: _shiftPreference,
+            dailyPrice: dailyPrice,
+            rating: _rating,
+            isBlocked: _isBlocked,
+            blockReason: blockReason,
+            hasWorkedWithUs: _hasWorkedWithUs || _pastClients.isNotEmpty,
+            pastClients: _pastClients,
+            isCurrentlyWorking: _isCurrentlyWorking,
+            currentClientName: currentClientName,
+            notes: notes.isNotEmpty ? notes : null,
+            createdBy: provider.currentUser?.username ?? 'shimaa',
+            hasLoginAccount: _enableLoginAccount,
+            loginUsername: _enableLoginAccount ? _loginUsernameController.text.trim() : null,
+            loginPassword: _enableLoginAccount ? _loginPasswordController.text.trim() : null,
+          );
+          await provider.addCaregiver(newCaregiver);
+          if (_enableLoginAccount) {
+            await provider.createOrUpdateNurseAccount(
+              caregiver: newCaregiver,
+              username: _loginUsernameController.text.trim(),
+              password: _loginPasswordController.text.trim(),
+              sendSms: _sendSmsOnSave,
+            );
+          }
         }
       } else {
         // Update existing
