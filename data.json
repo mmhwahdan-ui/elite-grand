@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-22T16:29:05.846Z",
+  "lastUpdated": "2026-11-22T17:28:51.670Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -533,13 +533,13 @@
       "name": "ناديه",
       "notes": "",
       "nurseAssigned": "سميه جمال عبد الحليم سعد ابراهيم",
-      "nurseDailyPrice": 350,
+      "nurseDailyPrice": 400,
       "openingBalance": -900,
       "phone": "01092153466",
       "serviceType": "hours24",
       "startDate": "2026-11-22T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-22T16:46:24.261",
+      "updatedAt": "2026-11-22T18:39:27.556",
       "activeWeekdays": [
         1,
         2,
@@ -1119,6 +1119,21 @@
       "nursePrice": 700,
       "recordedBy": "wahdan",
       "shiftType": "hours24"
+    },
+    {
+      "clientId": "cli_678010eb",
+      "clientName": "ناديه",
+      "clientPrice": 450,
+      "createdAt": "2026-11-10T15:50:49.543",
+      "date": "2026-11-20T00:00:00.000",
+      "endTime": "12:00 م",
+      "id": "day_61c7d578",
+      "notes": "حساب طبقاً للمدة وجدول الخدمة الأسبوعي (طوال الأسبوع (7 أيام))",
+      "nurseName": "سميه جمال عبد الحليم سعد ابراهيم",
+      "nursePrice": 400,
+      "recordedBy": "wahdan",
+      "shiftType": "hours24",
+      "startTime": "12:00 م"
     }
   ],
   "nurseTransactions": [
@@ -1741,7 +1756,8 @@
       "updatedAt": "2026-11-22T11:33:01.483Z",
       "createdBy": "wahdan",
       "loginUsername": "CG-007",
-      "loginPassword": "123456"
+      "loginPassword": "123456",
+      "nationalId": ""
     },
     {
       "address": "مركز اشمون - المنوفيه",
@@ -1759,14 +1775,19 @@
       "loginUsername": "CG-014",
       "name": "سميه جمال عبد الحليم سعد ابراهيم",
       "nationalId": "30603011705503",
-      "openingBalance": 800,
+      "openingBalance": 400,
       "phone": "01044142641",
       "qualification": "تمريض",
       "rating": 5,
       "residenceArea": "المنوفيه",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T14:34:19.613",
-      "currentClientName": "ناديه"
+      "updatedAt": "2026-11-22T18:58:28.976",
+      "currentClientName": "ناديه",
+      "lastLatitude": 30.0796705,
+      "lastLocationAccuracy": 18.746999740600586,
+      "lastLocationSource": "nurse_phone",
+      "lastLocationUpdate": "2026-11-22T18:36:42.724",
+      "lastLongitude": 31.3767164
     },
     {
       "address": "6 اكتوبر ثاني",
@@ -2224,7 +2245,7 @@
     },
     {
       "actionType": "service_days",
-      "description": "تم تسجيل 4 يوم خدمة للعمي��: عمرو - التمريض: نهى (hours12)",
+      "description": "تم تسجيل 4 يوم خدمة للعمي����: عمرو - التمريض: نهى (hours12)",
       "id": "ntf_c42a7885",
       "metadata": {
         "clientId": "cli_84191f94",
@@ -2490,7 +2511,7 @@
     },
     {
       "actionType": "payment",
-      "description": "تم تحصيل مبلغ 1926 ج.م من العميل: اميره (الحساب البنكي)",
+      "description": "تم تحصيل مبلغ 1926 ج.م من العميل: اميره (ا��حساب البنكي)",
       "id": "ntf_c8f5a3fa",
       "metadata": {
         "amount": 1926,
@@ -3386,14 +3407,14 @@
       "description": "تم تفعيل حساب النظام للممرض: شيماء ايمن محمد سعيد الامير (اسم المستخدم: 01068561497) وإرسال رسالة SMS",
       "id": "ntf_cec026cc",
       "timestamp": "2026-11-18T19:03:02.501",
-      "title": "حساب تمريض ورسالة SMS",
+      "title": "��ساب تمريض ورسالة SMS",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"
     },
     {
       "actionType": "add_caregiver",
-      "description": "أ/ وهدا�� قام بإضافة: شيماء ايمن محمد سعيد الامير (كود: CG-004) - السعر: 400 ج",
+      "description": "أ/ وهدان قام بإضافة: شيماء ايمن محمد سعيد الامير (كود: CG-004) - السعر: 400 ج",
       "id": "ntf_a484ff6e",
       "metadata": {
         "caregiverId": "cg_1795021381593",
@@ -3559,7 +3580,7 @@
     },
     {
       "actionType": "add_caregiver",
-      "description": "أ/ وهدان قام بإضافة: رشا سيد سيد محمد (كود: CG-005) - السعر: 300 ج",
+      "description": "أ/ وهدان قام بإضافة: رشا سي�� سيد محمد (كود: CG-005) - السعر: 300 ج",
       "id": "ntf_9dbd401f",
       "metadata": {
         "caregiverId": "cg_1795029639463",
@@ -3884,7 +3905,7 @@
       "title": "تسجيل تحصيل نقدية",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
-      "userRole": "مدير ا��حسابات والمالية"
+      "userRole": "مدير الحسابات والمالية"
     },
     {
       "actionType": "user_permissions",

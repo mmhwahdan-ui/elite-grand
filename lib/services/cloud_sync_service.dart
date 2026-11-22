@@ -130,6 +130,59 @@ class CloudSyncService {
 
     try {
       status = SyncStatus.syncing;
+
+      List<ClientModel> mergedClients = List.from(clients);
+      List<CaregiverModel> mergedCaregivers = List.from(caregivers);
+      List<UserModel> mergedUsers = List.from(users);
+
+      // Fetch remote first to prevent an old device with partial data from wiping cloud records
+      try {
+        final uri = Uri.parse(endpoint);
+        final checkRes = await http.get(uri, headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 4));
+        if (checkRes.statusCode >= 200 && checkRes.statusCode < 300 && checkRes.body.isNotEmpty && checkRes.body != 'null') {
+          final Map<String, dynamic> remote = jsonDecode(checkRes.body);
+          final delSet = deletedIds.toSet();
+          if (remote['deletedIds'] is List) {
+            delSet.addAll((remote['deletedIds'] as List).map((e) => e.toString()));
+          }
+
+          if (remote['caregivers'] is List) {
+            final remoteCgs = (remote['caregivers'] as List)
+                .map((e) => CaregiverModel.fromMap(Map<String, dynamic>.from(e)))
+                .where((c) => !delSet.contains(c.id))
+                .toList();
+            final cgMap = {for (var c in remoteCgs) c.id: c};
+            for (var c in caregivers) {
+              if (!delSet.contains(c.id)) cgMap[c.id] = c;
+            }
+            mergedCaregivers = cgMap.values.toList();
+          }
+
+          if (remote['clients'] is List) {
+            final remoteCls = (remote['clients'] as List)
+                .map((e) => ClientModel.fromMap(Map<String, dynamic>.from(e)))
+                .where((c) => !delSet.contains(c.id))
+                .toList();
+            final clMap = {for (var c in remoteCls) c.id: c};
+            for (var c in clients) {
+              if (!delSet.contains(c.id)) clMap[c.id] = c;
+            }
+            mergedClients = clMap.values.toList();
+          }
+
+          if (remote['users'] is List) {
+            final remoteUsrs = (remote['users'] as List)
+                .map((e) => UserModel.fromMap(Map<String, dynamic>.from(e)))
+                .toList();
+            final uMap = {for (var u in remoteUsrs) u.id: u};
+            for (var u in users) {
+              uMap[u.id] = u;
+            }
+            mergedUsers = uMap.values.toList();
+          }
+        }
+      } catch (_) {}
+
       final payload = {
         'lastUpdated': DateTime.now().toIso8601String(),
         'isFinancialReset': isFinancialReset,
@@ -137,15 +190,15 @@ class CloudSyncService {
         'deletedIds': deletedIds,
         'openingBalances':
             openingBalances ?? {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0},
-        'clients': clients.map((c) => c.toMap()).toList(),
+        'clients': mergedClients.map((c) => c.toMap()).toList(),
         'payments': payments.map((p) => p.toMap()).toList(),
         'expenses': expenses.map((e) => e.toMap()).toList(),
         'serviceDays': serviceDays.map((d) => d.toMap()).toList(),
         'nurseTransactions': nurseTransactions.map((t) => t.toMap()).toList(),
         'partnerLoans': partnerLoans.map((l) => l.toMap()).toList(),
         'partnerSettlements': partnerSettlements.map((s) => s.toMap()).toList(),
-        'users': users.map((u) => u.toMap()).toList(),
-        'caregivers': caregivers.map((c) => c.toMap()).toList(),
+        'users': mergedUsers.map((u) => u.toMap()).toList(),
+        'caregivers': mergedCaregivers.map((c) => c.toMap()).toList(),
         'chatMessages': chatMessages.take(300).map((m) => m.toMap()).toList(),
         'caseOffers': caseOffers.map((o) => o.toMap()).toList(),
         'notifications': notifications.take(150).map((n) => n.toMap()).toList(),

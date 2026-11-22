@@ -2279,7 +2279,12 @@ class AppProvider extends ChangeNotifier {
         }
 
         if (result.clients != null) {
-          _clients = result.clients!.where((c) => !deletedSet.contains(c.id)).toList();
+          final remoteClients = result.clients!.where((c) => !deletedSet.contains(c.id)).toList();
+          final clientMap = {for (var c in _clients) if (!deletedSet.contains(c.id)) c.id: c};
+          for (var c in remoteClients) {
+            clientMap[c.id] = c;
+          }
+          _clients = clientMap.values.toList();
           await storageService.saveClients(_clients);
         }
         if (result.payments != null) {
@@ -2307,7 +2312,12 @@ class AppProvider extends ChangeNotifier {
           await storageService.savePartnerSettlements(_partnerSettlements);
         }
         if (result.caregivers != null) {
-          _caregivers = result.caregivers!.where((c) => !deletedSet.contains(c.id)).toList();
+          final remoteCgs = result.caregivers!.where((c) => !deletedSet.contains(c.id)).toList();
+          final cgMap = {for (var c in _caregivers) if (!deletedSet.contains(c.id)) c.id: c};
+          for (var c in remoteCgs) {
+            cgMap[c.id] = c;
+          }
+          _caregivers = cgMap.values.toList();
           await storageService.saveCaregivers(_caregivers);
         }
         if (result.caseOffers != null) {
