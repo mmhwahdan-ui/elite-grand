@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import '../models/client_model.dart';
+import '../models/caregiver_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/export_service.dart';
@@ -27,6 +28,258 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _showCancelNurseAccountDialog(
+    BuildContext context,
+    AppProvider provider,
+    String nurseName,
+    CaregiverModel? caregiver,
+  ) {
+    bool refundToTreasury = true; // default: return money to treasury/bank
+    bool resetOpeningBalance = caregiver != null && caregiver.openingBalance != 0.0;
+    bool unassignFromClients = true;
+    bool isProcessing = false;
+
+    final earned = provider.getNurseTotalEarned(nurseName);
+    final advances = provider.getNurseTotalAdvances(nurseName);
+    final payouts = provider.getNurseTotalPayouts(nurseName);
+    final totalDisbursed = advances + payouts;
+    final remaining = provider.getNurseRemainingBalance(nurseName);
+    final days = provider.getNurseDaysCount(nurseName);
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.delete_sweep_rounded, color: Colors.red, size: 24),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'إلغاء حساب وسلف مقدم الخدمة: $nurseName',
+                    style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: 520,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Financial summary banner
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('أيام العمل المسجلة: $days يوم', style: const TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                              Text('إجمالي الأجر المستحق: ${earned.toStringAsFixed(0)} ج.م', style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold, color: Colors.teal)),
+                            ],
+                          ),
+                          const Divider(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('المنصرف الفعلي من الخزينة: ${totalDisbursed.toStringAsFixed(0)} ج.م', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
+                              Text('صافي الرصيد المتبقي: ${remaining.toStringAsFixed(0)} ج.م', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold, color: remaining >= 0 ? Colors.green.shade800 : Colors.red.shade800)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    const Text(
+                      'مصير المبالغ المنصرفة في رصيد الخزينة / الحساب البنكي:',
+                      style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Radio 1: Refund to Treasury
+                    InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () => setDialogState(() => refundToTreasury = true),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: refundToTreasury ? Colors.green.shade50 : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: refundToTreasury ? Colors.green.shade600 : Colors.grey.shade300,
+                            width: refundToTreasury ? 1.5 : 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Radio<bool>(
+                              value: true,
+                              groupValue: refundToTreasury,
+                              activeColor: Colors.green.shade700,
+                              onChanged: (val) => setDialogState(() => refundToTreasury = val ?? true),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'رد المبالغ المنصرفة إلى رصيد الخزينة / الحساب البنكي (${totalDisbursed.toStringAsFixed(0)} ج.م)',
+                                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.green.shade900),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'يقوم النظام بحذف قيود المصروفات المترتبة على سلف ودفعات هذا الممرض، فتعود المبالغ المنصرفة تلقائياً إلى رصيد الخزينة/البنك كسيولة متاحة.',
+                                    style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey.shade700),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Radio 2: Keep Treasury deduction
+                    InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () => setDialogState(() => refundToTreasury = false),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: !refundToTreasury ? Colors.amber.shade50 : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: !refundToTreasury ? Colors.amber.shade800 : Colors.grey.shade300,
+                            width: !refundToTreasury ? 1.5 : 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Radio<bool>(
+                              value: false,
+                              groupValue: refundToTreasury,
+                              activeColor: Colors.amber.shade900,
+                              onChanged: (val) => setDialogState(() => refundToTreasury = val ?? false),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'عدم رد المبالغ إلى الخزينة (إبقاء الخصم في الخزينة كمصروف فعلي)',
+                                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.amber.shade900),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'تبقى المصروفات مقيدة في الخزينة والبنك لأنها صُرفت بالفعل في الواقع ولا يمكن استردادها، ويتم فقط تصفير وإلغاء حساب الممرض وسجلاته من كشف التمريض.',
+                                    style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey.shade700),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Checkbox: reset opening balance
+                    if (caregiver != null && caregiver.openingBalance != 0.0)
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: Text(
+                          'تصفير الرصيد الافتتاحي لمقدم الخدمة (${caregiver.openingBalance.toStringAsFixed(0)} ج.م)',
+                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text('إلغاء أي مستحقات سابقة أو مديونيات افتتاحية مرحلة عليه', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: Colors.grey)),
+                        value: resetOpeningBalance,
+                        activeColor: Colors.red,
+                        onChanged: (v) => setDialogState(() => resetOpeningBalance = v ?? false),
+                      ),
+
+                    // Checkbox: unassign from clients
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text(
+                        'فك ارتباط مقدم الخدمة بالحالات المعين بها حالياً',
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: const Text('إلغاء إسناد الممرض من بطاقات العملاء ليتسنى إسناد ممرض بديل', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: Colors.grey)),
+                      value: unassignFromClients,
+                      activeColor: Colors.red,
+                      onChanged: (v) => setDialogState(() => unassignFromClients = v ?? false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isProcessing ? null : () => Navigator.pop(dialogCtx),
+                child: const Text('إلغاء التراجع', style: TextStyle(fontFamily: 'Cairo')),
+              ),
+              ElevatedButton.icon(
+                onPressed: isProcessing
+                    ? null
+                    : () async {
+                        setDialogState(() => isProcessing = true);
+                        await provider.cancelNurseAccount(
+                          nurseName: nurseName,
+                          refundToTreasury: refundToTreasury,
+                          resetOpeningBalance: resetOpeningBalance,
+                          unassignFromClients: unassignFromClients,
+                        );
+                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                        if (context.mounted) Navigator.pop(context); // close details dialog
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'تم إلغاء حسابات مقدم الخدمة ($nurseName) بنجاح • ' +
+                                  (refundToTreasury
+                                      ? 'تم رد ${totalDisbursed.toStringAsFixed(0)} ج.م إلى رصيد الخزينة/البنك'
+                                      : 'تم الإبقاء على الخصم في الخزينة دون رد'),
+                              style: const TextStyle(fontFamily: 'Cairo'),
+                            ),
+                            backgroundColor: Colors.teal.shade800,
+                          ),
+                        );
+                      },
+                icon: isProcessing
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.delete_sweep, size: 18),
+                label: const Text('تأكيد إلغاء الحساب', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showAddTransactionDialog(BuildContext context, {String? defaultNurseName, String defaultType = 'advance'}) {
@@ -450,14 +703,38 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                   }
                                 },
                                 icon: const Icon(Icons.remove_red_eye_rounded, size: 14),
-                                label: const Text('دخول ومعاينة الشاشة 👁️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                                label: const Text('معاينة 👁️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF6366F1),
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
                               ),
+                            const SizedBox(width: 4),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AddEditCaregiverDialog(
+                                    caregiver: caregiver,
+                                    initialName: nurseName,
+                                    initialClientName: caregiver?.currentClientName ?? provider.getCaregiverCurrentCase(nurseName),
+                                  ),
+                                );
+                              },
+                              icon: Icon(caregiver == null || caregiver.code.isEmpty ? Icons.badge_outlined : Icons.edit_note, size: 14),
+                              label: Text(
+                                caregiver == null || caregiver.code.isEmpty ? 'تكويد مقدم الخدمة ✍️' : 'تعديل البيانات 📝',
+                                style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: caregiver == null || caregiver.code.isEmpty ? Colors.amber.shade800 : Colors.teal.shade700,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
                             const SizedBox(width: 4),
                             IconButton(
                               onPressed: () => Navigator.pop(ctx),
@@ -564,6 +841,16 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                           icon: const Icon(Icons.payments, size: 16),
                           label: const Text('صرف دفعة مستحقات', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
                           style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent, foregroundColor: Colors.white),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => _showCancelNurseAccountDialog(context, provider, nurseName, caregiver),
+                          icon: const Icon(Icons.delete_sweep, size: 16),
+                          label: const Text('إلغاء وتصفير الحساب 🗑️', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade700,
+                            foregroundColor: Colors.white,
+                          ),
                         ),
                         const Spacer(),
                         OutlinedButton.icon(
@@ -1193,8 +1480,85 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(width: 8),
-                                  const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                                  const SizedBox(width: 4),
+                                  PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert, size: 20, color: Colors.grey),
+                                    tooltip: 'خيارات مقدم الخدمة',
+                                    onSelected: (val) {
+                                      final cg = provider.findCaregiverByName(nurse);
+                                      if (val == 'details') {
+                                        _showNurseDetailsDialog(context, nurse);
+                                      } else if (val == 'code') {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) => AddEditCaregiverDialog(
+                                            caregiver: cg,
+                                            initialName: nurse,
+                                            initialClientName: cg?.currentClientName ?? provider.getCaregiverCurrentCase(nurse),
+                                          ),
+                                        );
+                                      } else if (val == 'advance') {
+                                        _showAddTransactionDialog(context, defaultNurseName: nurse, defaultType: 'advance');
+                                      } else if (val == 'payout') {
+                                        _showAddTransactionDialog(context, defaultNurseName: nurse, defaultType: 'payout');
+                                      } else if (val == 'cancel') {
+                                        _showCancelNurseAccountDialog(context, provider, nurse, cg);
+                                      }
+                                    },
+                                    itemBuilder: (context) => [
+                                      const PopupMenuItem(
+                                        value: 'details',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.visibility_outlined, size: 18, color: Colors.blue),
+                                            SizedBox(width: 8),
+                                            Text('عرض كشف الحساب 📋', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'code',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.badge_outlined, size: 18, color: Colors.teal),
+                                            SizedBox(width: 8),
+                                            Text('تكويد / استكمال البيانات 📝', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'advance',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.handshake_outlined, size: 18, color: Colors.amber),
+                                            SizedBox(width: 8),
+                                            Text('تسجيل سلفة 💵', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'payout',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.payments_outlined, size: 18, color: Colors.green),
+                                            SizedBox(width: 8),
+                                            Text('صرف دفعة مستحقات 💰', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuDivider(),
+                                      const PopupMenuItem(
+                                        value: 'cancel',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.delete_sweep_outlined, size: 18, color: Colors.red),
+                                            SizedBox(width: 8),
+                                            Text('إلغاء وتصفير الحساب 🗑️', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.red, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),

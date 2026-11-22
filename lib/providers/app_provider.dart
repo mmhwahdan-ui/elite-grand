@@ -1680,6 +1680,7 @@ class AppProvider extends ChangeNotifier {
     String? shiftType,
     String notes = '',
     double? nurseOpeningBalance,
+    double? clientOpeningBalance,
   }) async {
     final clientIndex = _clients.indexWhere((c) => c.id == clientId);
     if (clientIndex == -1 || selectedDates.isEmpty) return 0;
@@ -1723,6 +1724,7 @@ class AppProvider extends ChangeNotifier {
       dailyPrice: clientPrice,
       nurseDailyPrice: nursePrice,
       startDate: client.startDate ?? selectedDates.first,
+      openingBalance: clientOpeningBalance ?? client.openingBalance,
     );
     _clients[clientIndex] = updatedClient;
 

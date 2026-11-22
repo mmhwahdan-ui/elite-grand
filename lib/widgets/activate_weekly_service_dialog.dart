@@ -24,6 +24,8 @@ class _ActivateWeeklyServiceDialogState extends State<ActivateWeeklyServiceDialo
   late TextEditingController _notesCtrl;
   late TextEditingController _nurseBalanceCtrl;
   String _nurseBalanceType = 'zero'; // 'due', 'debt', 'zero'
+  late TextEditingController _clientBalanceCtrl;
+  String _clientBalanceType = 'zero'; // 'debt', 'credit', 'zero'
   bool _hasInitializedNurseBalance = false;
   final Set<int> _selectedDayIndices = {}; // 0 to 6
   bool _isLoading = false;
@@ -51,6 +53,18 @@ class _ActivateWeeklyServiceDialogState extends State<ActivateWeeklyServiceDialo
     _notesCtrl = TextEditingController();
     _nurseBalanceCtrl = TextEditingController(text: '0');
 
+    // إعداد رصيد أو مديونية العميل السابقة
+    if (widget.client.openingBalance < 0) {
+      _clientBalanceType = 'debt';
+      _clientBalanceCtrl = TextEditingController(text: widget.client.openingBalance.abs().toStringAsFixed(0));
+    } else if (widget.client.openingBalance > 0) {
+      _clientBalanceType = 'credit';
+      _clientBalanceCtrl = TextEditingController(text: widget.client.openingBalance.toStringAsFixed(0));
+    } else {
+      _clientBalanceType = 'zero';
+      _clientBalanceCtrl = TextEditingController(text: '0');
+    }
+
     // Pre-select days based on client's active weekdays if defined
     if (widget.client.activeWeekdays.isNotEmpty) {
       for (int i = 0; i < 7; i++) {
@@ -75,7 +89,45 @@ class _ActivateWeeklyServiceDialogState extends State<ActivateWeeklyServiceDialo
     _nurseNameCtrl.dispose();
     _notesCtrl.dispose();
     _nurseBalanceCtrl.dispose();
+    _clientBalanceCtrl.dispose();
     super.dispose();
+  }
+
+  
+  void _syncNurseBalance(String name, AppProvider provider) {
+    final clean = name.trim();
+    if (clean.isEmpty) {
+      setState(() {
+        _nurseBalanceType = 'zero';
+        _nurseBalanceCtrl.text = '0';
+      });
+      return;
+    }
+    final rem = provider.getNurseRemainingBalance(clean);
+    final list = provider.caregivers.where((c) => provider.isNurseNameMatch(c.name, clean)).toList();
+    final cg = list.isNotEmpty ? list.first : null;
+    setState(() {
+      if (cg != null && cg.openingBalance != 0.0) {
+        if (cg.openingBalance > 0) {
+          _nurseBalanceType = 'due';
+          _nurseBalanceCtrl.text = cg.openingBalance.toStringAsFixed(0);
+        } else {
+          _nurseBalanceType = 'debt';
+          _nurseBalanceCtrl.text = cg.openingBalance.abs().toStringAsFixed(0);
+        }
+      } else if (rem != 0.0) {
+        if (rem > 0) {
+          _nurseBalanceType = 'due';
+          _nurseBalanceCtrl.text = rem.toStringAsFixed(0);
+        } else {
+          _nurseBalanceType = 'debt';
+          _nurseBalanceCtrl.text = rem.abs().toStringAsFixed(0);
+        }
+      } else {
+        _nurseBalanceType = 'zero';
+        _nurseBalanceCtrl.text = '0';
+      }
+    });
   }
 
   String _getDayArabicName(int weekday) {
@@ -109,6 +161,7 @@ class _ActivateWeeklyServiceDialogState extends State<ActivateWeeklyServiceDialo
     final totalClientCost = selectedCount * clientPrice;
     final totalNurseCost = selectedCount * nursePrice;
     final totalProfit = totalClientCost - totalNurseCost;
+    final clientBalance = provider.getClientBalance(widget.client);
 
     final weekEndDate = _weekStartDate.add(const Duration(days: 6));
     final dateRangeStr = '${DateFormat('MM/dd').format(_weekStartDate)} إلى ${DateFormat('MM/dd').format(weekEndDate)}';
@@ -229,6 +282,123 @@ class _ActivateWeeklyServiceDialogState extends State<ActivateWeeklyServiceDialo
                 ),
                 const SizedBox(height: 16),
 
+                
+                // 2. Client Previous Balance / Debt Card (رصيد أو مديونية العميل السابقة)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _clientBalanceType == 'debt'
+                        ? Colors.red.shade50
+                        : (_clientBalanceType == 'credit' ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _clientBalanceType == 'debt'
+                          ? Colors.red.shade200
+                          : (_clientBalanceType == 'credit' ? Colors.green.shade300 : const Color(0xFFCBD5E1)),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.account_balance_outlined,
+                            size: 18,
+                            color: _clientBalanceType == 'debt' ? Colors.red.shade700 : Colors.teal,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'رصيد ومديونية العميل (' + widget.client.name + '):',
+                              style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ),
+                          Text(
+                            clientBalance < 0
+                                ? 'مديونية حالية: ' + clientBalance.abs().toStringAsFixed(0) + ' ج.م'
+                                : (clientBalance > 0
+                                    ? 'رصيد دائن: ' + clientBalance.toStringAsFixed(0) + ' ج.م'
+                                    : 'خالص (0 ج.م)'),
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: clientBalance < 0
+                                  ? Colors.red.shade800
+                                  : (clientBalance > 0 ? Colors.green.shade800 : Colors.blueGrey),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Center(
+                                child: Text('مديونية سابقة (-)', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                              selected: _clientBalanceType == 'debt',
+                              selectedColor: Colors.red.shade100,
+                              onSelected: (val) {
+                                if (val) setState(() => _clientBalanceType = 'debt');
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Center(
+                                child: Text('رصيد دائن (+)', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                              ),
+                              selected: _clientBalanceType == 'credit',
+                              selectedColor: Colors.green.shade100,
+                              onSelected: (val) {
+                                if (val) setState(() => _clientBalanceType = 'credit');
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Center(
+                                child: Text('خالص (0)', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                              ),
+                              selected: _clientBalanceType == 'zero',
+                              onSelected: (val) {
+                                if (val) {
+                                  setState(() {
+                                    _clientBalanceType = 'zero';
+                                    _clientBalanceCtrl.text = '0';
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_clientBalanceType != 'zero') ...[
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _clientBalanceCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            labelText: _clientBalanceType == 'debt'
+                                ? 'قيمة مديونية العميل السابقة (خدمة قديمة لم تُحصل)'
+                                : 'قيمة الرصيد الدائن / دفعة مقدمة من العميل',
+                            suffixText: 'ج.م',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            border: const OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 // Days Selection (7 Days Checkboxes)
                 const Text(
                   'اختر أيام الخدمة لهذا الأسبوع:',
@@ -335,23 +505,8 @@ class _ActivateWeeklyServiceDialogState extends State<ActivateWeeklyServiceDialo
                     }).toList(),
                     onChanged: (val) {
                       if (val != null) {
-                        setState(() {
-                          _nurseNameCtrl.text = val;
-                          final list = provider.caregivers.where((c) => provider.isNurseNameMatch(c.name, val)).toList();
-                          if (list.isNotEmpty) {
-                            final cg = list.first;
-                            if (cg.openingBalance > 0) {
-                              _nurseBalanceType = 'due';
-                              _nurseBalanceCtrl.text = cg.openingBalance.toStringAsFixed(0);
-                            } else if (cg.openingBalance < 0) {
-                              _nurseBalanceType = 'debt';
-                              _nurseBalanceCtrl.text = cg.openingBalance.abs().toStringAsFixed(0);
-                            } else {
-                              _nurseBalanceType = 'zero';
-                              _nurseBalanceCtrl.text = '0';
-                            }
-                          }
-                        });
+                        _nurseNameCtrl.text = val;
+                        _syncNurseBalance(val, provider);
                       }
                     },
                   ),
@@ -360,19 +515,7 @@ class _ActivateWeeklyServiceDialogState extends State<ActivateWeeklyServiceDialo
                 TextField(
                   controller: _nurseNameCtrl,
                   onChanged: (val) {
-                    setState(() {
-                      final list = provider.caregivers.where((c) => provider.isNurseNameMatch(c.name, val.trim())).toList();
-                      if (list.isNotEmpty) {
-                        final cg = list.first;
-                        if (cg.openingBalance > 0) {
-                          _nurseBalanceType = 'due';
-                          _nurseBalanceCtrl.text = cg.openingBalance.toStringAsFixed(0);
-                        } else if (cg.openingBalance < 0) {
-                          _nurseBalanceType = 'debt';
-                          _nurseBalanceCtrl.text = cg.openingBalance.abs().toStringAsFixed(0);
-                        }
-                      }
-                    });
+                    _syncNurseBalance(val, provider);
                   },
                   decoration: const InputDecoration(
                     labelText: 'اسم الممرض (أو تعديل يدوي)',
