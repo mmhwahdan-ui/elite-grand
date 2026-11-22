@@ -951,45 +951,84 @@ class AppProvider extends ChangeNotifier {
       throw Exception('ليس لديك صلاحية تصفير حسابات النظام');
     }
 
-    // 1. Clear financial transactions collections
+    // 1. Collect all IDs being wiped to permanently tombstone them in _deletedIds
+    final wipedIds = <String>[
+      ..._payments.map((p) => p.id),
+      ..._expenses.map((e) => e.id),
+      ..._nurseTransactions.map((t) => t.id),
+      ..._partnerLoans.map((l) => l.id),
+      ..._partnerSettlements.map((s) => s.id),
+      if (resetServiceDays) ..._serviceDays.map((d) => d.id),
+    ];
+    for (final wid in wipedIds) {
+      if (!_deletedIds.contains(wid)) {
+        _deletedIds.add(wid);
+      }
+    }
+    await storageService.saveDeletedIds(_deletedIds);
+
+    // 2. Clear financial transactions collections
     _payments.clear();
     _expenses.clear();
     _nurseTransactions.clear();
     _partnerLoans.clear();
     _partnerSettlements.clear();
 
-    // 2. Reset treasury opening balances to zero
+    // 3. Reset treasury opening balances to zero
     _openingBalances = {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0};
     await storageService.saveOpeningBalances(_openingBalances);
 
-    // 3. Reset client opening balances if requested
+    // 4. Reset client opening balances if requested
     if (resetClientOpeningBalances) {
+      final now = DateTime.now();
       for (int i = 0; i < _clients.length; i++) {
         final c = _clients[i];
         if (c.openingBalance != 0.0 || c.isExistingClient) {
           _clients[i] = c.copyWith(
             openingBalance: 0.0,
             isExistingClient: false,
+            updatedAt: now,
           );
         }
       }
       await storageService.saveClients(_clients);
     }
 
-    // 4. Reset service days if requested
+    // 5. Reset service days if requested
     if (resetServiceDays) {
       _serviceDays.clear();
       await storageService.saveServiceDays(_serviceDays);
     }
 
-    // 5. Save all cleared collections
+    // 6. Save all cleared collections to local storage
     await storageService.savePayments(_payments);
     await storageService.saveExpenses(_expenses);
     await storageService.saveNurseTransactions(_nurseTransactions);
     await storageService.savePartnerLoans(_partnerLoans);
     await storageService.savePartnerSettlements(_partnerSettlements);
 
-    // 6. Log security audit trail
+    // 7. Push immediately to Cloud and await confirmation
+    await cloudSyncService.pushData(
+      clients: _clients,
+      payments: _payments,
+      expenses: _expenses,
+      serviceDays: _serviceDays,
+      nurseTransactions: _nurseTransactions,
+      partnerLoans: _partnerLoans,
+      partnerSettlements: _partnerSettlements,
+      users: _users,
+      caregivers: _caregivers,
+      chatMessages: _chatMessages,
+      caseOffers: _caseOffers,
+      notifications: _notifications,
+      managementInstructions: _managementInstructions,
+      deletedIds: _deletedIds,
+      openingBalances: _openingBalances,
+      isFinancialReset: true,
+      resetServiceDays: resetServiceDays,
+    );
+
+    // 8. Log security audit trail
     await _logAction(
       title: 'تصفير الحسابات المالية للنظام',
       description: 'تم تصفير كافة الأرصدة المالية والخزائن والمدفوعات والمصروفات وحسابات الشركاء والتمريض مع الحفاظ التام على كافة بيانات العملاء والتمريض والمستخدمين. ($reason)',
@@ -1000,11 +1039,10 @@ class AppProvider extends ChangeNotifier {
         'clientsPreserved': _clients.length,
         'caregiversPreserved': _caregivers.length,
         'usersPreserved': _users.length,
+        'wipedRecordsCount': wipedIds.length,
       },
     );
 
-    // 7. Persist and sync to cloud
-    await _persistAndSync();
     notifyListeners();
   }
 

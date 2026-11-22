@@ -123,6 +123,8 @@ class CloudSyncService {
     List<ManagementInstructionModel> managementInstructions = const [],
     List<String> deletedIds = const [],
     Map<String, double>? openingBalances,
+    bool isFinancialReset = false,
+    bool resetServiceDays = false,
   }) async {
     final endpoint = effectiveEndpoint;
 
@@ -130,6 +132,8 @@ class CloudSyncService {
       status = SyncStatus.syncing;
       final payload = {
         'lastUpdated': DateTime.now().toIso8601String(),
+        'isFinancialReset': isFinancialReset,
+        'resetServiceDays': resetServiceDays,
         'deletedIds': deletedIds,
         'openingBalances':
             openingBalances ?? {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0},
@@ -223,6 +227,8 @@ class CloudSyncService {
           remotePayments = (data['payments'] as List)
               .map((e) => PaymentModel.fromMap(Map<String, dynamic>.from(e)))
               .toList();
+        } else if (data['payments'] == null) {
+          remotePayments = [];
         }
 
         List<ExpenseModel>? remoteExpenses;
@@ -230,6 +236,8 @@ class CloudSyncService {
           remoteExpenses = (data['expenses'] as List)
               .map((e) => ExpenseModel.fromMap(Map<String, dynamic>.from(e)))
               .toList();
+        } else if (data['expenses'] == null) {
+          remoteExpenses = [];
         }
 
         List<ServiceDayModel>? remoteServiceDays;
@@ -237,6 +245,8 @@ class CloudSyncService {
           remoteServiceDays = (data['serviceDays'] as List)
               .map((e) => ServiceDayModel.fromMap(Map<String, dynamic>.from(e)))
               .toList();
+        } else if (data['serviceDays'] == null && data['deletedIds'] is List) {
+          remoteServiceDays = [];
         }
 
         List<NurseTransactionModel>? remoteNurseTransactions;
@@ -244,6 +254,8 @@ class CloudSyncService {
           remoteNurseTransactions = (data['nurseTransactions'] as List)
               .map((e) => NurseTransactionModel.fromMap(Map<String, dynamic>.from(e)))
               .toList();
+        } else if (data['nurseTransactions'] == null) {
+          remoteNurseTransactions = [];
         }
 
         List<PartnerLoanModel>? remotePartnerLoans;
@@ -251,6 +263,8 @@ class CloudSyncService {
           remotePartnerLoans = (data['partnerLoans'] as List)
               .map((e) => PartnerLoanModel.fromMap(Map<String, dynamic>.from(e)))
               .toList();
+        } else if (data['partnerLoans'] == null) {
+          remotePartnerLoans = [];
         }
 
         List<PartnerSettlementModel>? remotePartnerSettlements;
@@ -258,6 +272,8 @@ class CloudSyncService {
           remotePartnerSettlements = (data['partnerSettlements'] as List)
               .map((e) => PartnerSettlementModel.fromMap(Map<String, dynamic>.from(e)))
               .toList();
+        } else if (data['partnerSettlements'] == null) {
+          remotePartnerSettlements = [];
         }
 
         List<UserModel>? remoteUsers;
