@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-22T15:54:29.085Z",
+  "lastUpdated": "2026-11-22T16:29:05.846Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -649,7 +649,20 @@
       "startDate": "2026-11-22T00:00:00.000"
     }
   ],
-  "payments": [],
+  "payments": [
+    {
+      "amount": 3150,
+      "clientId": "cli_678010eb",
+      "clientName": "ناديه",
+      "createdAt": "2026-11-22T18:16:09.724",
+      "id": "pay_e1c9d2df",
+      "notes": "",
+      "paymentChannel": "wallet",
+      "paymentDate": "2026-11-22T18:15:58.802",
+      "paymentMethod": "transfer",
+      "receivedBy": "zezo"
+    }
+  ],
   "expenses": [
     {
       "amount": 800,
@@ -1612,13 +1625,13 @@
       "code": "CG-003",
       "createdAt": "2026-11-18T18:53:06.803",
       "createdBy": "wahdan",
-      "currentClientName": "ناديه",
+      "currentClientName": null,
       "dailyPrice": 350,
       "hasLoginAccount": true,
       "hasWorkedWithUs": false,
       "id": "cg_1795020786803",
       "isBlocked": false,
-      "isCurrentlyWorking": true,
+      "isCurrentlyWorking": false,
       "lastSmsSentAt": "2026-11-18T18:53:06.831",
       "loginPassword": "123456",
       "loginUsername": "CG-003",
@@ -2211,7 +2224,7 @@
     },
     {
       "actionType": "service_days",
-      "description": "تم تسجيل 4 يوم خدمة للعميل: عمرو - التمريض: نهى (hours12)",
+      "description": "تم تسجيل 4 يوم خدمة للعمي��: عمرو - التمريض: نهى (hours12)",
       "id": "ntf_c42a7885",
       "metadata": {
         "clientId": "cli_84191f94",
@@ -2603,7 +2616,7 @@
     },
     {
       "actionType": "nurse_trans",
-      "description": "تم حذف معاملة للممرض: سحر بقيمة 1400 ج.م",
+      "description": "تم ح��ف معاملة للممرض: سحر بقيمة 1400 ج.م",
       "id": "ntf_9c38ae3b",
       "timestamp": "2026-11-11T08:56:27.817",
       "title": "حذف معاملة تمريض",
@@ -3380,7 +3393,7 @@
     },
     {
       "actionType": "add_caregiver",
-      "description": "أ/ وهدان قام بإضافة: شيماء ايمن محمد سعيد الامير (كود: CG-004) - السعر: 400 ج",
+      "description": "أ/ وهدا�� قام بإضافة: شيماء ايمن محمد سعيد الامير (كود: CG-004) - السعر: 400 ج",
       "id": "ntf_a484ff6e",
       "metadata": {
         "caregiverId": "cg_1795021381593",
@@ -3871,7 +3884,7 @@
       "title": "تسجيل تحصيل نقدية",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
-      "userRole": "مدير الحسابات والمالية"
+      "userRole": "مدير ا��حسابات والمالية"
     },
     {
       "actionType": "user_permissions",

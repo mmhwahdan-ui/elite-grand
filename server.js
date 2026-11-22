@@ -118,6 +118,7 @@ function syncWithFirebase() {
             };
             const mergedStr = JSON.stringify(merged, null, 2);
             fs.writeFile(DATA_FILE, mergedStr, 'utf8', () => {});
+            pushToFirebase(mergedStr);
           });
         } catch (_) {}
       }

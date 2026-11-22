@@ -707,9 +707,9 @@ class AppProvider extends ChangeNotifier {
     }
     storageService.saveCaregivers(_caregivers);
 
-    // Ensure all default users have 123 as password
+    // Ensure administrative default users have 123 as password if not set
     for (var u in _users) {
-      if (u.password.isEmpty || u.password == '123456') {
+      if (u.roleType != 'nurse' && (u.password.isEmpty || u.password == '123456')) {
         u.password = '123';
       }
     }
@@ -897,15 +897,52 @@ class AppProvider extends ChangeNotifier {
       }
     }
 
+    // 6. If user not found in local memory (e.g. mobile opening for first time), pull from Cloud Sync
+    if (foundUser == null) {
+      try {
+        await syncWithCloud(silent: true);
+        for (var u in _users) {
+          final uName = u.username.toLowerCase();
+          final uNorm = uName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+          if (uName == cleanUser || (cleanAlphaNum.isNotEmpty && uNorm == cleanAlphaNum)) {
+            foundUser = u;
+            break;
+          }
+        }
+        if (foundUser == null) {
+          for (var u in _users) {
+            if (u.roleType == 'nurse') {
+              final cgMatch = _caregivers.where((c) => c.id == u.caregiverId || isNurseNameMatch(c.name, u.displayName)).toList();
+              if (cgMatch.isNotEmpty) {
+                final cg = cgMatch.first;
+                final cgCodeNorm = cg.code.toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+                final cgDigits = cg.code.replaceAll(RegExp(r'[^0-9]'), '');
+                final cgNum = int.tryParse(cgDigits);
+                if (cleanAlphaNum.isNotEmpty && (cleanAlphaNum == cgCodeNorm || cleanAlphaNum == 'cg$cgDigits' || (cgNum != null && cleanAlphaNum == 'cg$cgNum'))) {
+                  foundUser = u;
+                  break;
+                }
+                if (inputNum != null && cgNum != null && inputNum == cgNum) {
+                  foundUser = u;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     if (foundUser == null) {
       loginError = 'كود مقدم الخدمة أو اسم المستخدم غير مسجل بالنظام';
       notifyListeners();
       return false;
     }
 
-    // Check password: match actual password, or if still default '123' accept 123/123456, or Somaya's WhatsApp password
-    final isDefault = foundUser.password.trim() == '123' || foundUser.password.trim().isEmpty;
-    final isPasswordCorrect = cleanPass == foundUser.password.trim() ||
+    // Check password: match actual password, or standard defaults 123/123456, or Somaya's WhatsApp password
+    final userPass = foundUser.password.trim();
+    final isDefault = userPass == '123' || userPass == '123456' || userPass.isEmpty;
+    final isPasswordCorrect = cleanPass == userPass ||
         (isDefault && (cleanPass == '123' || cleanPass == '123456')) ||
         (cleanPass == '506472' && (foundUser.username.toUpperCase().contains('014') || foundUser.displayName.contains('سميه')));
 
