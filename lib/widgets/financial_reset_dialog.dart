@@ -15,7 +15,8 @@ class _FinancialResetDialogState extends State<FinancialResetDialog> {
   final _passwordCtrl = TextEditingController();
   final _confirmationTextCtrl = TextEditingController();
   bool _resetClientOpeningBalances = true;
-  bool _resetServiceDays = false;
+  bool _resetServiceDays = true;
+  bool _resetClientStartDates = true;
   bool _isLoading = false;
   bool _backupDownloaded = false;
   String? _errorMessage;
@@ -258,14 +259,31 @@ class _FinancialResetDialogState extends State<FinancialResetDialog> {
                       ),
                       const Divider(height: 12),
                       CheckboxListTile(
-                        value: _resetServiceDays,
-                        onChanged: (v) => setState(() => _resetServiceDays = v ?? false),
+                        value: _resetClientStartDates,
+                        onChanged: (v) => setState(() => _resetClientStartDates = v ?? true),
                         title: const Text(
-                          'تصفير سجل الورديات وأيام الخدمة السابقة المنفذة',
+                          'تصفير تواريخ بدء الخدمة للعملاء (لبدء الخدمة من جديد)',
                           style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                         subtitle: const Text(
-                          'إذا كنت تريد بدء تقفيل الورديات من الصفر بالكامل',
+                          'تصفير تاريخ البدء والأيام المحسوبة لتسجيل تاريخ بداية جديد عند استئناف الخدمة',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey),
+                        ),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        activeColor: Colors.red.shade700,
+                      ),
+                      const Divider(height: 12),
+                      CheckboxListTile(
+                        value: _resetServiceDays,
+                        onChanged: (v) => setState(() => _resetServiceDays = v ?? true),
+                        title: const Text(
+                          'تصفير سجل الورديات وأيام الخدمة ومستحقات مقدمي الخدمة',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text(
+                          'تصفير مستحقات التمريض والورديات المنفذة للبدء من الصفر بالكامل',
                           style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey),
                         ),
                         controlAffinity: ListTileControlAffinity.leading,
@@ -408,6 +426,7 @@ class _FinancialResetDialogState extends State<FinancialResetDialog> {
       await provider.resetSystemFinancials(
         resetClientOpeningBalances: _resetClientOpeningBalances,
         resetServiceDays: _resetServiceDays,
+        resetClientStartDates: _resetClientStartDates,
       );
 
       if (mounted) {

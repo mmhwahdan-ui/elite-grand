@@ -943,9 +943,10 @@ class AppProvider extends ChangeNotifier {
 
   /// تصفير النظام من الأرصدة المالية والبدء من جديد مع الحفاظ الكامل على العملاء ومقدمي الخدمة
   Future<void> resetSystemFinancials({
-    required bool resetClientOpeningBalances,
-    required bool resetServiceDays,
-    String reason = 'تصفير الحسابات المالية وإعادة إدخال الأرصدة',
+    bool resetClientOpeningBalances = true,
+    bool resetServiceDays = true,
+    bool resetClientStartDates = true,
+    String reason = 'تصفير الحسابات المالية وأرصدة العملاء والتمريض وتواريخ بدء الخدمة',
   }) async {
     if (!canManagePermissions && !canEditAnyData) {
       throw Exception('ليس لديك صلاحية تصفير حسابات النظام');
@@ -978,21 +979,20 @@ class AppProvider extends ChangeNotifier {
     _openingBalances = {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0};
     await storageService.saveOpeningBalances(_openingBalances);
 
-    // 4. Reset client opening balances if requested
-    if (resetClientOpeningBalances) {
-      final now = DateTime.now();
-      for (int i = 0; i < _clients.length; i++) {
-        final c = _clients[i];
-        if (c.openingBalance != 0.0 || c.isExistingClient) {
-          _clients[i] = c.copyWith(
-            openingBalance: 0.0,
-            isExistingClient: false,
-            updatedAt: now,
-          );
-        }
-      }
-      await storageService.saveClients(_clients);
+    // 4. Reset client opening balances & service start dates
+    final now = DateTime.now();
+    for (int i = 0; i < _clients.length; i++) {
+      final c = _clients[i];
+      _clients[i] = c.copyWith(
+        openingBalance: resetClientOpeningBalances ? 0.0 : c.openingBalance,
+        isExistingClient: resetClientOpeningBalances ? false : c.isExistingClient,
+        clearStartDate: resetClientStartDates,
+        clearEndDate: resetClientStartDates,
+        status: resetClientStartDates ? ((c.dailyPrice > 0) ? 'ready_to_start' : 'pending_pricing') : c.status,
+        updatedAt: now,
+      );
     }
+    await storageService.saveClients(_clients);
 
     // 5. Reset service days if requested
     if (resetServiceDays) {
@@ -1000,14 +1000,27 @@ class AppProvider extends ChangeNotifier {
       await storageService.saveServiceDays(_serviceDays);
     }
 
-    // 6. Save all cleared collections to local storage
+    // 6. Reset caregivers current client assignment
+    if (resetClientStartDates) {
+      for (int i = 0; i < _caregivers.length; i++) {
+        final cg = _caregivers[i];
+        _caregivers[i] = cg.copyWith(
+          isCurrentlyWorking: false,
+          clearCurrentClient: true,
+          updatedAt: now,
+        );
+      }
+      await storageService.saveCaregivers(_caregivers);
+    }
+
+    // 7. Save all cleared collections to local storage
     await storageService.savePayments(_payments);
     await storageService.saveExpenses(_expenses);
     await storageService.saveNurseTransactions(_nurseTransactions);
     await storageService.savePartnerLoans(_partnerLoans);
     await storageService.savePartnerSettlements(_partnerSettlements);
 
-    // 7. Push immediately to Cloud and await confirmation
+    // 8. Push immediately to Cloud and await confirmation
     await cloudSyncService.pushData(
       clients: _clients,
       payments: _payments,
@@ -1028,18 +1041,18 @@ class AppProvider extends ChangeNotifier {
       resetServiceDays: resetServiceDays,
     );
 
-    // 8. Log security audit trail
+    // 9. Log security audit trail
     await _logAction(
-      title: 'تصفير الحسابات المالية للنظام',
-      description: 'تم تصفير كافة الأرصدة المالية والخزائن والمدفوعات والمصروفات وحسابات الشركاء والتمريض مع الحفاظ التام على كافة بيانات العملاء والتمريض والمستخدمين. ($reason)',
+      title: 'تصفير الحسابات المالية للعملاء والتمريض',
+      description: 'تم تصفير كافة الحسابات المالية وتواريخ بدء الخدمة للعملاء ومستحقات مقدمي الخدمة والورديات السابقة للبدء من جديد مع الحفاظ التام على بيانات العملاء والتمريض. ($reason)',
       actionType: 'financial_reset',
       metadata: {
         'resetClientOpeningBalances': resetClientOpeningBalances,
         'resetServiceDays': resetServiceDays,
+        'resetClientStartDates': resetClientStartDates,
         'clientsPreserved': _clients.length,
         'caregiversPreserved': _caregivers.length,
         'usersPreserved': _users.length,
-        'wipedRecordsCount': wipedIds.length,
       },
     );
 

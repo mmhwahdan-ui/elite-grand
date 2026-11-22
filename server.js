@@ -87,6 +87,7 @@ function syncWithFirebase() {
               partnerLoans: [],
               partnerSettlements: [],
               users: [],
+              caregivers: [],
               notifications: [],
               deletedIds: [],
               openingBalances: { bank: 0, wallet: 0, cash: 0 }
@@ -112,6 +113,7 @@ function syncWithFirebase() {
               partnerLoans: smartMerge(local.partnerLoans, remote.partnerLoans, deletedSet, 'createdAt'),
               partnerSettlements: smartMerge(local.partnerSettlements, remote.partnerSettlements, deletedSet, 'createdAt'),
               users: smartMerge(local.users, remote.users, new Set(), 'id'),
+              caregivers: smartMerge(local.caregivers, remote.caregivers, deletedSet, 'updatedAt'),
               notifications: smartMerge(local.notifications, remote.notifications, new Set(), 'timestamp').slice(0, 150),
             };
             const mergedStr = JSON.stringify(merged, null, 2);
@@ -160,6 +162,7 @@ const server = http.createServer((req, res) => {
           parsed.nurseTransactions = (parsed.nurseTransactions || []).filter(t => t && !deletedSet.has(t.id));
           parsed.partnerLoans = (parsed.partnerLoans || []).filter(l => l && !deletedSet.has(l.id));
           parsed.partnerSettlements = (parsed.partnerSettlements || []).filter(s => s && !deletedSet.has(s.id));
+          parsed.caregivers = (parsed.caregivers || []).filter(c => c && !deletedSet.has(c.id));
           parsed.notifications = parsed.notifications || [];
           if (!parsed.openingBalances) {
             parsed.openingBalances = { bank: 0, wallet: 0, cash: 0 };
@@ -194,6 +197,7 @@ const server = http.createServer((req, res) => {
               partnerLoans: [],
               partnerSettlements: [],
               users: [],
+              caregivers: [],
               notifications: [],
               deletedIds: [],
               openingBalances: { bank: 0, wallet: 0, cash: 0 }
@@ -216,20 +220,19 @@ const server = http.createServer((req, res) => {
               current.nurseTransactions = [];
               current.partnerLoans = [];
               current.partnerSettlements = [];
+              current.serviceDays = [];
               current.openingBalances = { bank: 0, wallet: 0, cash: 0 };
-              if (incoming.resetServiceDays) {
-                current.serviceDays = [];
-              }
             }
 
             const mergedClients = smartMerge(current.clients, incoming.clients, deletedSet, 'updatedAt');
             const mergedPayments = incoming.isFinancialReset ? [] : smartMerge(current.payments, incoming.payments, deletedSet, 'createdAt');
             const mergedExpenses = incoming.isFinancialReset ? [] : smartMerge(current.expenses, incoming.expenses, deletedSet, 'createdAt');
-            const mergedServiceDays = (incoming.isFinancialReset && incoming.resetServiceDays) ? [] : smartMerge(current.serviceDays, incoming.serviceDays, deletedSet, 'createdAt');
+            const mergedServiceDays = incoming.isFinancialReset ? [] : smartMerge(current.serviceDays, incoming.serviceDays, deletedSet, 'createdAt');
             const mergedNurseTransactions = incoming.isFinancialReset ? [] : smartMerge(current.nurseTransactions, incoming.nurseTransactions, deletedSet, 'createdAt');
             const mergedPartnerLoans = incoming.isFinancialReset ? [] : smartMerge(current.partnerLoans, incoming.partnerLoans, deletedSet, 'createdAt');
             const mergedPartnerSettlements = incoming.isFinancialReset ? [] : smartMerge(current.partnerSettlements, incoming.partnerSettlements, deletedSet, 'createdAt');
             const mergedUsers = smartMerge(current.users, incoming.users, new Set(), 'id');
+            const mergedCaregivers = smartMerge(current.caregivers || [], incoming.caregivers || [], deletedSet, 'updatedAt');
             const mergedNotifications = smartMerge(current.notifications, incoming.notifications, new Set(), 'timestamp').slice(0, 150);
             const mergedOpeningBalances = incoming.openingBalances || current.openingBalances || { bank: 0, wallet: 0, cash: 0 };
 
@@ -245,6 +248,7 @@ const server = http.createServer((req, res) => {
               partnerLoans: mergedPartnerLoans,
               partnerSettlements: mergedPartnerSettlements,
               users: mergedUsers,
+              caregivers: mergedCaregivers,
               notifications: mergedNotifications,
             };
 
