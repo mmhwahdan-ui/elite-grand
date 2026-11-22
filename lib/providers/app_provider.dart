@@ -1007,6 +1007,7 @@ class AppProvider extends ChangeNotifier {
         _caregivers[i] = cg.copyWith(
           isCurrentlyWorking: false,
           clearCurrentClient: true,
+          openingBalance: 0.0,
           updatedAt: now,
         );
       }
@@ -1167,6 +1168,7 @@ class AppProvider extends ChangeNotifier {
     bool isOpenEnded = false,
     String? nurseAssigned,
     double? clientOpeningBalance,
+    double? nurseOpeningBalance,
     double? nurseOpeningAdvance,
     String nurseAdvanceTreasury = 'bank',
   }) async {
@@ -1218,13 +1220,16 @@ class AppProvider extends ChangeNotifier {
         }
       }
 
-      // Update Caregiver active working status
+      // Update Caregiver active working status & opening balance
       if (nurse != null && nurse.trim().isNotEmpty) {
         final cgIdx = _caregivers.indexWhere((cg) => isNurseNameMatch(cg.name, nurse));
         if (cgIdx != -1) {
-          _caregivers[cgIdx] = _caregivers[cgIdx].copyWith(
+          final targetCg = _caregivers[cgIdx];
+          final newCgBalance = nurseOpeningBalance ?? targetCg.openingBalance;
+          _caregivers[cgIdx] = targetCg.copyWith(
             isCurrentlyWorking: true,
             currentClientName: current.name,
+            openingBalance: newCgBalance,
             updatedAt: DateTime.now(),
           );
           await storageService.saveCaregivers(_caregivers);
@@ -1238,7 +1243,7 @@ class AppProvider extends ChangeNotifier {
             date: start,
             type: 'advance',
             paymentChannel: nurseAdvanceTreasury,
-            notes: 'سلفة / مديونية سابقة مسجلة عند بدء خدمة العميل (${current.name})',
+            notes: 'سلفة مسجلة عند بدء خدمة العميل (${current.name})',
             clientId: clientId,
             clientName: current.name,
           );
@@ -1248,11 +1253,12 @@ class AppProvider extends ChangeNotifier {
       final durStr = isOpenEnded
           ? 'مدة مفتوحة'
           : 'من ${DateFormat('yyyy/MM/dd').format(start)} إلى ${end != null ? DateFormat('yyyy/MM/dd').format(end) : ''}';
+      final clientBalStr = opBalance != 0.0 ? ' - رصيد سابق للعميل: ${opBalance.toStringAsFixed(0)} ج.م' : '';
+      final nurseBalStr = (nurseOpeningBalance != null && nurseOpeningBalance != 0) ? ' - رصيد سابق للممرض: ${nurseOpeningBalance.toStringAsFixed(0)} ج.م' : '';
+      final nurseAdvStr = (nurseOpeningAdvance != null && nurseOpeningAdvance > 0) ? ' - سلفة ممرض: ${nurseOpeningAdvance.toStringAsFixed(0)} ج.م' : '';
       await _logAction(
         title: 'بدء خدمة عميل',
-        description: 'تم بدء الخدمة للعميل: ${current.name} ($durStr) - التمريض: ${nurse ?? "غير محدد"}' +
-            (opBalance != 0.0 ? ' - رصيد سابق للعميل: ${opBalance.toStringAsFixed(0)} ج.م' : '') +
-            (nurseOpeningAdvance != null && nurseOpeningAdvance > 0 ? ' - سلفة ممرض: ${nurseOpeningAdvance.toStringAsFixed(0)} ج.م' : ''),
+        description: 'تم بدء الخدمة للعميل: ${current.name} ($durStr) - التمريض: ${nurse ?? "غير محدد"}$clientBalStr$nurseBalStr$nurseAdvStr',
         actionType: 'start_service',
         metadata: {'clientId': clientId, 'clientName': current.name},
       );
@@ -2516,6 +2522,13 @@ class AppProvider extends ChangeNotifier {
         }
       }
     }
+
+    // رصيد سابق مستحق للممرض (خدمة قديمة سابقة لم يحصلها)
+    final cg = _caregivers.where((c) => isNurseNameMatch(c.name, nurseName)).firstOrNull;
+    if (cg != null && cg.openingBalance > 0) {
+      earned += cg.openingBalance;
+    }
+
     return earned;
   }
 
@@ -2526,11 +2539,18 @@ class AppProvider extends ChangeNotifier {
     return list;
   }
 
-  /// إجمالي السلف التي أخذها الممرض
+  /// إجمالي السلف التي أخذها الممرض + أي مديونية سابقة مرحلة عليه
   double getNurseTotalAdvances(String nurseName) {
-    return _nurseTransactions
+    double advances = _nurseTransactions
         .where((t) => isNurseNameMatch(t.nurseName, nurseName) && t.type == 'advance')
         .fold(0.0, (sum, t) => sum + t.amount);
+
+    final cg = _caregivers.where((c) => isNurseNameMatch(c.name, nurseName)).firstOrNull;
+    if (cg != null && cg.openingBalance < 0) {
+      advances += cg.openingBalance.abs();
+    }
+
+    return advances;
   }
 
   /// إجمالي صرف المستحقات / الأجور التي استلمها الممرض

@@ -18,6 +18,7 @@ class CaregiverModel {
   final List<String> pastClients; // أسماء العملاء الذين اشتغل معهم
   final bool isCurrentlyWorking; // شغال معانا الآن
   final String? currentClientName; // اسم الحالة التي يعمل فيها حالياً
+  final double openingBalance; // رصيد سابق: (+) مستحق للممرض عن خدمة قديمة لم يحصلها / (-) سلف أو مديونية على الممرض
   final String? notes; // ملاحظات إضافية
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -52,6 +53,7 @@ class CaregiverModel {
     this.pastClients = const [],
     this.isCurrentlyWorking = false,
     this.currentClientName,
+    this.openingBalance = 0.0,
     this.notes,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -130,6 +132,7 @@ class CaregiverModel {
     bool? isCurrentlyWorking,
     String? currentClientName,
     bool clearCurrentClient = false,
+    double? openingBalance,
     String? notes,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -164,6 +167,7 @@ class CaregiverModel {
       pastClients: pastClients ?? this.pastClients,
       isCurrentlyWorking: isCurrentlyWorking ?? this.isCurrentlyWorking,
       currentClientName: clearCurrentClient ? null : (currentClientName ?? this.currentClientName),
+      openingBalance: openingBalance ?? this.openingBalance,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
@@ -201,6 +205,7 @@ class CaregiverModel {
       pastClients: pastClients,
       isCurrentlyWorking: isCurrentlyWorking,
       currentClientName: currentClientName,
+      openingBalance: openingBalance,
       notes: notes,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
@@ -238,6 +243,7 @@ class CaregiverModel {
       'pastClients': pastClients,
       'isCurrentlyWorking': isCurrentlyWorking,
       'currentClientName': currentClientName,
+      'openingBalance': openingBalance,
       'notes': notes,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -275,6 +281,7 @@ class CaregiverModel {
       pastClients: (map['pastClients'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       isCurrentlyWorking: map['isCurrentlyWorking'] ?? false,
       currentClientName: map['currentClientName'],
+      openingBalance: (map['openingBalance'] as num?)?.toDouble() ?? 0.0,
       notes: map['notes'],
       createdAt: map['createdAt'] != null ? DateTime.tryParse(map['createdAt']) : null,
       updatedAt: map['updatedAt'] != null ? DateTime.tryParse(map['updatedAt']) : null,

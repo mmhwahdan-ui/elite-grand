@@ -25,10 +25,9 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
   late TextEditingController _clientBalanceCtrl;
   String _clientBalanceType = 'zero'; // 'debt' (مديونية على العميل -) | 'credit' (رصيد دائن للعميل +) | 'zero' (خالص 0)
 
-  // سلفة أو مديونية مقدم الخدمة
-  bool _addNurseAdvance = false;
-  late TextEditingController _nurseAdvanceCtrl;
-  String _nurseAdvanceTreasury = 'bank'; // الحساب البنكي الافتراضي
+  // رصيد أو مستحقات مقدم الخدمة السابقة
+  late TextEditingController _nurseBalanceCtrl;
+  String _nurseBalanceType = 'zero'; // 'due' (مستحقات سابقة للممرض +) | 'debt' (مديونية سابقة على الممرض -) | 'zero' (خالص 0)
 
   @override
   void initState() {
@@ -50,14 +49,14 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
       _clientBalanceCtrl = TextEditingController(text: '0');
     }
 
-    _nurseAdvanceCtrl = TextEditingController(text: '');
+    _nurseBalanceCtrl = TextEditingController(text: '0');
   }
 
   @override
   void dispose() {
     _nurseController.dispose();
     _clientBalanceCtrl.dispose();
-    _nurseAdvanceCtrl.dispose();
+    _nurseBalanceCtrl.dispose();
     super.dispose();
   }
 
@@ -93,6 +92,26 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
     return _clientBalanceType == 'debt' ? -val.abs() : val.abs();
   }
 
+  double get _computedNurseOpeningBalance {
+    if (_nurseBalanceType == 'zero') return 0.0;
+    final val = double.tryParse(_nurseBalanceCtrl.text.trim()) ?? 0.0;
+    if (val == 0.0) return 0.0;
+    return _nurseBalanceType == 'due' ? val.abs() : -val.abs();
+  }
+
+  // اقتراح مستحقات الممرض المقابلة لمديونية العميل إذا كانت ناتجة عن خدمة قديمة
+  void _suggestNurseDuesFromClientDebt() {
+    final clientDebt = double.tryParse(_clientBalanceCtrl.text.trim()) ?? 0.0;
+    if (clientDebt > 0 && widget.client.dailyPrice > 0 && widget.client.nurseDailyPrice > 0) {
+      final days = clientDebt / widget.client.dailyPrice;
+      final suggestedNurseDue = days * widget.client.nurseDailyPrice;
+      setState(() {
+        _nurseBalanceType = 'due';
+        _nurseBalanceCtrl.text = suggestedNurseDue.toStringAsFixed(0);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
@@ -103,7 +122,7 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
     final totalNurseCost = daysCount * widget.client.nurseDailyPrice;
     final totalProfit = totalClientCost - totalNurseCost;
 
-    // البحث عن مقدم الخدمة المحدد لمعرفة رصيده ومديونيته
+    // مقدم الخدمة المحدد
     final selectedNurseName = _nurseController.text.trim();
     CaregiverModel? matchedCaregiver;
     if (selectedNurseName.isNotEmpty) {
@@ -114,15 +133,14 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
     final nurseRemaining = selectedNurseName.isNotEmpty ? provider.getNurseRemainingBalance(selectedNurseName) : 0.0;
     final nurseEarned = selectedNurseName.isNotEmpty ? provider.getNurseTotalEarned(selectedNurseName) : 0.0;
     final nurseAdvances = selectedNurseName.isNotEmpty ? provider.getNurseTotalAdvances(selectedNurseName) : 0.0;
-    final nursePayouts = selectedNurseName.isNotEmpty ? provider.getNurseTotalPayouts(selectedNurseName) : 0.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
-          width: 580,
-          constraints: const BoxConstraints(maxHeight: 760),
+          width: 600,
+          constraints: const BoxConstraints(maxHeight: 780),
           padding: const EdgeInsets.all(22),
           child: SingleChildScrollView(
             child: Column(
@@ -141,11 +159,11 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                       child: const Icon(Icons.play_circle_fill, color: AppTheme.accent, size: 28),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
+                    const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'تأكيد بدء الخدمة وضبط حسابات الحالة والتمريض',
                             style: TextStyle(
                               fontSize: 17,
@@ -154,8 +172,8 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                             ),
                           ),
                           Text(
-                            'تحديد تاريخ البدء + رصيد/مديونية العميل + رصيد ومديونية مقدم الخدمة',
-                            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontFamily: 'Cairo'),
+                            'تاريخ البدء + مديونية العميل السابقة + مستحقات مقدم الخدمة السابقة',
+                            style: TextStyle(fontSize: 11.5, color: Colors.blueGrey, fontFamily: 'Cairo'),
                           ),
                         ],
                       ),
@@ -222,7 +240,7 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                 ),
                 const SizedBox(height: 14),
 
-                // 2. Client Balance & Indebtedness Section (رصيد أو مديونية العميل السابقة)
+                // 2. Client Previous Debt / Balance Card (مديونية العميل السابقة عن خدمة قديمة لم تُحصل)
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -242,16 +260,18 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                       Row(
                         children: [
                           Icon(
-                            Icons.account_balance_wallet,
+                            Icons.receipt_long,
                             size: 18,
                             color: _clientBalanceType == 'debt'
                                 ? Colors.red.shade700
                                 : (_clientBalanceType == 'credit' ? Colors.green.shade700 : AppTheme.primary),
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            'رصيد أو مديونية العميل السابقة (الرصيد الافتتاحي):',
-                            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
+                          const Expanded(
+                            child: Text(
+                              'مديونية العميل السابقة (عن خدمة قديمة تمت ولم تُحصّل بعد):',
+                              style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
                           ),
                         ],
                       ),
@@ -262,7 +282,7 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                           Expanded(
                             child: ChoiceChip(
                               label: const Center(
-                                child: Text('مديونية على العميل (-)', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                                child: Text('مديونية على العميل (-)', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
                               ),
                               selected: _clientBalanceType == 'debt',
                               selectedColor: Colors.red.shade100,
@@ -308,12 +328,13 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                         TextField(
                           controller: _clientBalanceCtrl,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
                             labelText: _clientBalanceType == 'debt'
-                                ? 'مبلغ المديونية السابقة المستحقة على العميل'
+                                ? 'مبلغ المديونية السابقة المستحقة على العميل (عن خدمة سابقة)'
                                 : 'مبلغ الرصيد الدائن / الدفعة المقدمة للعميل',
                             prefixIcon: Icon(
-                              _clientBalanceType == 'debt' ? Icons.remove_circle : Icons.add_circle,
+                              _clientBalanceType == 'debt' ? Icons.money_off : Icons.add_circle,
                               color: _clientBalanceType == 'debt' ? Colors.red : Colors.green,
                             ),
                             suffixText: 'ج.م',
@@ -329,9 +350,229 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                 ),
                 const SizedBox(height: 14),
 
-                // 3. Service Dates & Duration Switcher (تاريخ بدء الخدمة وفترة التعاقد)
+                // 3. Caregiver Previous Dues / Debt Card (مستحقات مقدم الخدمة عن خدمة قديمة عند نفس العميل)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _nurseBalanceType == 'due'
+                        ? const Color(0xFFF0FDF4)
+                        : (_nurseBalanceType == 'debt' ? Colors.red.shade50 : const Color(0xFFF8FAFC)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _nurseBalanceType == 'due'
+                          ? Colors.green.shade300
+                          : (_nurseBalanceType == 'debt' ? Colors.red.shade200 : const Color(0xFFCBD5E1)),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.badge_outlined, size: 18, color: AppTheme.primary),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'مقدم الخدمة (الممرض) ومستحقاته السابقة عن نفس الحالة:',
+                              style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Caregiver Autocomplete / Search
+                      Autocomplete<CaregiverModel>(
+                        displayStringForOption: (CaregiverModel cg) => cg.name,
+                        initialValue: TextEditingValue(text: _nurseController.text),
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          if (textEditingValue.text.isEmpty) {
+                            return provider.caregivers;
+                          }
+                          return provider.caregivers.where((CaregiverModel cg) {
+                            return cg.name.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
+                                cg.code.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                          });
+                        },
+                        onSelected: (CaregiverModel selection) {
+                          setState(() {
+                            _nurseController.text = selection.name;
+                            if (selection.openingBalance > 0) {
+                              _nurseBalanceType = 'due';
+                              _nurseBalanceCtrl.text = selection.openingBalance.toStringAsFixed(0);
+                            } else if (selection.openingBalance < 0) {
+                              _nurseBalanceType = 'debt';
+                              _nurseBalanceCtrl.text = selection.openingBalance.abs().toStringAsFixed(0);
+                            }
+                          });
+                        },
+                        fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                          return TextField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            onChanged: (val) {
+                              setState(() {
+                                _nurseController.text = val;
+                              });
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'اختر أو اكتب اسم مقدم الخدمة القائم بالحالة',
+                              prefixIcon: const Icon(Icons.person_search),
+                              suffixIcon: _nurseController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 18),
+                                      onPressed: () {
+                                        controller.clear();
+                                        setState(() {
+                                          _nurseController.text = '';
+                                        });
+                                      },
+                                    )
+                                  : null,
+                              border: const OutlineInputBorder(),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                          );
+                        },
+                      ),
+
+                      // Live Status of selected caregiver
+                      if (selectedNurseName.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                matchedCaregiver != null ? 'كود: ${matchedCaregiver.code}' : 'ممرض محدد',
+                                style: const TextStyle(fontSize: 11, fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppTheme.primary),
+                              ),
+                              Text(
+                                'الرصيد: ${nurseRemaining.toStringAsFixed(0)} ج.م (مكتسب: ${nurseEarned.toStringAsFixed(0)} | سلف: ${nurseAdvances.toStringAsFixed(0)})',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontFamily: 'Cairo',
+                                  fontWeight: FontWeight.bold,
+                                  color: nurseRemaining >= 0 ? Colors.green.shade800 : Colors.red.shade800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 10),
+                      // Caregiver Previous Dues / Debt selector
+                      const Text(
+                        'حساب مستحقات مقدم الخدمة عن الفترة السابقة:',
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Center(
+                                child: Text('مستحق للممرض (+) (خدمة قديمة)', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                              selected: _nurseBalanceType == 'due',
+                              selectedColor: Colors.green.shade100,
+                              onSelected: (val) {
+                                if (val) setState(() => _nurseBalanceType = 'due');
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Center(
+                                child: Text('مديونية على الممرض (-)', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                              ),
+                              selected: _nurseBalanceType == 'debt',
+                              selectedColor: Colors.red.shade100,
+                              onSelected: (val) {
+                                if (val) setState(() => _nurseBalanceType = 'debt');
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Center(
+                                child: Text('خالص (0 ج.م)', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                              ),
+                              selected: _nurseBalanceType == 'zero',
+                              onSelected: (val) {
+                                if (val) {
+                                  setState(() {
+                                    _nurseBalanceType = 'zero';
+                                    _nurseBalanceCtrl.text = '0';
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      if (_nurseBalanceType != 'zero') ...[
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _nurseBalanceCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            labelText: _nurseBalanceType == 'due'
+                                ? 'مبلغ مستحقات الممرض السابقة (خدمة قديمة لم يحصلها عند نفس العميل)'
+                                : 'مبلغ المديونية أو السلفة السابقة على الممرض',
+                            prefixIcon: Icon(
+                              _nurseBalanceType == 'due' ? Icons.account_balance_wallet : Icons.money_off,
+                              color: _nurseBalanceType == 'due' ? Colors.green.shade700 : Colors.red.shade700,
+                            ),
+                            suffixText: 'ج.م',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            border: const OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                        ),
+                        // Smart suggestion button from client debt
+                        if (_clientBalanceType == 'debt' && (double.tryParse(_clientBalanceCtrl.text) ?? 0) > 0) ...[
+                          const SizedBox(height: 6),
+                          InkWell(
+                            onTap: _suggestNurseDuesFromClientDebt,
+                            borderRadius: BorderRadius.circular(6),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.auto_awesome, size: 14, color: Colors.teal),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'اقتراح مستحقات الممرض تلقائياً من مديونية العميل (حسب يومية ${widget.client.nurseDailyPrice.toStringAsFixed(0)} ج.م)',
+                                    style: const TextStyle(fontSize: 10.5, fontFamily: 'Cairo', color: Colors.teal, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // 4. Service Dates & Duration Switcher (تاريخ بدء الخدمة وفترة التعاقد)
                 const Text(
-                  'تاريخ بدء الخدمة ومدة التعاقد:',
+                  'تاريخ بدء الخدمة الجديد وفترة التعاقد:',
                   style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textPrimary),
                 ),
                 const SizedBox(height: 6),
@@ -622,224 +863,6 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 14),
-
-                // 4. Caregiver Selection & Indebtedness Card (مقدم الخدمة ورصيده ومديونيته)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFCBD5E1)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.badge_outlined, size: 18, color: AppTheme.primary),
-                          SizedBox(width: 8),
-                          Text(
-                            'مقدم الخدمة / الممرض المكلف بالحالة:',
-                            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Autocomplete / Searchable input for caregivers
-                      Autocomplete<CaregiverModel>(
-                        displayStringForOption: (CaregiverModel cg) => cg.name,
-                        initialValue: TextEditingValue(text: _nurseController.text),
-                        optionsBuilder: (TextEditingValue textEditingValue) {
-                          if (textEditingValue.text.isEmpty) {
-                            return provider.caregivers;
-                          }
-                          return provider.caregivers.where((CaregiverModel cg) {
-                            return cg.name.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                                cg.code.toLowerCase().contains(textEditingValue.text.toLowerCase());
-                          });
-                        },
-                        onSelected: (CaregiverModel selection) {
-                          setState(() {
-                            _nurseController.text = selection.name;
-                          });
-                        },
-                        fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                          return TextField(
-                            controller: controller,
-                            focusNode: focusNode,
-                            onChanged: (val) {
-                              setState(() {
-                                _nurseController.text = val;
-                              });
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'اختر أو اكتب اسم مقدم الخدمة',
-                              prefixIcon: const Icon(Icons.person_search),
-                              suffixIcon: _nurseController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear, size: 18),
-                                      onPressed: () {
-                                        controller.clear();
-                                        setState(() {
-                                          _nurseController.text = '';
-                                        });
-                                      },
-                                    )
-                                  : null,
-                              border: const OutlineInputBorder(),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              filled: true,
-                              fillColor: Colors.white,
-                            ),
-                          );
-                        },
-                      ),
-
-                      // Live Caregiver Balance Card (رصيد ومديونية مقدم الخدمة)
-                      if (selectedNurseName.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: nurseRemaining < 0
-                                ? Colors.red.shade50
-                                : (nurseRemaining > 0 ? Colors.green.shade50 : const Color(0xFFF1F5F9)),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: nurseRemaining < 0
-                                  ? Colors.red.shade200
-                                  : (nurseRemaining > 0 ? Colors.green.shade200 : const Color(0xFFCBD5E1)),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    nurseRemaining < 0
-                                        ? Icons.warning_amber_rounded
-                                        : (nurseRemaining > 0 ? Icons.check_circle : Icons.account_balance_wallet_outlined),
-                                    size: 18,
-                                    color: nurseRemaining < 0
-                                        ? Colors.red.shade700
-                                        : (nurseRemaining > 0 ? Colors.green.shade700 : AppTheme.primary),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    matchedCaregiver != null
-                                        ? 'كشف حساب: ${matchedCaregiver.name} (${matchedCaregiver.code})'
-                                        : 'كشف حساب: $selectedNurseName',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'Cairo'),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    nurseRemaining < 0
-                                        ? '⚠️ مديونية سابقة على الممرض (سلف غير مسددة):'
-                                        : (nurseRemaining > 0 ? 'مستحق للممرض طرف الشركة:' : 'حساب الممرض الحالي:'),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontFamily: 'Cairo',
-                                      color: nurseRemaining < 0 ? Colors.red.shade900 : (nurseRemaining > 0 ? Colors.green.shade900 : Colors.blueGrey),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${nurseRemaining.abs().toStringAsFixed(0)} ج.م ${nurseRemaining == 0 ? "(خالص)" : ""}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      fontFamily: 'Cairo',
-                                      color: nurseRemaining < 0 ? Colors.red.shade700 : (nurseRemaining > 0 ? Colors.green.shade700 : Colors.blueGrey),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (nurseEarned > 0 || nurseAdvances > 0 || nursePayouts > 0) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  'المكتسب: ${nurseEarned.toStringAsFixed(0)} ج.م | السلف: ${nurseAdvances.toStringAsFixed(0)} ج.م | المنصرف: ${nursePayouts.toStringAsFixed(0)} ج.م',
-                                  style: TextStyle(fontSize: 10, fontFamily: 'Cairo', color: Colors.grey.shade600),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-
-                        // Section to register initial advance / debt on nurse upon starting
-                        const SizedBox(height: 10),
-                        CheckboxListTile(
-                          value: _addNurseAdvance,
-                          onChanged: (val) => setState(() => _addNurseAdvance = val ?? false),
-                          title: const Text(
-                            'تسجيل سلفة أو مديونية سابقة على مقدم الخدمة',
-                            style: TextStyle(fontFamily: 'Cairo', fontSize: 11.5, fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: const Text(
-                            'إذا كان الممرض أخذ سلفة قبل بدء هذه الحالة وتريد إثباتها في حسابه',
-                            style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.grey),
-                          ),
-                          controlAffinity: ListTileControlAffinity.leading,
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          activeColor: AppTheme.primary,
-                        ),
-                        if (_addNurseAdvance) ...[
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: TextField(
-                                  controller: _nurseAdvanceCtrl,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: const InputDecoration(
-                                    labelText: 'مبلغ السلفة / المديونية',
-                                    prefixIcon: Icon(Icons.money_off, color: Colors.red),
-                                    suffixText: 'ج.م',
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                    border: OutlineInputBorder(),
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                flex: 2,
-                                child: DropdownButtonFormField<String>(
-                                  value: _nurseAdvanceTreasury,
-                                  decoration: const InputDecoration(
-                                    labelText: 'الخزينة المنصرف منها',
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                    border: OutlineInputBorder(),
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                  ),
-                                  items: const [
-                                    DropdownMenuItem(value: 'bank', child: Text('الحساب البنكي 🏛️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11))),
-                                    DropdownMenuItem(value: 'cash', child: Text('الخزينة النقدية 💵', style: TextStyle(fontFamily: 'Cairo', fontSize: 11))),
-                                    DropdownMenuItem(value: 'wallet', child: Text('المحفظة الإلكترونية 📱', style: TextStyle(fontFamily: 'Cairo', fontSize: 11))),
-                                  ],
-                                  onChanged: (v) {
-                                    if (v != null) setState(() => _nurseAdvanceTreasury = v);
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ],
-                  ),
-                ),
 
                 const SizedBox(height: 20),
                 // Action Buttons
@@ -861,12 +884,7 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                         onPressed: () async {
                           final nurseName = _nurseController.text.trim();
                           final clientOpBalance = _computedClientOpeningBalance;
-
-                          double? nurseAdvance;
-                          if (_addNurseAdvance) {
-                            final advVal = double.tryParse(_nurseAdvanceCtrl.text.trim()) ?? 0.0;
-                            if (advVal > 0) nurseAdvance = advVal;
-                          }
+                          final nurseOpBalance = _computedNurseOpeningBalance;
 
                           await provider.startClientService(
                             clientId: widget.client.id,
@@ -875,20 +893,19 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                             isOpenEnded: _isOpenEnded,
                             nurseAssigned: nurseName.isNotEmpty ? nurseName : null,
                             clientOpeningBalance: clientOpBalance,
-                            nurseOpeningAdvance: nurseAdvance,
-                            nurseAdvanceTreasury: _nurseAdvanceTreasury,
+                            nurseOpeningBalance: nurseOpBalance,
                           );
 
                           if (context.mounted) {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
+                              const SnackBar(
                                 content: Text(
                                   'تم بدء الخدمة بنجاح وتحديث تاريخ البدء وحسابات الحالة والتمريض 🛡️',
-                                  style: const TextStyle(fontFamily: 'Cairo'),
+                                  style: TextStyle(fontFamily: 'Cairo'),
                                 ),
                                 backgroundColor: AppTheme.accent,
-                                duration: const Duration(seconds: 4),
+                                duration: Duration(seconds: 4),
                               ),
                             );
                           }
@@ -899,7 +916,7 @@ class _StartServiceDialogState extends State<StartServiceDialog> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         child: const Text(
-                          'تأكيد بدء الخدمة',
+                          'تأكيد بدء الخدمة وحفظ الحسابات',
                           style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                       ),
