@@ -2639,6 +2639,230 @@ class AppProvider extends ChangeNotifier {
     return getNurseTotalEarned(nurseName) - getNurseTotalReceived(nurseName);
   }
 
+  /// الورديات المنقضية المنفذة حتى تاريخ اليوم أو تاريخ محدد لمقدم الخدمة
+  List<ServiceDayModel> getNurseElapsedShifts(String nurseName, {DateTime? asOfDate}) {
+    final cutoff = asOfDate ?? DateTime.now();
+    final cutoffDate = DateTime(cutoff.year, cutoff.month, cutoff.day);
+    return _serviceDays.where((d) {
+      if (!isNurseNameMatch(d.nurseName, nurseName)) return false;
+      final dNorm = DateTime(d.date.year, d.date.month, d.date.day);
+      return !dNorm.isAfter(cutoffDate);
+    }).toList();
+  }
+
+  /// إجمالي أجر مقدم الخدمة عن الأيام المنقضية المنفذة حتى تاريخ اليوم
+  double getNurseElapsedEarned(String nurseName, {DateTime? asOfDate}) {
+    final elapsedShifts = getNurseElapsedShifts(nurseName, asOfDate: asOfDate);
+    double earned = elapsedShifts.fold(0.0, (sum, d) => sum + d.nursePrice);
+
+    final cg = findCaregiverByName(nurseName);
+    if (cg != null && cg.openingBalance > 0) {
+      earned += cg.openingBalance;
+    }
+    return earned;
+  }
+
+  /// صافي المستحق لمقدم الخدمة عن الأيام المنقضية حتى اليوم (المستحق للتصفية عند التبديل أو الوقف)
+  /// موجباً (+): متبقي له طرف الشركة
+  /// سالباً (-): مديونية عليه نتيجة سلف أكثر من الأيام المنقضية
+  double getNurseElapsedRemainingBalance(String nurseName, {DateTime? asOfDate}) {
+    return getNurseElapsedEarned(nurseName, asOfDate: asOfDate) - getNurseTotalReceived(nurseName);
+  }
+
+  /// تكلفة الأيام المنقضية المنفذة على العميل حتى تاريخ اليوم
+  double getClientElapsedAccruedCost(String clientId, {DateTime? asOfDate}) {
+    final cutoff = asOfDate ?? DateTime.now();
+    final cutoffNorm = DateTime(cutoff.year, cutoff.month, cutoff.day);
+
+    final elapsedDays = _serviceDays.where((d) {
+      if (d.clientId != clientId) return false;
+      final dNorm = DateTime(d.date.year, d.date.month, d.date.day);
+      return !dNorm.isAfter(cutoffNorm);
+    });
+
+    return elapsedDays.fold(0.0, (sum, d) => sum + d.clientPrice);
+  }
+
+  /// رصيد العميل عن الأيام المنقضية حتى تاريخ اليوم
+  /// سالباً (-): مديونية مستحقة على العميل عن الأيام المنقضية + مديونيته السابقة
+  /// موجباً (+): رصيد دائن للعميل مغطي
+  double getClientElapsedBalance(ClientModel client, {DateTime? asOfDate}) {
+    final paid = getClientTotalPaid(client.id);
+    final elapsedCost = getClientElapsedAccruedCost(client.id, asOfDate: asOfDate);
+    return client.openingBalance + paid - elapsedCost;
+  }
+
+  /// ضبط وتسوية رصيد العميل يدوياً (تعديل الرصيد الافتتاحي أو المديونية السابقة)
+  Future<void> manuallyAdjustClientBalance({
+    required String clientId,
+    required double newOpeningBalance,
+    String reason = 'ضبط يدوي لحساب العميل وتعديل الرصيد السابق',
+  }) async {
+    final index = _clients.indexWhere((c) => c.id == clientId);
+    if (index == -1) return;
+    final current = _clients[index];
+    final oldBalance = current.openingBalance;
+    final updated = current.copyWith(
+      openingBalance: newOpeningBalance,
+      isExistingClient: newOpeningBalance != 0.0,
+      updatedAt: DateTime.now(),
+    );
+    _clients[index] = updated;
+    await storageService.saveClients(_clients);
+
+    await _logAction(
+      title: 'ضبط يدوي لحساب العميل',
+      description: 'تم ضبط حساب العميل: ${current.name} يدوياً - الرصيد السابق: ${oldBalance.toStringAsFixed(0)} ج.م ⬅️ الرصيد الجديد: ${newOpeningBalance.toStringAsFixed(0)} ج.م ($reason)',
+      actionType: 'manual_balance_adjustment',
+      metadata: {
+        'clientId': clientId,
+        'clientName': current.name,
+        'oldBalance': oldBalance,
+        'newBalance': newOpeningBalance,
+        'reason': reason,
+      },
+    );
+
+    await _persistAndSync();
+    notifyListeners();
+  }
+
+  /// ضبط وتسوية رصيد مقدم الخدمة / الممرض يدوياً (تعديل الرصيد الافتتاحي أو مستحقات خدمة قديمة)
+  Future<void> manuallyAdjustCaregiverBalance({
+    required String nurseName,
+    required double newOpeningBalance,
+    String reason = 'ضبط يدوي لحساب مقدم الخدمة وتعديل الرصيد السابق',
+  }) async {
+    final cleanNurse = nurseName.trim();
+    final cgIdx = _caregivers.indexWhere((c) => isNurseNameMatch(c.name, cleanNurse));
+    double oldBalance = 0.0;
+    if (cgIdx != -1) {
+      final cg = _caregivers[cgIdx];
+      oldBalance = cg.openingBalance;
+      _caregivers[cgIdx] = cg.copyWith(
+        openingBalance: newOpeningBalance,
+        updatedAt: DateTime.now(),
+      );
+    } else {
+      final newCode = 'CG-' + (_caregivers.length + 1).toString().padLeft(3, '0');
+      final newCg = CaregiverModel(
+        id: 'cg_' + DateTime.now().millisecondsSinceEpoch.toString(),
+        name: cleanNurse,
+        code: newCode,
+        phone: '',
+        dailyPrice: 0.0,
+        isCurrentlyWorking: false,
+        openingBalance: newOpeningBalance,
+        createdBy: _currentUser?.username ?? 'wahdan',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      _caregivers.add(newCg);
+    }
+    await storageService.saveCaregivers(_caregivers);
+
+    await _logAction(
+      title: 'ضبط يدوي لحساب مقدم الخدمة',
+      description: 'تم ضبط حساب مقدم الخدمة: $cleanNurse يدوياً - الرصيد السابق: ${oldBalance.toStringAsFixed(0)} ج.م ⬅️ الرصيد الجديد: ${newOpeningBalance.toStringAsFixed(0)} ج.م ($reason)',
+      actionType: 'manual_caregiver_balance_adjustment',
+      metadata: {
+        'nurseName': cleanNurse,
+        'oldBalance': oldBalance,
+        'newBalance': newOpeningBalance,
+        'reason': reason,
+      },
+    );
+
+    await _persistAndSync();
+    notifyListeners();
+  }
+
+  /// تبديل مقدم الخدمة لحالة في وسط الأسبوع بسلاسة مع تسوية المنقضي وتحويل المتبقي
+  Future<int> swapCaregiverMidWeek({
+    required String clientId,
+    required String oldNurseName,
+    required String newNurseName,
+    required DateTime effectiveDate,
+    double? newNurseDailyPrice,
+    String reason = 'تبديل مقدم الخدمة في وسط الأسبوع',
+  }) async {
+    final clientIndex = _clients.indexWhere((c) => c.id == clientId);
+    if (clientIndex == -1) return 0;
+    final client = _clients[clientIndex];
+
+    final effectiveNorm = DateTime(effectiveDate.year, effectiveDate.month, effectiveDate.day);
+    int modifiedDaysCount = 0;
+
+    for (int i = 0; i < _serviceDays.length; i++) {
+      final day = _serviceDays[i];
+      if (day.clientId == clientId) {
+        final dNorm = DateTime(day.date.year, day.date.month, day.date.day);
+        if (!dNorm.isBefore(effectiveNorm) && isNurseNameMatch(day.nurseName, oldNurseName)) {
+          _serviceDays[i] = day.copyWith(
+            nurseName: newNurseName.trim(),
+            nursePrice: newNurseDailyPrice ?? day.nursePrice,
+            notes: (day.notes.isNotEmpty ? day.notes + ' | ' : '') + 'تم التبديل من $oldNurseName إلى $newNurseName بتاريخ ${DateFormat('yyyy/MM/dd').format(effectiveDate)} ($reason)',
+          );
+          modifiedDaysCount++;
+        }
+      }
+    }
+
+    // Update active nurse on client if swap is effective today or past
+    final today = DateTime.now();
+    final todayNorm = DateTime(today.year, today.month, today.day);
+    if (!effectiveNorm.isAfter(todayNorm)) {
+      _clients[clientIndex] = client.copyWith(
+        nurseAssigned: newNurseName.trim(),
+        nurseDailyPrice: newNurseDailyPrice ?? client.nurseDailyPrice,
+        updatedAt: DateTime.now(),
+      );
+    }
+
+    // Update Caregivers directory status
+    final oldCg = findCaregiverByName(oldNurseName);
+    if (oldCg != null) {
+      final oldCgIdx = _caregivers.indexWhere((c) => c.id == oldCg.id);
+      if (oldCgIdx != -1) {
+        _caregivers[oldCgIdx] = oldCg.copyWith(isCurrentlyWorking: false, updatedAt: DateTime.now());
+      }
+    }
+
+    final newCg = findCaregiverByName(newNurseName);
+    if (newCg != null) {
+      final newCgIdx = _caregivers.indexWhere((c) => c.id == newCg.id);
+      if (newCgIdx != -1) {
+        _caregivers[newCgIdx] = newCg.copyWith(
+          isCurrentlyWorking: true,
+          currentClientName: client.name,
+          updatedAt: DateTime.now(),
+        );
+      }
+    }
+
+    await storageService.saveServiceDays(_serviceDays);
+    await storageService.saveClients(_clients);
+    await storageService.saveCaregivers(_caregivers);
+
+    await _logAction(
+      title: 'تبديل مقدم الخدمة للحالة',
+      description: 'تم تبديل مقدم الخدمة للعميل: ${client.name} من: $oldNurseName إلى: $newNurseName بدءاً من تاريخ ${DateFormat('yyyy/MM/dd').format(effectiveDate)} لعدد $modifiedDaysCount ورديات ($reason)',
+      actionType: 'swap_caregiver',
+      metadata: {
+        'clientId': clientId,
+        'clientName': client.name,
+        'oldNurse': oldNurseName,
+        'newNurse': newNurseName,
+        'effectiveDate': effectiveDate.toIso8601String(),
+        'modifiedDaysCount': modifiedDaysCount,
+      },
+    );
+
+    await _persistAndSync();
+    notifyListeners();
+    return modifiedDaysCount;
+  }
+
   /// تقرير كشف تقفيل الحسابات الأسبوعي أو الشهري لمقدمي الخدمة والعملاء
   WeeklyMonthlySettlementReport getSettlementReportData({
     required DateTime startDate,

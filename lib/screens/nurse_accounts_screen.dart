@@ -1,3 +1,5 @@
+import '../widgets/manual_adjust_caregiver_balance_dialog.dart';
+import '../widgets/swap_caregiver_dialog.dart';
 import 'caregivers_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -822,9 +824,191 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                     ],
                     const SizedBox(height: 16),
 
+                    // Live Shift Status: Elapsed Days vs End of Week
+                    Builder(
+                      builder: (context) {
+                        final now = DateTime.now();
+                        final todayNorm = DateTime(now.year, now.month, now.day);
+                        final allNurseShifts = provider.getNurseShifts(nurseName);
+                        final elapsedShifts = allNurseShifts.where((s) {
+                          final d = DateTime(s.date.year, s.date.month, s.date.day);
+                          return !d.isAfter(todayNorm);
+                        }).toList();
+
+                        final activeClient = provider.clients.where((c) => provider.isNurseNameMatch(c.nurseAssigned, nurseName) && c.status == 'active').firstOrNull
+                            ?? (caregiver?.currentClientName != null ? provider.clients.where((c) => c.name == caregiver!.currentClientName).firstOrNull : null)
+                            ?? (elapsedShifts.isNotEmpty ? provider.clients.where((c) => c.id == elapsedShifts.first.clientId).firstOrNull : null);
+
+                        final elapsedCount = elapsedShifts.length;
+                        final totalWeekCount = allNurseShifts.length;
+                        final elapsedEarned = provider.getNurseElapsedEarned(nurseName);
+                        final elapsedRemaining = provider.getNurseElapsedRemainingBalance(nurseName);
+
+                        final clientElapsedBal = activeClient != null ? provider.getClientElapsedBalance(activeClient) : 0.0;
+                        final clientFullBal = activeClient != null ? provider.getClientBalance(activeClient) : 0.0;
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.indigo.shade50.withOpacity(0.6), const Color(0xFFF8FAFC)],
+                              begin: Alignment.topRight,
+                              end: Alignment.bottomLeft,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.indigo.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(color: Colors.indigo.shade100, shape: BoxShape.circle),
+                                    child: const Icon(Icons.timelapse, color: Colors.indigo, size: 18),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Text(
+                                      'موقف الخدمة الجارية: الأيام المنقضية حتى اليوم vs نهاية الأسبوع ⏱️',
+                                      style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.indigo),
+                                    ),
+                                  ),
+                                  if (activeClient != null)
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) => SwapCaregiverDialog(client: activeClient, oldNurseName: nurseName),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.swap_horiz, size: 14),
+                                      label: const Text('تبديل مقدم الخدمة 🔄', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold)),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.amber.shade900,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        minimumSize: const Size(0, 30),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (activeClient != null) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  'الحالة المكلف بها حالياً: ' + activeClient.name + ' (سعر العميل: ' + activeClient.dailyPrice.toStringAsFixed(0) + ' ج.م | يومية الممرض: ' + activeClient.nurseDailyPrice.toStringAsFixed(0) + ' ج.م)',
+                                  style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.indigo.shade900, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                              const Divider(height: 16),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // 1. Elapsed Days Box
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: Colors.indigo.shade100),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text('الأيام المنقضية حتى تاريخه:', style: TextStyle(fontFamily: 'Cairo', fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                              Text(elapsedCount.toString() + ' يوم', style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, fontWeight: FontWeight.bold)),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text('مستحق للممرض عن المنقضي: ' + elapsedEarned.toStringAsFixed(0) + ' ج.م', style: const TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: Colors.blueGrey)),
+                                          Text(
+                                            elapsedRemaining >= 0
+                                                ? 'صافي المستحق له عند التبديل/الوقف الآن: ' + elapsedRemaining.toStringAsFixed(0) + ' ج.م'
+                                                : 'عليه سلفة للشركة الآن: ' + elapsedRemaining.abs().toStringAsFixed(0) + ' ج.م',
+                                            style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: elapsedRemaining >= 0 ? Colors.green.shade800 : Colors.red.shade800),
+                                          ),
+                                          if (activeClient != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              clientElapsedBal < 0
+                                                  ? 'صافي مديونية العميل حتى تاريخه: ' + clientElapsedBal.abs().toStringAsFixed(0) + ' ج.م'
+                                                  : 'رصيد دائن مغطي للعميل: ' + clientElapsedBal.toStringAsFixed(0) + ' ج.م',
+                                              style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.bold, color: clientElapsedBal < 0 ? Colors.red.shade700 : Colors.teal.shade800),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  // 2. Full Week Projection Box
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: Colors.teal.shade100),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text('حساب نهاية الأسبوع (إجمالي):', style: TextStyle(fontFamily: 'Cairo', fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.teal)),
+                                              Text(totalWeekCount.toString() + ' يوم', style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, fontWeight: FontWeight.bold)),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text('إجمالي مستحق الممرض للأسبوع: ' + earned.toStringAsFixed(0) + ' ج.م', style: const TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: Colors.blueGrey)),
+                                          Text(
+                                            remaining >= 0
+                                                ? 'باقي للممرض بنهاية الأسبوع: ' + remaining.toStringAsFixed(0) + ' ج.م'
+                                                : 'عليه سلف بنهاية الأسبوع: ' + remaining.abs().toStringAsFixed(0) + ' ج.م',
+                                            style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: remaining >= 0 ? Colors.teal.shade800 : Colors.red.shade800),
+                                          ),
+                                          if (activeClient != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              clientFullBal < 0
+                                                  ? 'مديونية العميل بنهاية الأسبوع: ' + clientFullBal.abs().toStringAsFixed(0) + ' ج.م'
+                                                  : 'رصيد العميل بنهاية الأسبوع: ' + clientFullBal.toStringAsFixed(0) + ' ج.م',
+                                              style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.bold, color: clientFullBal < 0 ? Colors.red.shade700 : Colors.teal.shade800),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                     // Actions bar
                     Row(
                       children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => ManualAdjustCaregiverBalanceDialog(nurseName: nurseName, caregiver: caregiver),
+                            );
+                          },
+                          icon: const Icon(Icons.scale, size: 16),
+                          label: const Text('ضبط الحساب يدوياً ⚖️', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade800, foregroundColor: Colors.white),
+                        ),
+                        const SizedBox(width: 8),
                         ElevatedButton.icon(
                           onPressed: () {
                             _showAddTransactionDialog(context, defaultNurseName: nurseName, defaultType: 'advance');
@@ -1501,6 +1685,19 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                         _showAddTransactionDialog(context, defaultNurseName: nurse, defaultType: 'advance');
                                       } else if (val == 'payout') {
                                         _showAddTransactionDialog(context, defaultNurseName: nurse, defaultType: 'payout');
+                                      } else if (val == 'adjust') {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) => ManualAdjustCaregiverBalanceDialog(nurseName: nurse, caregiver: cg),
+                                        );
+                                      } else if (val == 'swap') {
+                                        final client = provider.clients.where((c) => provider.isNurseNameMatch(c.nurseAssigned, nurse) && c.status == 'active').firstOrNull;
+                                        if (client != null) {
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) => SwapCaregiverDialog(client: client, oldNurseName: nurse),
+                                          );
+                                        }
                                       } else if (val == 'cancel') {
                                         _showCancelNurseAccountDialog(context, provider, nurse, cg);
                                       }
@@ -1546,6 +1743,27 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                           ],
                                         ),
                                       ),
+                                      const PopupMenuItem(
+                                        value: 'adjust',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.scale, size: 18, color: Colors.teal),
+                                            SizedBox(width: 8),
+                                            Text('ضبط الحساب يدوياً ⚖️', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                      if (provider.clients.any((c) => provider.isNurseNameMatch(c.nurseAssigned, nurse) && c.status == 'active'))
+                                        const PopupMenuItem(
+                                          value: 'swap',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.swap_horiz, size: 18, color: Colors.amber),
+                                              SizedBox(width: 8),
+                                              Text('تبديل مقدم الخدمة 🔄', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                                            ],
+                                          ),
+                                        ),
                                       const PopupMenuDivider(),
                                       const PopupMenuItem(
                                         value: 'cancel',

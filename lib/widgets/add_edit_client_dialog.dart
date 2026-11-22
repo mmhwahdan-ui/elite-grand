@@ -1094,6 +1094,7 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               final openingBal = _calculateComputedOpeningBalance();
+                              final effectiveIsExisting = _isExistingClient || openingBal != 0.0;
                               final cPrice = double.tryParse(_dailyPriceController.text.trim()) ?? (widget.client?.dailyPrice ?? 0.0);
                               final nPrice = double.tryParse(_nurseDailyPriceController.text.trim()) ?? (widget.client?.nurseDailyPrice ?? 0.0);
 
@@ -1105,7 +1106,7 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                                   healthCondition: _healthConditionController.text.trim(),
                                   nurseAssigned: _nurseController.text.trim(),
                                   notes: _notesController.text.trim(),
-                                  isExistingClient: _isExistingClient,
+                                  isExistingClient: effectiveIsExisting,
                                   openingBalance: openingBal,
                                   dailyPrice: cPrice,
                                   nurseDailyPrice: nPrice,
@@ -1124,7 +1125,7 @@ class _AddEditClientDialogState extends State<AddEditClientDialog> {
                                   healthCondition: _healthConditionController.text.trim(),
                                   nurseAssigned: _nurseController.text.trim(),
                                   notes: _notesController.text.trim(),
-                                  isExistingClient: _isExistingClient,
+                                  isExistingClient: effectiveIsExisting,
                                   openingBalance: openingBal,
                                   dailyPrice: cPrice,
                                   nurseDailyPrice: nPrice,

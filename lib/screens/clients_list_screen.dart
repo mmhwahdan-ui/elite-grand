@@ -1,3 +1,4 @@
+import '../widgets/manual_adjust_client_balance_dialog.dart';
 import 'team_chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -560,6 +561,17 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                       },
                     ),
 
+                  ActionChip(
+                    avatar: const Icon(Icons.scale, size: 16, color: Colors.blue),
+                    label: const Text('ضبط الحساب يدوياً ⚖️', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.blue, fontWeight: FontWeight.bold)),
+                    backgroundColor: Colors.blue.shade50,
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => ManualAdjustClientBalanceDialog(client: client),
+                      );
+                    },
+                  ),
                   // Record Payment (Zezo & Wahdan)
                   if (provider.canRecordPayment)
                     ActionChip(

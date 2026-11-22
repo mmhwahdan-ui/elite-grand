@@ -1,3 +1,4 @@
+import '../widgets/manual_adjust_client_balance_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
@@ -53,6 +54,16 @@ class ClientDetailScreen extends StatelessWidget {
         appBar: AppBar(
           title: Text(client.name, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo')),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.scale_rounded, color: Colors.blue),
+              tooltip: 'ضبط وتسوية حساب العميل يدوياً ⚖️',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => ManualAdjustClientBalanceDialog(client: client),
+                );
+              },
+            ),
             if (provider.isManager || provider.isAccountant || provider.canEditAnyData)
               IconButton(
                 icon: const Icon(Icons.swap_horiz_rounded),
@@ -555,7 +566,7 @@ class ClientDetailScreen extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            if (client.isExistingClient && client.openingBalance != 0) ...[
+                            if (client.openingBalance != 0) ...[
                               _buildAccountingRow(
                                 client.openingBalance >= 0
                                     ? 'الرصيد الافتتاحي السابق (رصيد دائن مستحق للعميل):'
