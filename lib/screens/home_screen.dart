@@ -21,6 +21,7 @@ import 'team_chat_screen.dart';
 import 'nurse_portal_screen.dart';
 import 'case_offers_screen.dart';
 import '../widgets/management_instructions_dialog.dart';
+import '../widgets/all_users_passwords_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -384,6 +385,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
                   }
+                } else if (val == 'all_passwords') {
+                  showDialog(
+                    context: context,
+                    builder: (_) => const AllUsersPasswordsDialog(),
+                  );
                 } else if (val == 'cloud') {
                   showDialog(
                     context: context,
@@ -458,6 +464,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+                if (provider.isManager || provider.canManagePermissions)
+                  PopupMenuItem(
+                    value: 'all_passwords',
+                    child: Row(
+                      children: [
+                        Icon(Icons.vpn_key_rounded, color: Colors.amber.shade800, size: 20),
+                        const SizedBox(width: 8),
+                        Text('كشف كلمات مرور المستخدمين 🔑', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
+                      ],
+                    ),
+                  ),
                 const PopupMenuItem(
                   value: 'switch',
                   child: Row(

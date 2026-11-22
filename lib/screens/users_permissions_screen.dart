@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/all_users_passwords_dialog.dart';
 
 class UsersPermissionsScreen extends StatelessWidget {
   const UsersPermissionsScreen({super.key});
@@ -25,11 +27,11 @@ class UsersPermissionsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.shield_outlined, color: AppTheme.primary, size: 28),
-                  SizedBox(width: 12),
-                  Expanded(
+                  const Icon(Icons.shield_outlined, color: AppTheme.primary, size: 28),
+                  const SizedBox(width: 12),
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -38,10 +40,26 @@ class UsersPermissionsScreen extends StatelessWidget {
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'Cairo'),
                         ),
                         Text(
-                          'تخصيص وتوزيع الصلاحيات وتغيير كلمات المرور لجميع الحسابات الـ 5',
+                          'تخصيص وتوزيع الصلاحيات واستعراض كلمات المرور لجميع الحسابات',
                           style: TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Cairo'),
                         ),
                       ],
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => const AllUsersPasswordsDialog(),
+                      );
+                    },
+                    icon: const Icon(Icons.vpn_key_rounded, size: 16),
+                    label: const Text('كشف كلمات المرور 🔑', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber.shade800,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ],
@@ -91,9 +109,59 @@ class UsersPermissionsScreen extends StatelessWidget {
               ),
             ],
           ),
-          subtitle: Text(
-            user.roleTitle,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontFamily: 'Cairo'),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user.roleTitle,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontFamily: 'Cairo'),
+              ),
+              const SizedBox(height: 6),
+              // Password Display Badge for Wahdan / Manager
+              InkWell(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: user.password));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('تم نسخ كلمة مرور @${user.username} بنجاح (${user.password})', style: const TextStyle(fontFamily: 'Cairo')),
+                      backgroundColor: Colors.teal,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.amber.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.vpn_key_rounded, size: 13, color: Colors.amber.shade900),
+                      const SizedBox(width: 4),
+                      Text(
+                        'كلمة المرور: ',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber.shade900, fontFamily: 'Cairo'),
+                      ),
+                      SelectableText(
+                        user.password,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(Icons.copy, size: 12, color: Colors.amber.shade900),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
