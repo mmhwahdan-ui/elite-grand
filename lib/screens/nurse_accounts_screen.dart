@@ -496,6 +496,52 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                         ],
                       ),
                     ),
+                    if (caregiver != null && caregiver.openingBalance != 0.0) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: caregiver.openingBalance > 0 ? const Color(0xFFF0FDF4) : Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: caregiver.openingBalance > 0 ? Colors.green.shade300 : Colors.red.shade300,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              caregiver.openingBalance > 0 ? Icons.history_edu : Icons.receipt_long,
+                              color: caregiver.openingBalance > 0 ? Colors.green.shade700 : Colors.red.shade700,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    caregiver.openingBalance > 0
+                                        ? 'مستحقات سابقة مثبتة (خدمة قديمة): ${caregiver.openingBalance.toStringAsFixed(0)} ج.م'
+                                        : 'مديونية / سلفة سابقة مرحلة على الممرض: ${caregiver.openingBalance.abs().toStringAsFixed(0)} ج.م',
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12.5,
+                                      color: caregiver.openingBalance > 0 ? Colors.green.shade900 : Colors.red.shade900,
+                                    ),
+                                  ),
+                                  if (caregiver.currentClientName != null && caregiver.currentClientName!.isNotEmpty)
+                                    Text(
+                                      'عن الخدمة المنفذة للحالة: ${caregiver.currentClientName!}',
+                                      style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey.shade700),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
 
                     // Actions bar
@@ -984,6 +1030,29 @@ class _NurseAccountsScreenState extends State<NurseAccountsScreen> {
                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                  decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(4)),
                                                  child: Text('سلف: ' + advances.toStringAsFixed(0) + ' ج.م', style: TextStyle(color: Colors.amber.shade900, fontSize: 11, fontFamily: 'Cairo')),
+                                               ),
+                                             if (provider.findCaregiverByName(nurse) != null && provider.findCaregiverByName(nurse)!.openingBalance != 0.0)
+                                               Container(
+                                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                 decoration: BoxDecoration(
+                                                   color: provider.findCaregiverByName(nurse)!.openingBalance > 0 ? Colors.green.shade50 : Colors.red.shade50,
+                                                   borderRadius: BorderRadius.circular(4),
+                                                   border: Border.all(
+                                                     color: provider.findCaregiverByName(nurse)!.openingBalance > 0 ? Colors.green.shade300 : Colors.red.shade300,
+                                                     width: 0.5,
+                                                   ),
+                                                 ),
+                                                 child: Text(
+                                                   provider.findCaregiverByName(nurse)!.openingBalance > 0
+                                                       ? 'رصيد سابق: ' + provider.findCaregiverByName(nurse)!.openingBalance.toStringAsFixed(0) + ' ج.م'
+                                                       : 'مديونية سابقة: ' + provider.findCaregiverByName(nurse)!.openingBalance.abs().toStringAsFixed(0) + ' ج.م',
+                                                   style: TextStyle(
+                                                     color: provider.findCaregiverByName(nurse)!.openingBalance > 0 ? Colors.green.shade900 : Colors.red.shade900,
+                                                     fontSize: 11,
+                                                     fontFamily: 'Cairo',
+                                                     fontWeight: FontWeight.bold,
+                                                   ),
+                                                 ),
                                                ),
                                               if (provider.findCaregiverByName(nurse) != null)
                                                 Builder(

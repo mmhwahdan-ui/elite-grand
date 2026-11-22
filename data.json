@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-22T10:37:38.357Z",
+  "lastUpdated": "2026-11-22T11:56:32.984Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -268,7 +268,21 @@
     "day_2c5c32e9",
     "day_163030bf",
     "day_f4aa9d1c",
-    "day_677bdf12"
+    "day_677bdf12",
+    "day_7486be77",
+    "day_a7a25686",
+    "day_d3aee188",
+    "day_3d5476f3",
+    "day_c0b412e7",
+    "day_efc7ba35",
+    "day_a2dd1498",
+    "day_2875bfaa",
+    "day_9b1d5894",
+    "day_926ad012",
+    "day_8a863733",
+    "day_78f6ea57",
+    "day_5a103229",
+    "cli_7662974e"
   ],
   "openingBalances": {
     "bank": 0,
@@ -292,21 +306,18 @@
       "phone": "01000880131",
       "serviceType": "hours12",
       "status": "active",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "startDate": "2026-11-22T00:00:00.000",
       "activeWeekdays": [
-        1,
-        2,
         3,
-        4,
-        5,
-        6,
-        7
+        7,
+        1,
+        4
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
+      "daysPerWeek": 4,
+      "serviceScheduleType": "custom_days",
       "settlementFrequency": "weekly",
-      "endDate": null
+      "endDate": "2026-11-29T00:00:00.000"
     },
     {
       "address": "المنيل",
@@ -323,9 +334,9 @@
       "openingBalance": 0,
       "phone": "01001440101",
       "serviceType": "hours24",
-      "startDate": "2026-11-21T00:00:00.000",
-      "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "startDate": "2026-11-22T00:00:00.000",
+      "status": "active",
+      "updatedAt": "2026-11-22T11:33:01.485Z",
       "activeWeekdays": [
         1,
         2,
@@ -347,17 +358,17 @@
       "dailyPrice": 400,
       "healthCondition": "زهايمر",
       "id": "cli_2a197e89",
-      "isExistingClient": false,
+      "isExistingClient": true,
       "name": "ابتسام",
       "notes": "[2026/11/18] تم تمديد/تعديل مدة الخدمة",
       "nurseAssigned": "شيماء 1",
-      "nurseDailyPrice": 307.5,
-      "openingBalance": 0,
+      "nurseDailyPrice": 308,
+      "openingBalance": 400,
       "phone": "01203225572",
       "serviceType": "hours24",
       "startDate": "2026-11-22T00:00:00.000",
-      "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "status": "active",
+      "updatedAt": "2026-11-22T13:39:01.373",
       "activeWeekdays": [
         1,
         2,
@@ -389,7 +400,7 @@
       "serviceType": "hours24",
       "startDate": null,
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "activeWeekdays": [
         1,
         2,
@@ -421,7 +432,7 @@
       "serviceType": "hours24",
       "startDate": null,
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "activeWeekdays": [
         1,
         2,
@@ -434,38 +445,6 @@
       "daysPerWeek": 7,
       "serviceScheduleType": "all_week",
       "settlementFrequency": "weekly",
-      "endDate": null
-    },
-    {
-      "address": "الاسكندريه",
-      "createdAt": "2026-11-10T13:42:50.661",
-      "createdBy": "shimaa",
-      "dailyPrice": 0,
-      "healthCondition": "كسر ف الكامل ممنوع الحركة \nبتاخد ادويه سيوله ابره كلكسان + ادويه تاب",
-      "id": "cli_7662974e",
-      "isExistingClient": false,
-      "name": "مدام وفاء هارون",
-      "notes": "اتفقت ع 500 ف 24 س \nمساعده تمريض اقامه",
-      "nurseAssigned": "",
-      "nurseDailyPrice": 0,
-      "openingBalance": 0,
-      "phone": "01006690602",
-      "serviceType": "hours12",
-      "status": "pending_pricing",
-      "updatedAt": "2026-11-22T12:21:48.370",
-      "activeWeekdays": [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7
-      ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly",
-      "startDate": null,
       "endDate": null
     },
     {
@@ -485,7 +464,7 @@
       "serviceType": "hours12",
       "startDate": null,
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "activeWeekdays": [
         1,
         2,
@@ -518,7 +497,7 @@
       "serviceType": "hours24",
       "startDate": null,
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "terminationReason": "طلب العميل إيقاف الخدمة مؤقتاً",
       "activeWeekdays": [
         1,
@@ -551,7 +530,7 @@
       "serviceType": "hours12",
       "startDate": null,
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "activeWeekdays": [
         1,
         2,
@@ -582,7 +561,7 @@
       "serviceType": "hours24",
       "startDate": null,
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "activeWeekdays": [
         1,
         2,
@@ -615,7 +594,7 @@
       "serviceType": "hours12",
       "startDate": null,
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "activeWeekdays": [
         1,
         2,
@@ -646,7 +625,7 @@
       "serviceType": "hours12",
       "startDate": null,
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "activeWeekdays": [
         1,
         2,
@@ -679,7 +658,7 @@
       "serviceType": "hours24",
       "startDate": null,
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "activeWeekdays": [
         1,
         2,
@@ -701,9 +680,9 @@
       "clientId": "cli_2e10d0fd",
       "clientName": "كريم الحسيني",
       "clientPrice": 500,
-      "createdAt": "2026-11-22T12:23:12.428",
+      "createdAt": "2026-11-22T13:10:10.736",
       "date": "2026-11-26T00:00:00.000",
-      "id": "day_7486be77",
+      "id": "day_bef90a0e",
       "notes": "تفعيل خدمة أسبوعي",
       "nurseName": "محمود",
       "nursePrice": 400,
@@ -714,9 +693,9 @@
       "clientId": "cli_2e10d0fd",
       "clientName": "كريم الحسيني",
       "clientPrice": 500,
-      "createdAt": "2026-11-22T12:23:12.428",
+      "createdAt": "2026-11-22T13:10:10.736",
       "date": "2026-11-25T00:00:00.000",
-      "id": "day_a7a25686",
+      "id": "day_8181fc19",
       "notes": "تفعيل خدمة أسبوعي",
       "nurseName": "محمود",
       "nursePrice": 400,
@@ -727,9 +706,9 @@
       "clientId": "cli_2e10d0fd",
       "clientName": "كريم الحسيني",
       "clientPrice": 500,
-      "createdAt": "2026-11-22T12:23:12.428",
+      "createdAt": "2026-11-22T13:10:10.736",
       "date": "2026-11-23T00:00:00.000",
-      "id": "day_d3aee188",
+      "id": "day_62de7c09",
       "notes": "تفعيل خدمة أسبوعي",
       "nurseName": "محمود",
       "nursePrice": 400,
@@ -740,9 +719,9 @@
       "clientId": "cli_2e10d0fd",
       "clientName": "كريم الحسيني",
       "clientPrice": 500,
-      "createdAt": "2026-11-22T12:23:12.427",
+      "createdAt": "2026-11-22T13:10:10.736",
       "date": "2026-11-22T00:00:00.000",
-      "id": "day_3d5476f3",
+      "id": "day_c6c62695",
       "notes": "تفعيل خدمة أسبوعي",
       "nurseName": "محمود",
       "nursePrice": 400,
@@ -1031,7 +1010,7 @@
       "rating": 5,
       "residenceArea": "",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "openingBalance": 0
     },
     {
@@ -1056,7 +1035,7 @@
       "rating": 5,
       "residenceArea": "المنوفيه",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "openingBalance": 0
     },
     {
@@ -1081,7 +1060,7 @@
       "rating": 5,
       "residenceArea": "قنا",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "openingBalance": 0
     },
     {
@@ -1106,7 +1085,7 @@
       "rating": 5,
       "residenceArea": "الغربيه",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "openingBalance": 0
     },
     {
@@ -1131,7 +1110,7 @@
       "rating": 5,
       "residenceArea": "المطريه القاهره",
       "shiftPreference": "hours12",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "openingBalance": 0
     },
     {
@@ -1156,8 +1135,29 @@
       "rating": 5,
       "residenceArea": "عزبه النخل القاهره",
       "shiftPreference": "hours12",
-      "updatedAt": "2026-11-22T12:21:48.370",
+      "updatedAt": "2026-11-22T13:09:49.406",
       "openingBalance": 0
+    },
+    {
+      "id": "cg_amira_haifa",
+      "code": "CG-007",
+      "name": "اميره",
+      "phone": "01001440101",
+      "address": "المنيل",
+      "qualification": "تمريض منزلي",
+      "residenceArea": "القاهرة",
+      "rating": 5,
+      "dailyPrice": 350,
+      "shiftPreference": "both",
+      "isBlocked": false,
+      "hasWorkedWithUs": true,
+      "hasLoginAccount": false,
+      "isCurrentlyWorking": true,
+      "currentClientName": "هيفاء",
+      "openingBalance": 5350,
+      "createdAt": "2026-11-22T13:20:23.858",
+      "updatedAt": "2026-11-22T11:33:01.483Z",
+      "createdBy": "wahdan"
     }
   ],
   "notifications": [
@@ -2864,7 +2864,7 @@
       "timestamp": "2026-11-18T21:36:32.825",
       "title": "حساب تمريض ورسالة SMS",
       "userId": "usr_shimaa",
-      "userName": "أ/ ��يماء",
+      "userName": "أ/ شيماء",
       "userRole": "مديرة المتابعة والتشغيل"
     },
     {

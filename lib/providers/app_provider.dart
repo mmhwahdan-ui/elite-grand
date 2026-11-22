@@ -1232,8 +1232,24 @@ class AppProvider extends ChangeNotifier {
             openingBalance: newCgBalance,
             updatedAt: DateTime.now(),
           );
-          await storageService.saveCaregivers(_caregivers);
+        } else {
+          final newCode = 'CG-' + (_caregivers.length + 1).toString().padLeft(3, '0');
+          final newCg = CaregiverModel(
+            id: 'cg_' + DateTime.now().millisecondsSinceEpoch.toString(),
+            name: nurse.trim(),
+            code: newCode,
+            phone: '',
+            dailyPrice: current.nurseDailyPrice > 0 ? current.nurseDailyPrice : 0.0,
+            isCurrentlyWorking: true,
+            currentClientName: current.name,
+            openingBalance: nurseOpeningBalance ?? 0.0,
+            createdBy: _currentUser?.username ?? 'wahdan',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          _caregivers.add(newCg);
         }
+        await storageService.saveCaregivers(_caregivers);
 
         // Record opening advance / indebtedness on the caregiver if provided
         if (nurseOpeningAdvance != null && nurseOpeningAdvance > 0) {
@@ -1722,8 +1738,24 @@ class AppProvider extends ChangeNotifier {
           currentClientName: client.name,
           openingBalance: newCgBalance,
         );
-        await storageService.saveCaregivers(_caregivers);
+      } else {
+        final newCode = 'CG-' + (_caregivers.length + 1).toString().padLeft(3, '0');
+        final newCg = CaregiverModel(
+          id: 'cg_' + DateTime.now().millisecondsSinceEpoch.toString(),
+          name: cleanNurse,
+          code: newCode,
+          phone: '',
+          dailyPrice: nursePrice > 0 ? nursePrice : 0.0,
+          isCurrentlyWorking: true,
+          currentClientName: client.name,
+          openingBalance: nurseOpeningBalance ?? 0.0,
+          createdBy: _currentUser?.username ?? 'wahdan',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+        _caregivers.add(newCg);
       }
+      await storageService.saveCaregivers(_caregivers);
     }
 
     await storageService.saveClients(_clients);
@@ -2623,14 +2655,16 @@ class AppProvider extends ChangeNotifier {
         return !d.isBefore(startNorm) && !d.isAfter(endNorm);
       }).toList();
 
-      final earned = periodShifts.fold(0.0, (sum, s) => sum + s.nursePrice);
-      final advances = periodTrans.where((t) => t.type == 'advance').fold(0.0, (sum, t) => sum + t.amount);
+      final cg = findCaregiverByName(nurse);
+      final cgOpEarned = (cg != null && cg.openingBalance > 0) ? cg.openingBalance : 0.0;
+      final cgOpAdvance = (cg != null && cg.openingBalance < 0) ? cg.openingBalance.abs() : 0.0;
+      final earned = periodShifts.fold(0.0, (sum, s) => sum + s.nursePrice) + cgOpEarned;
+      final advances = periodTrans.where((t) => t.type == 'advance').fold(0.0, (sum, t) => sum + t.amount) + cgOpAdvance;
       final payouts = periodTrans.where((t) => t.type == 'payout').fold(0.0, (sum, t) => sum + t.amount);
       final periodNetDue = earned - advances - payouts;
       final allTimeRem = getNurseRemainingBalance(nurse);
 
       final clientNames = periodShifts.map((s) => s.clientName).toSet().toList();
-      final cg = findCaregiverByName(nurse);
 
       if (periodShifts.isNotEmpty || advances > 0 || payouts > 0 || allTimeRem.abs() > 0.01) {
         caregiverItems.add(CaregiverSettlementItem(
