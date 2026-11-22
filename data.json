@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-22T09:19:07.079Z",
+  "lastUpdated": "2026-11-22T09:36:21.841Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -945,6 +945,7 @@
       "username": "01096551478"
     }
   ],
+  "caregivers": [],
   "notifications": [
     {
       "actionType": "add_client",
@@ -1352,7 +1353,7 @@
         "clientName": "عمرو"
       },
       "timestamp": "2026-11-10T15:58:52.154",
-      "title": "��سجيل تحصيل نقدية",
+      "title": "تسجيل تحصيل نقدية",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"

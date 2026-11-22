@@ -1166,6 +1166,9 @@ class AppProvider extends ChangeNotifier {
     DateTime? endDate,
     bool isOpenEnded = false,
     String? nurseAssigned,
+    double? clientOpeningBalance,
+    double? nurseOpeningAdvance,
+    String nurseAdvanceTreasury = 'bank',
   }) async {
     final index = _clients.indexWhere((c) => c.id == clientId);
     if (index != -1) {
@@ -1173,12 +1176,15 @@ class AppProvider extends ChangeNotifier {
       final start = startDate ?? DateTime.now();
       final end = isOpenEnded ? null : endDate;
       final nurse = nurseAssigned ?? current.nurseAssigned;
+      final opBalance = clientOpeningBalance ?? current.openingBalance;
 
       _clients[index] = current.copyWith(
         startDate: start,
         endDate: end,
         clearEndDate: isOpenEnded,
         nurseAssigned: nurse,
+        openingBalance: opBalance,
+        isExistingClient: opBalance != 0.0,
         status: 'active',
         updatedAt: DateTime.now(),
       );
@@ -1212,12 +1218,41 @@ class AppProvider extends ChangeNotifier {
         }
       }
 
+      // Update Caregiver active working status
+      if (nurse != null && nurse.trim().isNotEmpty) {
+        final cgIdx = _caregivers.indexWhere((cg) => isNurseNameMatch(cg.name, nurse));
+        if (cgIdx != -1) {
+          _caregivers[cgIdx] = _caregivers[cgIdx].copyWith(
+            isCurrentlyWorking: true,
+            currentClientName: current.name,
+            updatedAt: DateTime.now(),
+          );
+          await storageService.saveCaregivers(_caregivers);
+        }
+
+        // Record opening advance / indebtedness on the caregiver if provided
+        if (nurseOpeningAdvance != null && nurseOpeningAdvance > 0) {
+          await recordNurseTransaction(
+            nurseName: nurse,
+            amount: nurseOpeningAdvance,
+            date: start,
+            type: 'advance',
+            paymentChannel: nurseAdvanceTreasury,
+            notes: 'سلفة / مديونية سابقة مسجلة عند بدء خدمة العميل (${current.name})',
+            clientId: clientId,
+            clientName: current.name,
+          );
+        }
+      }
+
       final durStr = isOpenEnded
           ? 'مدة مفتوحة'
           : 'من ${DateFormat('yyyy/MM/dd').format(start)} إلى ${end != null ? DateFormat('yyyy/MM/dd').format(end) : ''}';
       await _logAction(
         title: 'بدء خدمة عميل',
-        description: 'تم بدء الخدمة للعميل: ${current.name} ($durStr) - التمريض: ${nurse ?? "غير محدد"}',
+        description: 'تم بدء الخدمة للعميل: ${current.name} ($durStr) - التمريض: ${nurse ?? "غير محدد"}' +
+            (opBalance != 0.0 ? ' - رصيد سابق للعميل: ${opBalance.toStringAsFixed(0)} ج.م' : '') +
+            (nurseOpeningAdvance != null && nurseOpeningAdvance > 0 ? ' - سلفة ممرض: ${nurseOpeningAdvance.toStringAsFixed(0)} ج.م' : ''),
         actionType: 'start_service',
         metadata: {'clientId': clientId, 'clientName': current.name},
       );
