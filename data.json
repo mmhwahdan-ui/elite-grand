@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-22T17:28:51.670Z",
+  "lastUpdated": "2026-11-23T04:09:53.534Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -372,13 +372,13 @@
       "name": "ابتسام",
       "notes": "[2026/11/18] تم تمديد/تعديل مدة الخدمة",
       "nurseAssigned": "شيماء ايمن محمد سعيد الامير",
-      "nurseDailyPrice": 307.5,
+      "nurseDailyPrice": 307,
       "openingBalance": 400,
       "phone": "01203225572",
       "serviceType": "hours24",
-      "startDate": "2026-11-22T00:00:00.000",
+      "startDate": "2026-11-07T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-22T15:57:55.532",
+      "updatedAt": "2026-11-23T05:40:35.566",
       "activeWeekdays": [
         1,
         2,
@@ -523,7 +523,7 @@
       "settlementFrequency": "weekly"
     },
     {
-      "address": "عماره 18 شارع النزهه مصر الجديده",
+      "address": "عماره 18 شارع النزهه م��������������������������������������������������������������������������ر الجديده",
       "createdAt": "2026-11-10T15:50:49.543",
       "createdBy": "wahdan",
       "dailyPrice": 450,
@@ -653,7 +653,7 @@
     {
       "amount": 3150,
       "clientId": "cli_678010eb",
-      "clientName": "ناديه",
+      "clientName": "��اد����",
       "createdAt": "2026-11-22T18:16:09.724",
       "id": "pay_e1c9d2df",
       "notes": "",
@@ -680,12 +680,12 @@
   "serviceDays": [
     {
       "clientId": "cli_2e10d0fd",
-      "clientName": "كريم الحسيني",
+      "clientName": "كريم الح��يني",
       "clientPrice": 500,
       "createdAt": "2026-11-22T14:04:36.609",
       "date": "2026-11-26T00:00:00.000",
       "id": "day_f4b7d0cf",
-      "notes": "تفعيل خدمة أسبوعي",
+      "notes": "��ف����يل ��دمة أسبوعي",
       "nurseName": "محمود",
       "nursePrice": 400,
       "recordedBy": "wahdan",
@@ -698,7 +698,7 @@
       "createdAt": "2026-11-22T14:04:36.609",
       "date": "2026-11-25T00:00:00.000",
       "id": "day_78e5ff97",
-      "notes": "تفعيل خدمة أسبوعي",
+      "notes": "تفعي�� خدمة أسبوعي",
       "nurseName": "محمود",
       "nursePrice": 400,
       "recordedBy": "wahdan",
@@ -750,7 +750,7 @@
       "createdAt": "2026-11-22T14:11:22.878",
       "date": "2026-11-28T00:00:00.000",
       "id": "day_f1a64cfc",
-      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم - طوال الأسبوع (7 أيام))",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم - طوال الأسبوع (7 أ��ام))",
       "nurseName": "زينب",
       "nursePrice": 700,
       "recordedBy": "wahdan",
@@ -875,7 +875,7 @@
     },
     {
       "clientId": "cli_2e10d0fd",
-      "clientName": "كريم الحسيني",
+      "clientName": "كريم الح��يني",
       "clientPrice": 500,
       "createdAt": "2026-11-22T15:43:31.441",
       "date": "2026-11-22T00:00:00.000",
@@ -901,12 +901,12 @@
     },
     {
       "clientId": "cli_19d0c98d",
-      "clientName": "احمد وصفي",
+      "clientName": "احمد ��صفي",
       "clientPrice": 900,
       "createdAt": "2026-11-22T16:22:55.786",
       "date": "2026-11-25T00:00:00.000",
       "id": "day_fba53545",
-      "notes": "تفعيل خدمة أسبوعي",
+      "notes": "تفعيل خدمة أس��وعي",
       "nurseName": "زينب",
       "nursePrice": 700,
       "recordedBy": "wahdan",
@@ -927,7 +927,7 @@
     },
     {
       "clientId": "cli_19d0c98d",
-      "clientName": "احمد وصفي",
+      "clientName": "اح��د وصفي",
       "clientPrice": 900,
       "createdAt": "2026-11-22T16:22:55.786",
       "date": "2026-11-23T00:00:00.000",
@@ -958,7 +958,7 @@
       "createdAt": "2026-11-22T16:53:56.911",
       "date": "2026-11-29T00:00:00.000",
       "id": "day_0d88730b",
-      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم - طوال الأسبوع (7 أيام))",
+      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم - طوال الأسبوع (7 أ��ام))",
       "nurseName": "نهى احمد شوقي محمود مرسي",
       "nursePrice": 450,
       "recordedBy": "wahdan",
@@ -985,7 +985,7 @@
       "date": "2026-11-27T00:00:00.000",
       "id": "day_5d779b3a",
       "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم - طوال الأسبوع (7 أيام))",
-      "nurseName": "نهى احمد شوقي محمود مرسي",
+      "nurseName": "ن��ى احمد شوقي محمود مرسي",
       "nursePrice": 450,
       "recordedBy": "wahdan",
       "shiftType": "hours12"
@@ -997,7 +997,7 @@
       "createdAt": "2026-11-22T16:53:56.911",
       "date": "2026-11-26T00:00:00.000",
       "id": "day_ae615d06",
-      "notes": "تسجيل آلي للمدة المحددة للتعاقد (8 يوم - طوال الأسبوع (7 أيام))",
+      "notes": "تسجيل ��لي للمدة المحددة للتعاقد (8 يوم - طوال الأسبوع (7 أيام))",
       "nurseName": "نهى احمد شوقي محمود مرسي",
       "nursePrice": 450,
       "recordedBy": "wahdan",
@@ -1096,7 +1096,7 @@
     },
     {
       "clientId": "cli_7b2153f1",
-      "clientName": "احمد وصفي",
+      "clientName": "اح��د وصفي",
       "clientPrice": 900,
       "createdAt": "2026-11-22T17:26:54.024",
       "date": "2026-11-23T00:00:00.000",
@@ -1115,7 +1115,7 @@
       "date": "2026-11-22T00:00:00.000",
       "id": "day_12562431",
       "notes": "تفعيل خدمة أسبوعي",
-      "nurseName": "زينب محمد عبد الحميد احمد خير الله",
+      "nurseName": "زينب محمد عبد الحم��د احمد خير الله",
       "nursePrice": 700,
       "recordedBy": "wahdan",
       "shiftType": "hours24"
@@ -1128,8 +1128,8 @@
       "date": "2026-11-20T00:00:00.000",
       "endTime": "12:00 م",
       "id": "day_61c7d578",
-      "notes": "حساب طبقاً للمدة وجدول الخدمة الأسبوعي (طوال الأسبوع (7 أيام))",
-      "nurseName": "سميه جمال عبد الحليم سعد ابراهيم",
+      "notes": "حساب طبقاً للمدة وج��ول الخدمة الأسبوعي (طوال الأسبوع (7 أيام))",
+      "nurseName": "سم��ه جمال عبد الحليم ��عد ابراهيم",
       "nursePrice": 400,
       "recordedBy": "wahdan",
       "shiftType": "hours24",
@@ -1140,12 +1140,12 @@
     {
       "amount": 800,
       "clientId": "cli_2e10d0fd",
-      "clientName": "كريم الحسيني",
+      "clientName": "كر��م الحسيني",
       "createdAt": "2026-11-22T16:01:05.196",
       "date": "2026-11-22T16:00:56.712",
       "id": "ntr_01eae633",
       "notes": "",
-      "nurseName": "محمود احمد عبد القادر شمس الدين",
+      "nurseName": "م��مو�� احمد عبد القادر ش��س الدين",
       "paymentChannel": "bank",
       "recordedBy": "zezo",
       "type": "advance"
@@ -1661,28 +1661,28 @@
       "openingBalance": 0
     },
     {
-      "address": "مركز السنطه - الغربيه",
-      "code": "CG-011",
+      "address": "ميت غزل مركز السنطه",
+      "code": "CG-004",
       "createdAt": "2026-11-18T19:03:01.593",
       "createdBy": "wahdan",
       "currentClientName": "ابتسام",
-      "dailyPrice": 400,
+      "dailyPrice": 307,
       "hasLoginAccount": true,
-      "hasWorkedWithUs": true,
+      "hasWorkedWithUs": false,
       "id": "cg_1795021381593",
       "isBlocked": false,
       "isCurrentlyWorking": true,
-      "lastSmsSentAt": "2026-11-22T15:55:38.188",
+      "lastSmsSentAt": "2026-11-18T19:20:34.651",
       "loginPassword": "654321",
-      "loginUsername": "CG-011",
+      "loginUsername": "01068561497",
       "name": "شيماء ايمن محمد سعيد الامير",
       "nationalId": "28908211601628",
       "phone": "01068561497",
-      "qualification": "جليسه",
+      "qualification": "حاصله على دبلوم تجاره",
       "rating": 5,
       "residenceArea": "الغربيه",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T15:57:55.532",
+      "updatedAt": "2026-11-23T05:40:35.587",
       "openingBalance": 1535
     },
     {
@@ -1775,19 +1775,19 @@
       "loginUsername": "CG-014",
       "name": "سميه جمال عبد الحليم سعد ابراهيم",
       "nationalId": "30603011705503",
-      "openingBalance": 400,
+      "openingBalance": 800,
       "phone": "01044142641",
       "qualification": "تمريض",
       "rating": 5,
       "residenceArea": "المنوفيه",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T18:58:28.976",
+      "updatedAt": "2026-11-23T05:25:36.980",
       "currentClientName": "ناديه",
-      "lastLatitude": 30.0796705,
-      "lastLocationAccuracy": 18.746999740600586,
+      "lastLatitude": 30.07955425975768,
+      "lastLocationAccuracy": 105,
       "lastLocationSource": "nurse_phone",
-      "lastLocationUpdate": "2026-11-22T18:36:42.724",
-      "lastLongitude": 31.3767164
+      "lastLocationUpdate": "2026-11-23T05:25:36.980",
+      "lastLongitude": 31.376645532002097
     },
     {
       "address": "6 اكتوبر ثاني",
@@ -1839,7 +1839,7 @@
       "updatedAt": "2026-11-22T15:40:30.235"
     },
     {
-      "address": "عماره 6 الثمن عماير",
+      "address": "عماره 6 ال������������من عماير",
       "code": "CG-009",
       "createdAt": "2026-11-22T15:36:09.582",
       "createdBy": "wahdan",
@@ -2010,7 +2010,7 @@
       "title": "صرف مستحقات تمريض",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userRole": "مدير ال��ركة (المدير العام)"
     },
     {
       "actionType": "start_service",
@@ -2231,7 +2231,7 @@
     },
     {
       "actionType": "start_service",
-      "description": "تم بدء الخدمة للعميل: عمرو (من 2026/11/07 إلى 2026/11/10) - التمريض: نهى",
+      "description": "تم بد�� الخدمة ل��عميل: ��مر�� (م�� 2026/11/07 إل�� 2026/11/10) - التمريض: نهى",
       "id": "ntf_871df4d5",
       "metadata": {
         "clientId": "cli_84191f94",
@@ -2482,7 +2482,7 @@
     },
     {
       "actionType": "service_days",
-      "description": "تم تسجيل 8 يوم خدمة للعميل: محمد عثمان - التمريض: نورهان (hours12) (من 11:00 ص إلى 11:00 م)",
+      "description": "تم تسجيل 8 يوم خدمة للعميل: محمد عثمان - الت��ريض: نورهان (hours12) (من 11:00 ص إلى 11:00 م)",
       "id": "ntf_69a893b1",
       "metadata": {
         "clientId": "cli_c025fb5c",
@@ -2490,7 +2490,7 @@
         "daysCount": 8
       },
       "timestamp": "2026-11-10T15:43:41.934",
-      "title": "تسجيل أيام الخدمة",
+      "title": "تسجيل أيا�� الخدمة",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"
@@ -2504,14 +2504,14 @@
         "dailyPrice": 450
       },
       "timestamp": "2026-11-10T15:42:25.967",
-      "title": "إضافة عميل جديد",
+      "title": "��ضافة عميل ��دي��",
       "userId": "usr_wahdan",
-      "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userName": "أ/ وه��ان",
+      "userRole": "مد��ر الشركة (المدير ال��ام)"
     },
     {
       "actionType": "payment",
-      "description": "تم تحصيل مبلغ 1926 ج.م من العميل: اميره (ا��حساب البنكي)",
+      "description": "تم تحصي���������������������������������������������������������������������� مبلغ 1926 ج.م من العميل: اميره (ا��حساب البنكي)",
       "id": "ntf_c8f5a3fa",
       "metadata": {
         "amount": 1926,
@@ -2562,7 +2562,7 @@
         "dailyPrice": 321.42
       },
       "timestamp": "2026-11-10T14:50:01.220",
-      "title": "إضافة عميل جديد",
+      "title": "إضافة عميل جدي��",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"
@@ -2613,17 +2613,17 @@
     },
     {
       "actionType": "delete_expense",
-      "description": "تم حذف مصروف: حساب نورهان بقيمة 700 ج.م",
+      "description": "تم حذف مص��وف: حساب نورهان بقي��ة 700 ج.م",
       "id": "ntf_8df91a60",
       "timestamp": "2026-11-11T08:48:39.763",
-      "title": "حذف مصروف",
+      "title": "حذف ��صروف",
       "userId": "usr_wahdan",
-      "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userName": "��/ و��دان",
+      "userRole": "��دي�� الشركة (المدير ال��������������������������������������������������������������������������������������������������������������������������������������������ام)"
     },
     {
       "actionType": "nurse_payout",
-      "description": "تم صرف مستحقات تمريض للممرض: نورهان بمبلغ 700 ج.م (الحساب البنكي)",
+      "description": "تم صرف مس��حق����ت تمريض ��لم��رض: نو��ها���� بمبلغ 700 ��.م (الحساب ال��نك��)",
       "id": "ntf_04618cd6",
       "metadata": {
         "amount": 700,
@@ -2831,7 +2831,7 @@
       "timestamp": "2026-11-11T18:28:22.291",
       "title": "تسجيل تحصيل نقدية",
       "userId": "usr_zezo",
-      "userName": "أ/ زيزو",
+      "userName": "أ/ ز��زو",
       "userRole": "مدير الحسابات والمالية"
     },
     {
@@ -3142,39 +3142,39 @@
       "title": "صرف مستحقات تمريض",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
-      "userRole": "مدير الحسابات والمالية"
+      "userRole": "مدير الحسابات و��لم��لي��"
     },
     {
       "actionType": "nurse_payout",
-      "description": "تم صرف مستحقات تمريض للممرض: اميره بمبلغ 700 ج.م (الخزينة كاش)",
+      "description": "تم صرف مستحقات تمريض للممرض: اميره ب��بل�� 700 ج.م (ال��زينة كاش)",
       "id": "ntf_f1c69a7f",
       "metadata": {
         "amount": 700,
-        "nurseName": "اميره"
+        "nurseName": "ا��يره"
       },
       "timestamp": "2026-11-16T18:47:59.180",
-      "title": "صرف مستحقات تمريض",
+      "title": "��رف مستحقات ��مر��ض",
       "userId": "usr_zezo",
-      "userName": "أ/ زيزو",
-      "userRole": "مدير الحسابات والمالية"
+      "userName": "أ/ ��يز��",
+      "userRole": "م��ير الحسابات ��ال��ال��ة"
     },
     {
       "actionType": "nurse_payout",
-      "description": "تم صرف مستحقات تمريض للممرض: شيماء 1 بمبلغ 2150 ج.م (الحساب البنكي)",
+      "description": "تم صر�� مستحقات ��مر��ض للممرض: شيماء 1 بم��لغ 2150 ��.م (الحساب ال��نك��)",
       "id": "ntf_3639b90d",
       "metadata": {
         "amount": 2150,
-        "nurseName": "شيماء 1"
+        "nurseName": "ش��ما�� 1"
       },
       "timestamp": "2026-11-17T11:19:13.801",
-      "title": "صرف مستحقات تمريض",
+      "title": "��رف مستحقات تمريض",
       "userId": "usr_zezo",
-      "userName": "أ/ زيزو",
-      "userRole": "مدير الحسابات والمالية"
+      "userName": "أ/ زي������و",
+      "userRole": "مدير الحسابات ��الم��لية"
     },
     {
       "actionType": "add_caregiver",
-      "description": "أ/ وهدان قام بإضافة: شيماء حسن الحاكم (كود: CG-001) - السعر: 400 ج",
+      "description": "أ/ وه��ان قام بإ��افة: ��يماء حسن ال��اك�� (ك��د: CG-001) - ا��سع��: 400 ج",
       "id": "ntf_1671f3d5",
       "metadata": {
         "caregiverId": "cg_1794991670881",
@@ -3208,31 +3208,31 @@
     },
     {
       "actionType": "edit_caregiver",
-      "description": "أ/ وهدان قام بتعديل بيانات: شيماء حسن الحاكم (كود: CG-001)",
+      "description": "أ/ وهدان قام بتعديل بيانات: شيم��ء حسن ��لحاكم (كود: CG-001)",
       "id": "ntf_3d12f0be",
       "metadata": {
         "caregiverId": "cg_1794991670881",
         "name": "شيماء حسن الحاكم"
       },
       "timestamp": "2026-11-18T10:56:37.184",
-      "title": "تعديل ملف مقدم خدمة",
+      "title": "تعد��ل ملف ��قدم خدمة",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"
     },
     {
       "actionType": "change_password",
-      "description": "تم تحديث كلمة المرور للمستخدم: أ/ وهدان",
+      "description": "تم تحديث ��ل��ة المرور للمستخد��: أ/ وهدان",
       "id": "ntf_6179935a",
       "metadata": {
         "userId": "usr_wahdan",
         "username": "wahdan"
       },
       "timestamp": "2026-11-18T15:18:43.715",
-      "title": "تغيير كلمة المرور",
+      "title": "تغيير كلمة الم��ور",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userRole": "مد��������ر الشركة (المدير العام)"
     },
     {
       "actionType": "nurse_sms",
@@ -3246,7 +3246,7 @@
     },
     {
       "actionType": "nurse_account",
-      "description": "تم تفعيل حساب النظام للممرض: زينب محمد عبد الحميد احمد خير الله (اسم المستخدم: cg002) وإرسال رسالة SMS",
+      "description": "تم تفعيل حساب النظام للممرض: زين�� محمد عبد الحميد احمد خير الله (اسم المستخدم: cg002) وإرسال رسالة SMS",
       "id": "ntf_e9ab589b",
       "timestamp": "2026-11-18T16:13:34.928",
       "title": "حساب تمريض ورسالة SMS",
@@ -3373,41 +3373,41 @@
       "description": "تم تفعيل حساب النظام للممرض: هايدي عبد الهادي محمد بكري (اسم المستخدم: cg003) وإرسال رسالة SMS",
       "id": "ntf_1fb5a271",
       "timestamp": "2026-11-18T18:53:07.663",
-      "title": "حساب تمريض ورسالة SMS",
+      "title": "حساب تمري�� ورسالة SMS",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userRole": "مدير ا��شركة (ا��مدير العام)"
     },
     {
       "actionType": "add_caregiver",
-      "description": "أ/ وهدان قام بإضافة: هايدي عبد الهادي محمد بكري (كود: CG-003) - السعر: 350 ج",
+      "description": "أ/ ��هد��ن قام ��إضاف��: هايدي عبد ا��هادي محمد بكري (��ود: CG-003) - السعر: 350 ج",
       "id": "ntf_1f5de890",
       "metadata": {
         "caregiverId": "cg_1795020786803",
-        "name": "هايدي عبد الهادي محمد بكري"
+        "name": "هايدي عب�� الهادي محمد بكري"
       },
       "timestamp": "2026-11-18T18:53:06.807",
-      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "title": "إضافة م��دم خدمة ب��اعدة البيانات",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userRole": "مدير الشرك�� (ا��مد��ر العام)"
     },
     {
       "actionType": "delete_client",
-      "description": "تم حذف العميل: مصطفى وهدان من النظام",
+      "description": "��م حذف ��لعميل: مصطفى وهدان من النظام",
       "id": "ntf_3347eae2",
       "timestamp": "2026-11-18T18:54:42.133",
       "title": "حذف عميل",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userRole": "مدير الش��كة (الم��ير العام)"
     },
     {
       "actionType": "nurse_account",
-      "description": "تم تفعيل حساب النظام للممرض: شيماء ايمن محمد سعيد الامير (اسم المستخدم: 01068561497) وإرسال رسالة SMS",
+      "description": "تم تفعيل حساب النظام للمم��ض: شيما�� ايمن مح��د سعيد الامير (اسم المستخدم: 01068561497) ��إر��ا�� رسالة SMS",
       "id": "ntf_cec026cc",
       "timestamp": "2026-11-18T19:03:02.501",
-      "title": "��ساب تمريض ورسالة SMS",
+      "title": "حساب تمريض ورسالة SMS",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
       "userRole": "مدير الشركة (المدير العام)"
@@ -3576,11 +3576,11 @@
       "title": "تمديد / تعديل مدة الخدمة",
       "userId": "usr_shimaa",
       "userName": "أ/ شيماء",
-      "userRole": "مديرة المتابعة والتشغيل"
+      "userRole": "مديرة المتابع�� والتشغيل"
     },
     {
       "actionType": "add_caregiver",
-      "description": "أ/ وهدان قام بإضافة: رشا سي�� سيد محمد (كود: CG-005) - السعر: 300 ج",
+      "description": "أ/ وهدان قام بإضافة: رشا سيد سيد محمد (كود: CG-005) - السعر: 300 ج",
       "id": "ntf_9dbd401f",
       "metadata": {
         "caregiverId": "cg_1795029639463",
@@ -3652,41 +3652,41 @@
       "id": "ntf_b911494a",
       "metadata": {
         "caregiverId": "cg_1795011214381",
-        "name": "زينب محمد عبد الحميد احمد خير الله"
+        "name": "زينب محمد ع��د الحميد احمد خير الله"
       },
       "timestamp": "2026-11-18T21:36:25.081",
       "title": "تعديل ملف مقدم خدمة",
       "userId": "usr_shimaa",
       "userName": "أ/ شيماء",
-      "userRole": "مديرة المتابعة والتشغيل"
+      "userRole": "مديرة ��لمتابعة والتشغيل"
     },
     {
       "actionType": "edit_caregiver",
-      "description": "أ/ شيماء قام بتعديل بيانات: زينب محمد عبد الحميد احمد خير الله (كود: CG-002)",
+      "description": "أ/ شيماء قام بتعدي�� بيانات: زينب محمد عبد الحميد احمد خير الله (كود: CG-002)",
       "id": "ntf_a1ad318d",
       "metadata": {
         "caregiverId": "cg_1795011214381",
-        "name": "زينب محمد عبد الحميد احمد خير الله"
+        "name": "زينب م��مد عبد الحميد احمد خير الله"
       },
       "timestamp": "2026-11-18T21:36:24.963",
-      "title": "تعديل ملف مقدم خدمة",
+      "title": "تعديل ملف مقدم خد��ة",
       "userId": "usr_shimaa",
       "userName": "أ/ شيماء",
-      "userRole": "مديرة المتابعة والتشغيل"
+      "userRole": "مديرة المتابعة ��التشغيل"
     },
     {
       "actionType": "add_caregiver",
-      "description": "أ/ شيماء قام بإضافة: مني (كود: CG-007) - السعر: 400 ج",
+      "description": "أ/ شي��اء قام ��إضاف��: مني (كو��: CG-007) - السعر: 400 ج",
       "id": "ntf_620d74c4",
       "metadata": {
         "caregiverId": "cg_1795030575687",
         "name": "مني"
       },
       "timestamp": "2026-11-18T21:36:15.692",
-      "title": "إضافة مقدم خدمة بقاعدة البيانات",
+      "title": "إضافة مقدم خدمة ب��اعدة البيانات",
       "userId": "usr_shimaa",
       "userName": "أ/ شيماء",
-      "userRole": "مديرة المتابعة والتشغيل"
+      "userRole": "مديرة المتا��عة والتشغيل"
     },
     {
       "actionType": "add_caregiver",
@@ -3795,7 +3795,7 @@
     },
     {
       "actionType": "service_days",
-      "description": "الممرض: زينب قام بتسليم وانصراف الوردية للعميل: احمد وصفي (وقت الإنهاء: 09:29 PM) [موقع جغرافي مثبت 📍]",
+      "description": "الممرض: زينب قام بتسليم وانصراف الوردية للعميل: احمد وصفي (وقت الإنهاء: 09:29 PM) [موقع ج��رافي مثبت 📍]",
       "id": "ntf_b4799766",
       "metadata": {
         "clientId": "cli_19d0c98d",
@@ -3845,11 +3845,11 @@
       "title": "حذف عميل",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userRole": "مدير الشرك�� (الم��ير العام)"
     },
     {
       "actionType": "payment",
-      "description": "تم تحصيل مبلغ 2800 ج.م من العميل: ابتسام (الحساب البنكي)",
+      "description": "ت�� تحصيل مبلغ 2800 ج.م من العميل: ابتسام (الحساب الب����ي)",
       "id": "ntf_b65e82cf",
       "metadata": {
         "amount": 2800,
@@ -3857,29 +3857,29 @@
         "clientName": "ابتسام"
       },
       "timestamp": "2026-11-18T19:17:26.701",
-      "title": "تسجيل تحصيل نقدية",
+      "title": "تسجيل ��حصيل نقدية",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
       "userRole": "مدير الحسابات والمالية"
     },
     {
       "actionType": "payment",
-      "description": "تم تحصيل مبلغ 2800 ج.م من العميل: ابتسام (الحساب البنكي)",
+      "description": "تم تح��يل مبلغ 2800 ج.م من الع��يل: ابتسام (الحس��ب البنكي)",
       "id": "ntf_aaafd5ba",
       "metadata": {
         "amount": 2800,
         "clientId": "cli_2a197e89",
-        "clientName": "ابتسام"
+        "clientName": "اب��سا��"
       },
       "timestamp": "2026-11-22T08:48:22.616",
-      "title": "تسجيل تحصيل نقدية",
+      "title": "��سجيل تحصيل نقدية",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
-      "userRole": "مدير الحسابات والمالية"
+      "userRole": "��دير الحسابات ��المالية"
     },
     {
       "actionType": "payment",
-      "description": "تم تحصيل مبلغ 5000 ج.م من العميل: منال (الحساب البنكي)",
+      "description": "تم تحصيل مبلغ 5000 ج.م من العميل: منال (الحساب ال��نكي)",
       "id": "ntf_32a82672",
       "metadata": {
         "amount": 5000,
@@ -3887,14 +3887,14 @@
         "clientName": "منال"
       },
       "timestamp": "2026-11-22T08:47:34.769",
-      "title": "تسجيل تحصيل نقدية",
+      "title": "تسجيل تحص��ل نقدية",
       "userId": "usr_zezo",
       "userName": "أ/ زيزو",
-      "userRole": "مدير الحسابات والمالية"
+      "userRole": "مدير ����لحسا�����ات ��المالية"
     },
     {
       "actionType": "payment",
-      "description": "تم تحصيل مبلغ 2750 ج.م من العميل: عمرو (الحساب البنكي)",
+      "description": "تم تحصيل مبلغ 2750 ج.م من العميل: عمرو (الحساب البن��ي)",
       "id": "ntf_4cb5980f",
       "metadata": {
         "amount": 2750,
@@ -3909,23 +3909,23 @@
     },
     {
       "actionType": "user_permissions",
-      "description": "تم تعديل صلاحيات المستخدم: أ/ زيزو",
+      "description": "تم تعديل صلاح��ات المستخدم: أ/ زيزو",
       "id": "ntf_349252bd",
       "timestamp": "2026-11-22T10:40:21.346",
-      "title": "تعديل صلاحيات مستخدم",
+      "title": "تع��يل صلاحيات م��تخدم",
       "userId": "usr_wahdan",
-      "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userName": "أ/ وه��ان",
+      "userRole": "مدير الشركة (المدير ال��ام)"
     },
     {
       "actionType": "user_permissions",
-      "description": "تم تعديل صلاحيات المستخدم: أ/ زيزو",
+      "description": "��م تعديل ��لاحيات المستخدم: أ/ زيزو",
       "id": "ntf_4e8bf8dc",
       "timestamp": "2026-11-22T10:40:27.106",
       "title": "تعديل صلاحيات مستخدم",
       "userId": "usr_wahdan",
       "userName": "أ/ وهدان",
-      "userRole": "مدير الشركة (المدير العام)"
+      "userRole": "مد����ر الشركة (المدير ��لع��م)"
     }
   ]
 }

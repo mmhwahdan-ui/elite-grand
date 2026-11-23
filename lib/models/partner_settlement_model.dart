@@ -28,6 +28,10 @@ class PartnerSettlementModel {
   final double totalDisbursed;
   final double treasuryBeforePayout;
   final double remainingTreasuryCash;
+  final double mandatoryReserve;
+  final double clientAdvancesHeld;
+  final double nurseAdvanceEscrow;
+  final double safeTreasuryCash;
   final bool isDisbursed;
   final String notes;
   final String recordedBy;
@@ -55,6 +59,10 @@ class PartnerSettlementModel {
     required this.totalDisbursed,
     required this.treasuryBeforePayout,
     required this.remainingTreasuryCash,
+    this.mandatoryReserve = 29000.0,
+    this.clientAdvancesHeld = 0.0,
+    this.nurseAdvanceEscrow = 0.0,
+    this.safeTreasuryCash = 0.0,
     this.isDisbursed = false,
     this.notes = '',
     this.recordedBy = 'wahdan',
@@ -84,6 +92,10 @@ class PartnerSettlementModel {
       'totalDisbursed': totalDisbursed,
       'treasuryBeforePayout': treasuryBeforePayout,
       'remainingTreasuryCash': remainingTreasuryCash,
+      'mandatoryReserve': mandatoryReserve,
+      'clientAdvancesHeld': clientAdvancesHeld,
+      'nurseAdvanceEscrow': nurseAdvanceEscrow,
+      'safeTreasuryCash': safeTreasuryCash,
       'isDisbursed': isDisbursed,
       'notes': notes,
       'recordedBy': recordedBy,
@@ -120,6 +132,10 @@ class PartnerSettlementModel {
       totalDisbursed: (map['totalDisbursed'] as num?)?.toDouble() ?? 0.0,
       treasuryBeforePayout: (map['treasuryBeforePayout'] as num?)?.toDouble() ?? 0.0,
       remainingTreasuryCash: (map['remainingTreasuryCash'] as num?)?.toDouble() ?? 0.0,
+      mandatoryReserve: (map['mandatoryReserve'] as num?)?.toDouble() ?? 29000.0,
+      clientAdvancesHeld: (map['clientAdvancesHeld'] as num?)?.toDouble() ?? 0.0,
+      nurseAdvanceEscrow: (map['nurseAdvanceEscrow'] as num?)?.toDouble() ?? 0.0,
+      safeTreasuryCash: (map['safeTreasuryCash'] as num?)?.toDouble() ?? 0.0,
       isDisbursed: map['isDisbursed'] ?? false,
       notes: map['notes'] ?? '',
       recordedBy: map['recordedBy'] ?? 'wahdan',

@@ -257,19 +257,63 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
                     ),
                     child: Column(
                       children: [
-                        _buildCashRow('💰 السيولة المتاحة بالخزائن حالياً (قبل الصرف):', '${treasuryBefore.toStringAsFixed(0)} ج.م', Colors.blue.shade900),
-                        const Divider(height: 12),
-                        _buildCashRow('💸 إجمالي الأرباح المنصرفة للشركاء:', '- ${totalDisbursed.toStringAsFixed(0)} ج.م', Colors.red.shade700),
-                        const Divider(height: 12),
+                        _buildCashRow('💰 إجمالي السيولة بالخزائن حالياً (بنك + كاش + محفظة):', '${treasuryBefore.toStringAsFixed(0)} ج.م', Colors.blue.shade900),
+                        const Divider(height: 10),
+                        _buildCashRow('🛡️ استقطاع الاحتياطي الإجباري (مجمد):', '- ${(calc['mandatoryReserve'] as num? ?? 29000).toStringAsFixed(0)} ج.م', Colors.red.shade700),
+                        const Divider(height: 10),
+                        _buildCashRow('⏳ استقطاع أمانات العملاء والتمريض المقدمة:', '- ${(calc['totalClientAdvances'] as num? ?? 0).toStringAsFixed(0)} ج.م', Colors.amber.shade900),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8, top: 2, bottom: 4),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              '• أمانات مستحقات التمريض: ${(calc['nurseAdvanceEscrow'] as num? ?? 0).toStringAsFixed(0)} ج.م | مكاسب خدمات مؤجلة: ${(calc['companyAdvanceMargin'] as num? ?? 0).toStringAsFixed(0)} ج.م',
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.grey.shade700),
+                            ),
+                          ),
+                        ),
+                        const Divider(height: 10),
+                        _buildCashRow(
+                          '✨ صافي السيولة المتاحة فعلياً للتوزيع:',
+                          '${(calc['safeTreasuryCash'] as num? ?? 0).toStringAsFixed(0)} ج.م',
+                          (calc['safeTreasuryCash'] as double? ?? 0) >= 0 ? Colors.teal.shade800 : Colors.red.shade900,
+                          isBold: true,
+                        ),
+                        const Divider(height: 10),
+                        _buildCashRow('💸 إجمالي الأرباح المطلوب صرفها للشركاء:', '- ${totalDisbursed.toStringAsFixed(0)} ج.م', Colors.indigo.shade800, isBold: true),
+                        const Divider(height: 10),
                         _buildCashRow(
                           '💵 باقي النقدية والسيولة بالخزينة (بعد الصرف):',
                           '${remainingTreasury.toStringAsFixed(0)} ج.م',
-                          remainingTreasury >= 0 ? Colors.green.shade800 : Colors.red.shade900,
+                          remainingTreasury >= (calc['mandatoryReserve'] as double? ?? 29000) ? Colors.green.shade800 : Colors.red.shade900,
                           isBold: true,
                         ),
                       ],
                     ),
                   ),
+                  if ((calc['isTreasurySufficient'] as bool? ?? true) == false) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.shade400),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'تنبيه محاسبي: المنصرف للشركاء يتجاوز السيولة المتاحة بعد حجز الاحتياطي والأمانات بمقدار ${(totalDisbursed - (calc['safeTreasuryCash'] as double)).toStringAsFixed(0)} ج.م.',
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.brown.shade800),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 14),
 
                   // Partner Breakdown
@@ -522,15 +566,101 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
                     ],
                     const Divider(color: Colors.white24, height: 24),
 
-                    // Treasury Impact row
-                    Row(
-                      children: [
-                        _buildDarkStat('السيولة المتاحة حالياً بالخزائن', '${treasuryBefore.toStringAsFixed(0)} ج.م', Colors.amberAccent),
-                        const SizedBox(width: 12),
-                        _buildDarkStat('إجمالي المنصرف للشركاء', '- ${totalDisbursed.toStringAsFixed(0)} ج.م', Colors.redAccent),
-                        const SizedBox(width: 12),
-                        _buildDarkStat('باقي النقدية بالخزينة بعد الصرف', '${remainingTreasury.toStringAsFixed(0)} ج.م', Colors.greenAccent, isHighlight: true),
-                      ],
+                    // Treasury & Safeguard Section
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.04),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.shield_outlined, color: Color(0xFF38BDF8), size: 18),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'موقف الخزائن وحماية أمانات العملاء والاحتياطي الإجباري:',
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'Cairo'),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  'إجمالي الخزينة: ${treasuryBefore.toStringAsFixed(0)} ج.م',
+                                  style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'Cairo'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildDarkStat(
+                                  '🛡️ الاحتياطي الإجباري',
+                                  '${(calc['mandatoryReserve'] as num? ?? 29000).toStringAsFixed(0)} ج.م',
+                                  const Color(0xFFF87171),
+                                  subtext: 'مبلغ مجمد غير قابل للتوزيع',
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _buildDarkStat(
+                                  '⏳ أمانات العملاء والتمريض',
+                                  '${(calc['totalClientAdvances'] as num? ?? 0).toStringAsFixed(0)} ج.م',
+                                  const Color(0xFFFBBF24),
+                                  subtext: 'تمريض: ${(calc['nurseAdvanceEscrow'] as num? ?? 0).toStringAsFixed(0)} ج | مؤجل: ${(calc['companyAdvanceMargin'] as num? ?? 0).toStringAsFixed(0)} ج',
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _buildDarkStat(
+                                  '✨ السيولة المتاحة للتوزيع',
+                                  '${(calc['safeTreasuryCash'] as num? ?? 0).toStringAsFixed(0)} ج.م',
+                                  (calc['safeTreasuryCash'] as double? ?? 0) >= 0 ? const Color(0xFF34D399) : const Color(0xFFEF4444),
+                                  isHighlight: true,
+                                  subtext: 'الخزينة - الاحتياطي - الأمانات',
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildDarkStat(
+                                  '💸 المطلوب صرفه للشركاء',
+                                  '- ${totalDisbursed.toStringAsFixed(0)} ج.م',
+                                  Colors.white,
+                                  subtext: 'صافي أنصبة الشركاء بعد خصم السلف',
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _buildDarkStat(
+                                  '💵 باقي الخزينة بعد الصرف',
+                                  '${remainingTreasury.toStringAsFixed(0)} ج.م',
+                                  remainingTreasury >= (calc['mandatoryReserve'] as double? ?? 29000) ? const Color(0xFF38BDF8) : const Color(0xFFF87171),
+                                  subtext: remainingTreasury >= (calc['mandatoryReserve'] as double? ?? 29000)
+                                      ? 'الاحتياطي 29 ألف ج محمي بالكامل'
+                                      : 'تنبيه: الصرف يمس الاحتياطي',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Container(
@@ -777,23 +907,25 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
     );
   }
 
-  Widget _buildDarkStat(String title, String val, Color valColor, {bool isHighlight = false}) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-        decoration: BoxDecoration(
-          color: isHighlight ? valColor.withOpacity(0.15) : Colors.white.withOpacity(0.06),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: valColor.withOpacity(isHighlight ? 0.6 : 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: TextStyle(color: isHighlight ? valColor : Colors.white70, fontSize: 10, fontFamily: 'Cairo')),
-            const SizedBox(height: 4),
-            Text(val, style: TextStyle(color: valColor, fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Cairo')),
+  Widget _buildDarkStat(String title, String val, Color valColor, {bool isHighlight = false, String? subtext}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: BoxDecoration(
+        color: isHighlight ? valColor.withOpacity(0.15) : Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: valColor.withOpacity(isHighlight ? 0.6 : 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(color: isHighlight ? valColor : Colors.white70, fontSize: 10, fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(val, style: TextStyle(color: valColor, fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Cairo')),
+          if (subtext != null) ...[
+            const SizedBox(height: 2),
+            Text(subtext, style: const TextStyle(color: Colors.white54, fontSize: 9, fontFamily: 'Cairo')),
           ],
-        ),
+        ],
       ),
     );
   }

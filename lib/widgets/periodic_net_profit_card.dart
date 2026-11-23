@@ -876,6 +876,27 @@ class _PeriodicNetProfitCardState extends State<PeriodicNetProfitCard> {
               }
             },
           ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.blueGrey.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blueGrey.withOpacity(0.2)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.shield_outlined, size: 14, color: AppTheme.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'قواعد الخزينة: الاحتياطي غير القابل للتوزيع (29,000 ج) وأمانات الدفعات المقدمة محتجزة بالخزينة لضمان الأمان المالي.',
+                    style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.blueGrey.shade800),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

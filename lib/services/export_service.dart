@@ -718,9 +718,12 @@ class ExportService {
     sheet.appendRow(['البيان', 'المبلغ (ج.م)', 'ملاحظات'].map(_cell).toList());
     _styleRow(sheet, sheet.maxRows - 1, 3, _headerStyle);
 
-    sheet.appendRow(['صافي أرباح الشركة في هذه الدورة', calc['profit'], 'صافي الدورة المنتهية'].map(_cell).toList());
-    sheet.appendRow(['إجمالي السيولة المتاحة بالخزائن قبل الصرف', calc['treasuryBefore'], 'كاش + بنك + محافظ'].map(_cell).toList());
-    sheet.appendRow(['إجمالي المبالغ المنصرفة للشركاء', calc['totalDisbursed'], 'المبالغ المعتمدة'].map(_cell).toList());
+    sheet.appendRow(['صافي أرباح الشركة في هذه الدورة (المنفذ فعلياً)', calc['profit'], 'صافي الدورة المنتهية'].map(_cell).toList());
+    sheet.appendRow(['إجمالي السيولة بالخزائن حالياً', calc['treasuryBefore'], 'كاش + بنك + محافظ'].map(_cell).toList());
+    sheet.appendRow(['الاحتياطي الإجباري غير القابل للتوزيع', calc['mandatoryReserve'] ?? 29000.0, 'مبلغ مجمد لحماية الشركة'].map(_cell).toList());
+    sheet.appendRow(['أمانات العملاء والتمريض عن الدفعات المقدمة', calc['totalClientAdvances'] ?? 0.0, 'أمانات خدمات مستقبلية لم تنفذ'].map(_cell).toList());
+    sheet.appendRow(['صافي السيولة المتاحة فعلياً للتوزيع', calc['safeTreasuryCash'] ?? 0.0, 'الخزينة - الاحتياطي - الأمانات'].map(_cell).toList());
+    sheet.appendRow(['إجمالي المبالغ المنصرفة للشركاء', calc['totalDisbursed'], 'المبالغ المعتمدة للتوزيع'].map(_cell).toList());
     sheet.appendRow(['باقي النقدية والسيولة بالخزينة بعد الصرف', calc['remainingTreasury'], 'الرصيد المتبقي بالخزينة'].map(_cell).toList());
     _styleRow(sheet, sheet.maxRows - 1, 3, _totalRowStyle);
 

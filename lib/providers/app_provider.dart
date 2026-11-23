@@ -412,6 +412,40 @@ class AppProvider extends ChangeNotifier {
     return total;
   }
 
+  /// الاحتياطي الإجباري غير القابل للتوزيع (المجمد في الخزينة لحماية استقرار الشركة)
+  static const double mandatoryReserve = 29000.0;
+
+  /// إجمالي مستحقات وأمانات التمريض المحتجزة عن الدفعات المقدمة للعملاء (عن خدمات مستقبلية لم تنفذ بعد)
+  double get totalNurseAdvanceEscrowHeld {
+    double total = 0.0;
+    for (var c in _clients) {
+      final bal = getClientBalance(c);
+      if (bal > 0) {
+        final nurseRatio = c.dailyPrice > 0 ? (c.nurseDailyPrice / c.dailyPrice).clamp(0.0, 1.0) : 0.8;
+        total += bal * nurseRatio;
+      }
+    }
+    return total;
+  }
+
+  /// إجمالي أرباح ومكاسب الشركة المؤجلة عن الدفعات المقدمة للعملاء (لحين تنفيذ الخدمة بعد يوم 23)
+  double get totalCompanyAdvanceMarginHeld {
+    double total = 0.0;
+    for (var c in _clients) {
+      final bal = getClientBalance(c);
+      if (bal > 0) {
+        final compRatio = c.dailyPrice > 0 ? ((c.dailyPrice - c.nurseDailyPrice) / c.dailyPrice).clamp(0.0, 1.0) : 0.2;
+        total += bal * compRatio;
+      }
+    }
+    return total;
+  }
+
+  /// صافي السيولة المتاحة فعلياً بالخزائن للتوزيع بعد استقطاع الاحتياطي (29000 ج) وأرصدة العملاء المقدمة
+  double get totalDistributableTreasuryCash {
+    return totalTreasuryBalance - mandatoryReserve - totalClientAdvancesHeldByCompany;
+  }
+
   // --- Periodic Net Profit Calculations (Daily, Weekly, Monthly Cycle 23) ---
 
   /// حساب ملخص مالي دقيق لأي فترة زمنية محددة
@@ -3549,6 +3583,15 @@ class AppProvider extends ChangeNotifier {
     final treasuryBefore = totalTreasuryBalance;
     final remainingTreasury = treasuryBefore - totalDisbursed;
 
+    const reserve = mandatoryReserve; // 29,000 EGP الاحتياطي الإجباري غير القابل للتوزيع
+    final clientAdvances = totalClientAdvancesHeldByCompany;
+    final nurseAdvanceEscrow = totalNurseAdvanceEscrowHeld;
+    final companyAdvanceMargin = totalCompanyAdvanceMarginHeld;
+    // السيولة المتاحة فعلياً للتوزيع من الخزينة بعد حجز الاحتياطي وأمانات العملاء والتمريض
+    final safeTreasuryCash = treasuryBefore - reserve - clientAdvances;
+    final isTreasurySufficient = safeTreasuryCash >= totalDisbursed;
+    final safeRemainingTreasury = remainingTreasury - reserve - clientAdvances;
+
     return {
       'startDate': startDate,
       'endDate': endDate,
@@ -3556,7 +3599,13 @@ class AppProvider extends ChangeNotifier {
       'grossProfit': grossProfit,
       'totalExpenses': totalExpenses,
       'totalClientDebts': totalClientDebtsOwedToCompany,
-      'totalClientAdvances': totalClientAdvancesHeldByCompany,
+      'totalClientAdvances': clientAdvances,
+      'mandatoryReserve': reserve,
+      'nurseAdvanceEscrow': nurseAdvanceEscrow,
+      'companyAdvanceMargin': companyAdvanceMargin,
+      'safeTreasuryCash': safeTreasuryCash,
+      'safeRemainingTreasury': safeRemainingTreasury,
+      'isTreasurySufficient': isTreasurySufficient,
       'wahdanBase': wahdanBase,
       'wahdanAdminDeduction': wahdanAdminDeduction,
       'wahdanFinal': wahdanFinal,
@@ -3615,6 +3664,10 @@ class AppProvider extends ChangeNotifier {
       totalDisbursed: calc['totalDisbursed'] as double,
       treasuryBeforePayout: calc['treasuryBefore'] as double,
       remainingTreasuryCash: calc['remainingTreasury'] as double,
+      mandatoryReserve: calc['mandatoryReserve'] as double,
+      clientAdvancesHeld: calc['totalClientAdvances'] as double,
+      nurseAdvanceEscrow: calc['nurseAdvanceEscrow'] as double,
+      safeTreasuryCash: calc['safeTreasuryCash'] as double,
       isDisbursed: true,
       notes: notes.trim(),
       recordedBy: _currentUser?.username ?? 'wahdan',
