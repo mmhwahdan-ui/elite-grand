@@ -2281,17 +2281,33 @@ class AppProvider extends ChangeNotifier {
     await syncWithCloud();
   }
 
-  Future<void> syncWithCloud({bool silent = false}) async {
+  bool _isSyncRunning = false;
+
+  Future<void> syncWithCloud({bool silent = false, bool force = false}) async {
+    if (_isSyncRunning) return;
+    _isSyncRunning = true;
+
     if (!silent) {
       _isLoading = true;
       _statusMessage = 'جاري المزامنة مع السحابة...';
       notifyListeners();
     }
 
+    bool shouldNotify = !silent;
+
     try {
-      // 1. Pull remote data first
-      final result = await cloudSyncService.pullData();
+      // 1. Pull remote data first with lightweight timestamp check
+      final result = await cloudSyncService.pullData(force: force || !silent);
       if (result.success) {
+        if (!result.hasChanges) {
+          // Cloud has NOT changed at all! Skip writing to storage and skip rebuilding widgets!
+          if (!silent) {
+            _statusMessage = 'البيانات السحابية محدثة بالفعل';
+          }
+          return;
+        }
+
+        shouldNotify = true;
         bool hasNewDeletions = false;
         if (result.deletedIds != null && result.deletedIds!.isNotEmpty) {
           for (final did in result.deletedIds!) {
@@ -2501,8 +2517,13 @@ class AppProvider extends ChangeNotifier {
     } catch (e) {
       _statusMessage = 'خطأ في المزامنة: $e';
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _isSyncRunning = false;
+      if (!silent) {
+        _isLoading = false;
+      }
+      if (shouldNotify) {
+        notifyListeners();
+      }
     }
   }
 

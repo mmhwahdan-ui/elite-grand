@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:js_interop';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:web/web.dart' as web;
 import '../models/user_model.dart';
 import '../models/client_model.dart';
 import '../models/payment_model.dart';
@@ -27,6 +29,8 @@ enum SyncStatus {
 class SyncResult {
   final bool success;
   final String message;
+  final bool hasChanges;
+  final String? lastUpdated;
   final List<ClientModel>? clients;
   final List<PaymentModel>? payments;
   final List<ExpenseModel>? expenses;
@@ -46,6 +50,8 @@ class SyncResult {
   SyncResult({
     required this.success,
     required this.message,
+    this.hasChanges = true,
+    this.lastUpdated,
     this.clients,
     this.payments,
     this.expenses,
@@ -73,6 +79,9 @@ class CloudSyncService {
   SyncStatus status = SyncStatus.idle;
   DateTime? lastSyncTime;
   Timer? _periodicTimer;
+  String? _lastKnownRemoteTimestamp;
+  bool _isAutoSyncRunning = false;
+  bool _hasAttachedVisibilityListener = false;
 
   CloudSyncService({this.cloudEndpoint});
 
@@ -93,12 +102,39 @@ class CloudSyncService {
     return defaultFirebaseEndpoint;
   }
 
-  // Start background auto sync every 3 seconds for real-time multi-device sync
+  // Start background auto sync with smart 8s lightweight checking and tab visibility awareness
   void startAutoSync(Future<void> Function() onSyncTriggered) {
     _periodicTimer?.cancel();
     onSyncTriggered();
-    _periodicTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
-      await onSyncTriggered();
+
+    if (kIsWeb && !_hasAttachedVisibilityListener) {
+      _hasAttachedVisibilityListener = true;
+      try {
+        web.document.addEventListener('visibilitychange', (web.Event e) {
+          if (!web.document.hidden) {
+            onSyncTriggered();
+          }
+        }.toJS);
+      } catch (_) {}
+    }
+
+    _periodicTimer = Timer.periodic(const Duration(seconds: 8), (_) async {
+      if (_isAutoSyncRunning) return;
+      if (kIsWeb) {
+        try {
+          if (web.document.hidden) {
+            // Tab is hidden or phone screen is locked; skip background tick to conserve battery and CPU
+            return;
+          }
+        } catch (_) {}
+      }
+
+      _isAutoSyncRunning = true;
+      try {
+        await onSyncTriggered();
+      } finally {
+        _isAutoSyncRunning = false;
+      }
     });
   }
 
@@ -183,8 +219,9 @@ class CloudSyncService {
         }
       } catch (_) {}
 
+      final nowIso = DateTime.now().toIso8601String();
       final payload = {
-        'lastUpdated': DateTime.now().toIso8601String(),
+        'lastUpdated': nowIso,
         'isFinancialReset': isFinancialReset,
         'resetServiceDays': resetServiceDays,
         'deletedIds': deletedIds,
@@ -220,6 +257,7 @@ class CloudSyncService {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         status = SyncStatus.success;
         lastSyncTime = DateTime.now();
+        _lastKnownRemoteTimestamp = nowIso;
         return true;
       } else {
         status = SyncStatus.error;
@@ -231,11 +269,38 @@ class CloudSyncService {
     }
   }
 
-  // Pull latest data from Cloud
-  Future<SyncResult> pullData() async {
+  // Pull latest data from Cloud with smart lightweight timestamp check
+  Future<SyncResult> pullData({bool force = false}) async {
     final endpoint = effectiveEndpoint;
 
     try {
+      // 1. Lightweight subkey check on Firebase (30 bytes instead of 150KB) to prevent UI frame drops
+      if (!force && endpoint.contains('firebaseio.com')) {
+        final tsUrl = endpoint.endsWith('.json')
+            ? endpoint.replaceAll('.json', '/lastUpdated.json')
+            : '$endpoint/lastUpdated.json';
+        try {
+          final tsRes = await http.get(
+            Uri.parse(tsUrl),
+            headers: {'Accept': 'application/json'},
+          ).timeout(const Duration(seconds: 4));
+
+          if (tsRes.statusCode >= 200 && tsRes.statusCode < 300 && tsRes.body.isNotEmpty && tsRes.body != 'null') {
+            final remoteTs = tsRes.body.trim().replaceAll('"', '');
+            if (_lastKnownRemoteTimestamp != null && _lastKnownRemoteTimestamp == remoteTs) {
+              // Remote cloud data has NOT changed! No need to download 150KB or rebuild UI!
+              status = SyncStatus.success;
+              return SyncResult(
+                success: true,
+                hasChanges: false,
+                lastUpdated: remoteTs,
+                message: 'قاعدة البيانات السحابية محدثة (لا توجد تغييرات)',
+              );
+            }
+          }
+        } catch (_) {}
+      }
+
       status = SyncStatus.syncing;
       final uri = Uri.parse(endpoint);
       final response = await http.get(
@@ -246,10 +311,15 @@ class CloudSyncService {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty || response.body == 'null') {
           status = SyncStatus.success;
-          return SyncResult(success: true, message: 'قاعدة البيانات فارغة');
+          return SyncResult(success: true, hasChanges: false, message: 'قاعدة البيانات فارغة');
         }
 
         final Map<String, dynamic> data = jsonDecode(response.body);
+
+        final remoteTs = data['lastUpdated']?.toString();
+        if (remoteTs != null && remoteTs.isNotEmpty) {
+          _lastKnownRemoteTimestamp = remoteTs;
+        }
 
         List<String>? remoteDeletedIds;
         if (data['deletedIds'] is List) {
@@ -376,6 +446,8 @@ class CloudSyncService {
 
         return SyncResult(
           success: true,
+          hasChanges: true,
+          lastUpdated: remoteTs,
           message: 'تمت المزامنة اللحظية بنجاح 24/7',
           clients: remoteClients,
           payments: remotePayments,
