@@ -96,7 +96,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'تثبيت إيليت جراند كبرنامج على هذا الجهاز 📲',
+                            'تثبيت إيليت جراند كبرنامج على هذا الجهاز',
                             style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
                           ),
                           Text(

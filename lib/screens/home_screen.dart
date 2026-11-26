@@ -231,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      isMobile ? 'تثبيت' : 'تثبيت البرنامج 📲',
+                      isMobile ? 'تثبيت' : 'تثبيت البرنامج',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,

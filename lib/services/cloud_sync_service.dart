@@ -187,7 +187,7 @@ class CloudSyncService {
         final uri = Uri.parse(endpoint);
         final checkRes = await http.get(uri, headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 4));
         if (checkRes.statusCode >= 200 && checkRes.statusCode < 300 && checkRes.body.isNotEmpty && checkRes.body != 'null') {
-          final Map<String, dynamic> remote = jsonDecode(checkRes.body);
+          final Map<String, dynamic> remote = jsonDecode(utf8.decode(checkRes.bodyBytes));
           final delSet = deletedIds.toSet();
           if (remote['deletedIds'] is List) {
             for (var did in (remote['deletedIds'] as List)) {
@@ -376,7 +376,7 @@ class CloudSyncService {
               'Content-Type': 'application/json; charset=utf-8',
               'Accept': 'application/json',
             },
-            body: jsonEncode(payload),
+            body: utf8.encode(jsonEncode(payload)),
           )
           .timeout(const Duration(seconds: 6));
 
@@ -440,7 +440,7 @@ class CloudSyncService {
           return SyncResult(success: true, hasChanges: false, message: 'قاعدة البيانات فارغة');
         }
 
-        final Map<String, dynamic> data = jsonDecode(response.body);
+        final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
 
         final remoteTs = data['lastUpdated']?.toString();
         if (remoteTs != null && remoteTs.isNotEmpty) {

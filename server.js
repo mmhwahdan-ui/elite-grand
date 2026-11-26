@@ -55,15 +55,16 @@ function smartMerge(serverList, incomingList, deletedSet, dateField = 'updatedAt
 // Push local state to Firebase Cloud 24/7
 function pushToFirebase(jsonStr) {
   try {
+    const buf = Buffer.from(jsonStr, 'utf8');
     const req = https.request(FIREBASE_URL, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(jsonStr)
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Length': buf.length
       }
     });
     req.on('error', () => {});
-    req.write(jsonStr);
+    req.write(buf);
     req.end();
   } catch (_) {}
 }
@@ -71,11 +72,13 @@ function pushToFirebase(jsonStr) {
 // Pull latest changes from Firebase Cloud
 function syncWithFirebase() {
   https.get(FIREBASE_URL, (res) => {
-    let body = '';
-    res.on('data', chunk => body += chunk);
+    const chunks = [];
+    res.on('data', chunk => chunks.push(chunk));
     res.on('end', () => {
-      if (res.statusCode >= 200 && res.statusCode < 300 && body && body !== 'null') {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
         try {
+          const body = Buffer.concat(chunks).toString('utf8');
+          if (!body || body === 'null') return;
           const remote = JSON.parse(body);
           fs.readFile(DATA_FILE, 'utf8', (err, localRaw) => {
             let local = {
@@ -180,12 +183,13 @@ const server = http.createServer((req, res) => {
     }
 
     if (req.method === 'PUT' || req.method === 'POST') {
-      let body = '';
+      const chunks = [];
       req.on('data', (chunk) => {
-        body += chunk;
+        chunks.push(chunk);
       });
       req.on('end', () => {
         try {
+          const body = Buffer.concat(chunks).toString('utf8');
           const incoming = JSON.parse(body);
 
           fs.readFile(DATA_FILE, 'utf8', (readErr, currentRaw) => {
