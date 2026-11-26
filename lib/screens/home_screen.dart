@@ -209,13 +209,41 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           actions: [
-            // PWA Standalone Install Button
-            if (!PwaInstallService.isStandalone())
-              IconButton(
-                icon: const Icon(Icons.install_mobile_rounded, color: AppTheme.accentBright),
-                tooltip: 'تثبيت البرنامج على الجهاز (كمبيوتر / أندرويد)',
-                onPressed: () => PwaInstallService.handleInstallClick(context),
+            // Install App Button (دائم الظهور بجانب سحابي متصل)
+            InkWell(
+              onTap: () => PwaInstallService.handleInstallClick(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentBright.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.accentBright, width: 1.3),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.install_mobile_rounded,
+                      size: 16,
+                      color: AppTheme.accentBright,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      isMobile ? 'تثبيت' : 'تثبيت البرنامج 📲',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Cairo',
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ),
+            const SizedBox(width: 8),
 
             // Cloud Sync Button & Indicator
             InkWell(

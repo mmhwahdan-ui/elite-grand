@@ -31,6 +31,11 @@
       padding: 0;
       font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       overflow: hidden;
+      cursor: default;
+      touch-action: manipulation;
+    }
+    flt-glass-pane {
+      cursor: default;
     }
     #loading-container {
       display: flex;
@@ -165,13 +170,13 @@
       window.dispatchEvent(new CustomEvent('pwa-installed'));
     });
 
-    window.isAppStandalone = function() {
+    window.isAppStandalone = globalThis.isAppStandalone = function() {
       return window.matchMedia('(display-mode: standalone)').matches ||
              window.navigator.standalone === true ||
              document.referrer.includes('android-app://');
     };
 
-    window.promptPwaInstall = async function() {
+    window.promptPwaInstall = globalThis.promptPwaInstall = async function() {
       if (window.deferredInstallPrompt) {
         try {
           window.deferredInstallPrompt.prompt();
@@ -202,7 +207,7 @@
     }
 
     const bootstrapScript = document.createElement('script');
-    bootstrapScript.src = 'flutter_bootstrap.js?v=1795674366747?v=' + Date.now();
+    bootstrapScript.src = 'flutter_bootstrap.js?v=1795677612773?v=' + Date.now();
     bootstrapScript.async = true;
     document.body.appendChild(bootstrapScript);
   </script>

@@ -35,23 +35,26 @@ class PwaInstallService {
   }
 
   static Future<void> handleInstallClick(BuildContext context) async {
-    final status = await promptInstall();
-    if (status == 'accepted') {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('جاري تثبيت إيليت جراند بنجاح على جهازك', style: TextStyle(fontFamily: 'Cairo')),
-            backgroundColor: Color(0xFF00D09C),
-          ),
-        );
+    try {
+      final status = await promptInstall();
+      if (status == 'accepted') {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('جاري تثبيت إيليت جراند بنجاح على جهازك', style: TextStyle(fontFamily: 'Cairo')),
+              backgroundColor: Color(0xFF00D09C),
+            ),
+          );
+        }
+        return;
+      } else if (status == 'dismissed') {
+        return;
       }
-    } else if (status == 'dismissed') {
-      // User cancelled
-    } else {
-      // Unavailable or manual guide needed
-      if (context.mounted) {
-        showInstallHelpDialog(context);
-      }
+    } catch (_) {}
+
+    // Fallback: Show visual step-by-step install guide
+    if (context.mounted) {
+      showInstallHelpDialog(context);
     }
   }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'elite-grand-v2';
+const CACHE_NAME = 'elite-grand-v3';
 
 // Static core assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -26,7 +26,7 @@ self.addEventListener('install', (event) => {
         try {
           await cache.add(asset);
         } catch (e) {
-          console.warn('[SW] Precache skipped for optional asset:', asset, e);
+          // ignore individual asset miss during install
         }
       }
     })
@@ -54,14 +54,14 @@ self.addEventListener('fetch', (event) => {
   // 1. Never cache Firebase RTDB, API endpoints, or WebSockets - let them fail naturally when offline
   if (
     url.hostname.includes('firebaseio.com') ||
-    url.hostname.includes('googleapis.com') && url.pathname.includes('/v1/') ||
+    (url.hostname.includes('googleapis.com') && url.pathname.includes('/v1/')) ||
     url.pathname.includes('/api/') ||
     event.request.method !== 'GET'
   ) {
     return;
   }
 
-  // 2. Network-first with Cache-fallback for HTML and bootstrap scripts (so users always get fresh code if online)
+  // 2. Network-first with Cache-fallback for HTML and bootstrap scripts (ensures fresh app versions when online)
   if (
     event.request.mode === 'navigate' ||
     url.pathname.endsWith('index.html') ||
@@ -88,22 +88,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Cache-first with background revalidation for JS, WASM, CSS, Fonts, Images
+  // 3. Pure Cache-First for JS, WASM, CSS, Fonts, Images (Instant load, Zero CPU/network thrashing)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Fetch in background to update cache for next time
-        fetch(event.request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-            }
-          })
-          .catch(() => {});
         return cachedResponse;
       }
 
-      // If not in cache, fetch from network and store in cache
+      // If not in cache, fetch from network and store in cache for offline use
       return fetch(event.request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
@@ -113,8 +105,7 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch((err) => {
-          // If offline and request is an image or font, ignore or handle gracefully
-          console.warn('[SW] Fetch failed offline for:', event.request.url);
+          console.warn('[SW] Offline fetch fallback for:', event.request.url);
           throw err;
         });
     })

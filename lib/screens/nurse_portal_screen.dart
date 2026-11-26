@@ -898,13 +898,41 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
               },
             ),
 
-            // PWA Install Action for Nurse Phones
-            if (!PwaInstallService.isStandalone())
-              IconButton(
-                icon: const Icon(Icons.install_mobile_rounded, color: AppTheme.accentBright),
-                tooltip: 'تثبيت تطبيق التمريض على هاتفك',
-                onPressed: () => PwaInstallService.handleInstallClick(context),
+            // Install App Capsule Button for Nurses
+            InkWell(
+              onTap: () => PwaInstallService.handleInstallClick(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentBright.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.accentBright, width: 1.3),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.install_mobile_rounded,
+                      size: 16,
+                      color: AppTheme.accentBright,
+                    ),
+                    SizedBox(width: 5),
+                    Text(
+                      'تثبيت التطبيق 📲',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Cairo',
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ),
+            const SizedBox(width: 6),
 
             // User Menu: Change password & Logout
             PopupMenuButton<String>(
