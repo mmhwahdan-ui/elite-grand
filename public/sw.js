@@ -1,6 +1,6 @@
-const CACHE_NAME = 'elite-grand-v5';
+const CACHE_NAME = 'elite-grand-v6';
 
-// Static core assets to pre-cache on install
+// Core assets to pre-cache on install for 100% offline standalone operation
 const PRECACHE_ASSETS = [
   './',
   'index.html',
@@ -8,10 +8,14 @@ const PRECACHE_ASSETS = [
   'favicon.png',
   'flutter.js',
   'flutter_bootstrap.js',
+  'flutter_service_worker.js',
+  'sw.js',
   'main.dart.js',
   'version.json',
   'canvaskit/canvaskit.js',
   'canvaskit/canvaskit.wasm',
+  'canvaskit/chromium/canvaskit.wasm',
+  'canvaskit/webparagraph/canvaskit.wasm',
   'icons/Icon-192.png',
   'icons/Icon-512.png',
   'icons/Icon-maskable-192.png',
@@ -26,7 +30,7 @@ self.addEventListener('install', (event) => {
         try {
           await cache.add(asset);
         } catch (e) {
-          // ignore individual asset miss during install
+          console.warn('[SW] Precache skipped for:', asset, e);
         }
       }
     })
@@ -51,22 +55,54 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 1. Never cache Firebase RTDB, API endpoints, or WebSockets - let them fail naturally when offline
+  // 1. NEVER cache Firebase RTDB or local backend APIs - let them fail naturally when offline
   if (
     url.hostname.includes('firebaseio.com') ||
-    (url.hostname.includes('googleapis.com') && url.pathname.includes('/v1/')) ||
     url.pathname.includes('/api/') ||
     event.request.method !== 'GET'
   ) {
     return;
   }
 
-  // 2. Network-first with Cache-fallback for HTML and bootstrap scripts (ensures fresh app versions when online)
+  // 2. Intercept any external CanvasKit CDN requests and serve local cached CanvasKit instead!
+  if (url.hostname.includes('gstatic.com') && url.pathname.includes('canvaskit')) {
+    const filename = url.pathname.split('/').pop();
+    event.respondWith(
+      caches.match(`canvaskit/${filename}`, { ignoreSearch: true }).then((cached) => {
+        if (cached) return cached;
+        return caches.match('canvaskit/canvaskit.wasm', { ignoreSearch: true }).then((fallback) => {
+          return fallback || fetch(event.request);
+        });
+      })
+    );
+    return;
+  }
+
+  // 3. Cache Google Fonts (Cairo)
+  if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
+    event.respondWith(
+      caches.match(event.request, { ignoreSearch: true }).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((res) => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return res;
+        }).catch(() => {
+          // If offline and font css fails, return empty css response rather than failing
+          return new Response('', { status: 200, headers: { 'Content-Type': 'text/css' } });
+        });
+      })
+    );
+    return;
+  }
+
+  // 4. Navigation & HTML: Network-first with Cache-fallback (with ignoreSearch: true)
   if (
     event.request.mode === 'navigate' ||
     url.pathname.endsWith('index.html') ||
-    url.pathname.endsWith('/') ||
-    url.pathname.includes('flutter_bootstrap.js')
+    url.pathname.endsWith('/')
   ) {
     event.respondWith(
       fetch(event.request)
@@ -78,19 +114,19 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(async () => {
-          const cachedResponse = await caches.match(event.request);
+          const cachedResponse = await caches.match(event.request, { ignoreSearch: true });
           if (cachedResponse) return cachedResponse;
-          const fallback = await caches.match('index.html');
+          const fallback = await caches.match('index.html', { ignoreSearch: true });
           if (fallback) return fallback;
-          return caches.match('./');
+          return caches.match('./', { ignoreSearch: true });
         })
     );
     return;
   }
 
-  // 3. Pure Cache-First for JS, WASM, CSS, Fonts, Images (Instant load, Zero CPU/network thrashing)
+  // 5. All static scripts, bootstrap, flutter, WASM, images: Cache-first with ignoreSearch: true
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
@@ -104,8 +140,13 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch((err) => {
-          console.warn('[SW] Offline fetch fallback for:', event.request.url);
+        .catch(async (err) => {
+          // Fallback for bootstrap or main scripts matching by filename
+          const filename = url.pathname.split('/').pop();
+          if (filename) {
+            const fallback = await caches.match(filename, { ignoreSearch: true });
+            if (fallback) return fallback;
+          }
           throw err;
         });
     })

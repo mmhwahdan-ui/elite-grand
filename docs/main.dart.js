@@ -39485,7 +39485,7 @@ $S:4}
 A.bfr.prototype={
 $1(a){var s=A.eU().b
 s=s==null?null:s.canvasKitBaseUrl
-return(s==null?"https://www.gstatic.com/flutter-canvaskit/89c39edfdfae2949f6806e4a315c0c08522238b7/":s)+a},
+return(s==null?"canvaskit/":s)+a},
 $S:67}
 A.To.prototype={
 aaw(){var s=this.ax8(),r=$.cD.dk().ImageFilter.MakeColorFilter(s,null)

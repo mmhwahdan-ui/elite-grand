@@ -31,14 +31,10 @@ if (fs.existsSync('web/sw.js')) {
   fs.copyFileSync('web/sw.js', 'public/flutter_service_worker.js');
 }
 
-const ts = Date.now();
-['docs/index.html', 'public/index.html'].forEach(filePath => {
-  if (fs.existsSync(filePath)) {
-    let content = fs.readFileSync(filePath, 'utf8');
-    content = content.replace(/flutter_bootstrap\.js(\?v=\d+)?/g, `flutter_bootstrap.js?v=${ts}`);
-    fs.writeFileSync(filePath, content, 'utf8');
-    console.log(`Updated cache buster in ${filePath}`);
-  }
-});
+if (fs.existsSync('web/index.html')) {
+  fs.copyFileSync('web/index.html', 'build/web/index.html');
+  fs.copyFileSync('web/index.html', 'docs/index.html');
+  fs.copyFileSync('web/index.html', 'public/index.html');
+}
 
 console.log('Web deployment files updated successfully!');
