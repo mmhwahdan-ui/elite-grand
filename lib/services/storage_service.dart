@@ -35,6 +35,7 @@ class StorageService {
   static const String _keyCaseOffers = 'eg_case_offers_data';
   static const String _keyManagementInstructions = 'eg_management_instructions_data';
   static const String _keyLastThursdayAlertDate = 'eg_last_thursday_alert_date';
+  static const String _keyPendingOfflineSync = 'eg_pending_offline_sync';
 
   final SharedPreferences prefs;
 
@@ -427,5 +428,13 @@ class StorageService {
 
   Future<void> saveLastThursdayAlertDate(String dateStr) async {
     await prefs.setString(_keyLastThursdayAlertDate, dateStr);
+  }
+
+  bool loadPendingOfflineSync() {
+    return prefs.getBool(_keyPendingOfflineSync) ?? false;
+  }
+
+  Future<void> savePendingOfflineSync(bool value) async {
+    await prefs.setBool(_keyPendingOfflineSync, value);
   }
 }

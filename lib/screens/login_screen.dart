@@ -4,6 +4,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 import 'nurse_portal_screen.dart';
+import '../services/pwa_install_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -212,7 +213,24 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+
+                    // PWA Install Button (For PC and Mobile devices without browser bar)
+                    if (!PwaInstallService.isStandalone())
+                      OutlinedButton.icon(
+                        onPressed: () => PwaInstallService.handleInstallClick(context),
+                        icon: const Icon(Icons.install_mobile_rounded, color: AppTheme.accentBright, size: 20),
+                        label: const Text(
+                          'تثبيت البرنامج على الجهاز (كمبيوتر / أندرويد)',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppTheme.accentBright, width: 1.2),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    const SizedBox(height: 16),
 
                     // Cloud Sync indicator footer
                     Row(
@@ -223,20 +241,27 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: provider.cloudSyncService.cloudEndpoint != null
-                                ? AppTheme.accentBright
-                                : Colors.amber,
+                            color: provider.hasPendingOfflineSync
+                                ? Colors.amber
+                                : provider.isOnline
+                                    ? AppTheme.accentBright
+                                    : Colors.orange,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          provider.cloudSyncService.cloudEndpoint != null
-                              ? 'متصل بالمزامنة السحابية (5 هواتف)'
-                              : 'الوضع المحلي (جاهز للربط السحابي)',
-                          style: const TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontSize: 11,
-                            fontFamily: 'Cairo',
+                        Flexible(
+                          child: Text(
+                            provider.hasPendingOfflineSync
+                                ? 'وضع محلي (توجد بيانات محفوظة بانتظار الرفع السحابي)'
+                                : provider.isOnline
+                                    ? 'متصل بالسحابة 24/7 (يدعم العمل بدون إنترنت)'
+                                    : 'الوضع المحلي (البيانات محفوظة على جهازك)',
+                            style: const TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 11,
+                              fontFamily: 'Cairo',
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ],

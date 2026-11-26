@@ -14,6 +14,7 @@ import '../widgets/management_instructions_dialog.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
+import '../services/pwa_install_service.dart';
 
 class NursePortalScreen extends StatefulWidget {
   const NursePortalScreen({super.key});
@@ -897,6 +898,14 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
               },
             ),
 
+            // PWA Install Action for Nurse Phones
+            if (!PwaInstallService.isStandalone())
+              IconButton(
+                icon: const Icon(Icons.install_mobile_rounded, color: AppTheme.accentBright),
+                tooltip: 'تثبيت تطبيق التمريض على هاتفك',
+                onPressed: () => PwaInstallService.handleInstallClick(context),
+              ),
+
             // User Menu: Change password & Logout
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white),
@@ -1034,6 +1043,51 @@ class _NursePortalScreenState extends State<NursePortalScreen> with SingleTicker
                 ),
               ),
             ],
+
+            // Pending Offline Sync Alert
+            if (provider.hasPendingOfflineSync)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.amber.shade100,
+                child: Row(
+                  children: const [
+                    Icon(Icons.cloud_upload_outlined, color: Color(0xFFB45309), size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'وضع محلي: تم تسجيل حضورك وبياناتك بنجاح على هاتفك، وسيتم رفعها للسحابة تلقائياً فور توفر الإنترنت.',
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // In-app Install banner for nurses who haven't installed it as an app yet
+            if (!PwaInstallService.isStandalone())
+              InkWell(
+                onTap: () => PwaInstallService.handleInstallClick(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0A2540),
+                    border: Border(bottom: BorderSide(color: Color(0xFF1E3A5F))),
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.download_for_offline_rounded, color: AppTheme.accentBright, size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'تثبيت تطبيق إيليت جراند كأيقونة على هاتفك (يعمل بدون متصفح وبدون إنترنت)',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.accentBright, size: 12),
+                    ],
+                  ),
+                ),
+              ),
 
             // Top Nurse Financial Summary Cards (Strictly nurse's own finances!)
             _buildTopNurseKpis(

@@ -90,6 +90,9 @@ class AppProvider extends ChangeNotifier {
   String? get statusMessage => _statusMessage;
   SyncStatus get syncStatus => cloudSyncService.status;
   DateTime? get lastSyncTime => cloudSyncService.lastSyncTime;
+  bool _hasPendingOfflineSync = false;
+  bool get hasPendingOfflineSync => _hasPendingOfflineSync;
+  bool get isOnline => cloudSyncService.status != SyncStatus.offline;
 
   List<AppNotificationModel> get notifications => List.unmodifiable(_notifications);
   int get unreadNotificationCount => _unreadNotificationCount;
@@ -683,6 +686,7 @@ class AppProvider extends ChangeNotifier {
     _users = storageService.loadUsers();
     _deletedIds = storageService.loadDeletedIds();
     _openingBalances = storageService.loadOpeningBalances();
+    _hasPendingOfflineSync = storageService.loadPendingOfflineSync();
     final deletedSet = _deletedIds.toSet();
 
     _clients = storageService.loadClients().where((c) => !deletedSet.contains(c.id)).toList();
@@ -2296,13 +2300,42 @@ class AppProvider extends ChangeNotifier {
     bool shouldNotify = !silent;
 
     try {
+      // 0. If there are pending offline modifications, push them to the cloud first
+      if (_hasPendingOfflineSync) {
+        try {
+          final pushSuccess = await cloudSyncService.pushData(
+            clients: _clients,
+            payments: _payments,
+            expenses: _expenses,
+            serviceDays: _serviceDays,
+            nurseTransactions: _nurseTransactions,
+            partnerLoans: _partnerLoans,
+            partnerSettlements: _partnerSettlements,
+            users: _users,
+            caregivers: _caregivers,
+            chatMessages: _chatMessages,
+            caseOffers: _caseOffers,
+            notifications: _notifications,
+            managementInstructions: _managementInstructions,
+            deletedIds: _deletedIds,
+            openingBalances: _openingBalances,
+          );
+          if (pushSuccess) {
+            _hasPendingOfflineSync = false;
+            await storageService.savePendingOfflineSync(false);
+          }
+        } catch (_) {}
+      }
+
       // 1. Pull remote data first with lightweight timestamp check
       final result = await cloudSyncService.pullData(force: force || !silent);
       if (result.success) {
         if (!result.hasChanges) {
           // Cloud has NOT changed at all! Skip writing to storage and skip rebuilding widgets!
           if (!silent) {
-            _statusMessage = 'البيانات السحابية محدثة بالفعل';
+            _statusMessage = _hasPendingOfflineSync
+                ? 'وضع محلي (توجد تعديلات معلقة للرفع السحابي)'
+                : 'البيانات السحابية محدثة بالفعل';
           }
           return;
         }
@@ -2338,27 +2371,57 @@ class AppProvider extends ChangeNotifier {
           await storageService.saveClients(_clients);
         }
         if (result.payments != null) {
-          _payments = result.payments!.where((p) => !deletedSet.contains(p.id) && !deletedSet.contains(p.clientId)).toList();
+          final remotePayments = result.payments!.where((p) => !deletedSet.contains(p.id) && !deletedSet.contains(p.clientId)).toList();
+          final paymentMap = {for (var p in _payments) if (!deletedSet.contains(p.id) && !deletedSet.contains(p.clientId)) p.id: p};
+          for (var p in remotePayments) {
+            paymentMap[p.id] = p;
+          }
+          _payments = paymentMap.values.toList();
           await storageService.savePayments(_payments);
         }
         if (result.expenses != null) {
-          _expenses = result.expenses!.where((e) => !deletedSet.contains(e.id)).toList();
+          final remoteExpenses = result.expenses!.where((e) => !deletedSet.contains(e.id)).toList();
+          final expMap = {for (var e in _expenses) if (!deletedSet.contains(e.id)) e.id: e};
+          for (var e in remoteExpenses) {
+            expMap[e.id] = e;
+          }
+          _expenses = expMap.values.toList();
           await storageService.saveExpenses(_expenses);
         }
         if (result.serviceDays != null) {
-          _serviceDays = result.serviceDays!.where((d) => !deletedSet.contains(d.id) && !deletedSet.contains(d.clientId)).toList();
+          final remoteDays = result.serviceDays!.where((d) => !deletedSet.contains(d.id) && !deletedSet.contains(d.clientId)).toList();
+          final dayMap = {for (var d in _serviceDays) if (!deletedSet.contains(d.id) && !deletedSet.contains(d.clientId)) d.id: d};
+          for (var d in remoteDays) {
+            dayMap[d.id] = d;
+          }
+          _serviceDays = dayMap.values.toList();
           await storageService.saveServiceDays(_serviceDays);
         }
         if (result.nurseTransactions != null) {
-          _nurseTransactions = result.nurseTransactions!.where((t) => !deletedSet.contains(t.id)).toList();
+          final remoteTxs = result.nurseTransactions!.where((t) => !deletedSet.contains(t.id)).toList();
+          final txMap = {for (var t in _nurseTransactions) if (!deletedSet.contains(t.id)) t.id: t};
+          for (var t in remoteTxs) {
+            txMap[t.id] = t;
+          }
+          _nurseTransactions = txMap.values.toList();
           await storageService.saveNurseTransactions(_nurseTransactions);
         }
         if (result.partnerLoans != null) {
-          _partnerLoans = result.partnerLoans!.where((l) => !deletedSet.contains(l.id)).toList();
+          final remoteLoans = result.partnerLoans!.where((l) => !deletedSet.contains(l.id)).toList();
+          final lMap = {for (var l in _partnerLoans) if (!deletedSet.contains(l.id)) l.id: l};
+          for (var l in remoteLoans) {
+            lMap[l.id] = l;
+          }
+          _partnerLoans = lMap.values.toList();
           await storageService.savePartnerLoans(_partnerLoans);
         }
         if (result.partnerSettlements != null) {
-          _partnerSettlements = result.partnerSettlements!.where((s) => !deletedSet.contains(s.id)).toList();
+          final remoteSets = result.partnerSettlements!.where((s) => !deletedSet.contains(s.id)).toList();
+          final sMap = {for (var s in _partnerSettlements) if (!deletedSet.contains(s.id)) s.id: s};
+          for (var s in remoteSets) {
+            sMap[s.id] = s;
+          }
+          _partnerSettlements = sMap.values.toList();
           await storageService.savePartnerSettlements(_partnerSettlements);
         }
         if (result.caregivers != null) {
@@ -2541,26 +2604,38 @@ class AppProvider extends ChangeNotifier {
     await storageService.saveOpeningBalances(_openingBalances);
     await storageService.saveNotifications(_notifications);
     await storageService.saveManagementInstructions(_managementInstructions);
+
+    _hasPendingOfflineSync = true;
+    await storageService.savePendingOfflineSync(true);
     notifyListeners();
 
     // Push changes asynchronously
-    cloudSyncService.pushData(
-      clients: _clients,
-      payments: _payments,
-      expenses: _expenses,
-      serviceDays: _serviceDays,
-      nurseTransactions: _nurseTransactions,
-      partnerLoans: _partnerLoans,
-      partnerSettlements: _partnerSettlements,
-      users: _users,
-      caregivers: _caregivers,
-      chatMessages: _chatMessages,
-      caseOffers: _caseOffers,
-      notifications: _notifications,
-      managementInstructions: _managementInstructions,
-      deletedIds: _deletedIds,
-      openingBalances: _openingBalances,
-    );
+    try {
+      final success = await cloudSyncService.pushData(
+        clients: _clients,
+        payments: _payments,
+        expenses: _expenses,
+        serviceDays: _serviceDays,
+        nurseTransactions: _nurseTransactions,
+        partnerLoans: _partnerLoans,
+        partnerSettlements: _partnerSettlements,
+        users: _users,
+        caregivers: _caregivers,
+        chatMessages: _chatMessages,
+        caseOffers: _caseOffers,
+        notifications: _notifications,
+        managementInstructions: _managementInstructions,
+        deletedIds: _deletedIds,
+        openingBalances: _openingBalances,
+      );
+      if (success) {
+        _hasPendingOfflineSync = false;
+        await storageService.savePendingOfflineSync(false);
+        notifyListeners();
+      }
+    } catch (_) {
+      // Offline mode: changes safely saved locally, will auto-sync once online
+    }
   }
 
   // ==========================================

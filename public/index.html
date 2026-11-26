@@ -150,16 +150,59 @@
     };
   </script>
   <script>
-    // Ensure clean cache and unregister old service workers on update
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (let registration of registrations) {
-          registration.unregister();
+    // PWA Standalone & Install Prompt Handlers
+    window.deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.deferredInstallPrompt = e;
+      console.log('[PWA] beforeinstallprompt captured, app is ready for installation');
+      window.dispatchEvent(new CustomEvent('pwa-installable'));
+    });
+
+    window.addEventListener('appinstalled', function() {
+      console.log('[PWA] App successfully installed');
+      window.deferredInstallPrompt = null;
+      window.dispatchEvent(new CustomEvent('pwa-installed'));
+    });
+
+    window.isAppStandalone = function() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.navigator.standalone === true ||
+             document.referrer.includes('android-app://');
+    };
+
+    window.promptPwaInstall = async function() {
+      if (window.deferredInstallPrompt) {
+        try {
+          window.deferredInstallPrompt.prompt();
+          const choice = await window.deferredInstallPrompt.userChoice;
+          if (choice && choice.outcome === 'accepted') {
+            window.deferredInstallPrompt = null;
+            return 'accepted';
+          } else {
+            return 'dismissed';
+          }
+        } catch (err) {
+          console.warn('[PWA] prompt error:', err);
+          return 'error';
         }
+      }
+      return 'unavailable';
+    };
+
+    // Service Worker for 100% Offline Capability
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(reg) {
+          console.log('[PWA] ServiceWorker registered with scope:', reg.scope);
+        }).catch(function(err) {
+          console.warn('[PWA] ServiceWorker registration failed:', err);
+        });
       });
     }
+
     const bootstrapScript = document.createElement('script');
-    bootstrapScript.src = 'flutter_bootstrap.js?v=1795615453940?v=' + Date.now();
+    bootstrapScript.src = 'flutter_bootstrap.js?v=1795674366747?v=' + Date.now();
     bootstrapScript.async = true;
     document.body.appendChild(bootstrapScript);
   </script>

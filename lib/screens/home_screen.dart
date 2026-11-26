@@ -22,6 +22,7 @@ import 'nurse_portal_screen.dart';
 import 'case_offers_screen.dart';
 import '../widgets/management_instructions_dialog.dart';
 import '../widgets/all_users_passwords_dialog.dart';
+import '../services/pwa_install_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -208,6 +209,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           actions: [
+            // PWA Standalone Install Button
+            if (!PwaInstallService.isStandalone())
+              IconButton(
+                icon: const Icon(Icons.install_mobile_rounded, color: AppTheme.accentBright),
+                tooltip: 'تثبيت البرنامج على الجهاز (كمبيوتر / أندرويد)',
+                onPressed: () => PwaInstallService.handleInstallClick(context),
+              ),
+
             // Cloud Sync Button & Indicator
             InkWell(
               onTap: () {
@@ -223,19 +232,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _getSyncBorderColor(provider.syncStatus), width: 1.2),
+                  border: Border.all(
+                    color: _getSyncBorderColor(provider.syncStatus, hasPending: provider.hasPendingOfflineSync),
+                    width: 1.2,
+                  ),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      _getSyncIcon(provider.syncStatus),
+                      _getSyncIcon(provider.syncStatus, hasPending: provider.hasPendingOfflineSync),
                       size: 16,
-                      color: _getSyncBorderColor(provider.syncStatus),
+                      color: _getSyncBorderColor(provider.syncStatus, hasPending: provider.hasPendingOfflineSync),
                     ),
                     if (!isMobile) ...[
                       const SizedBox(width: 6),
                       Text(
-                        _getSyncTitle(provider.syncStatus),
+                        _getSyncTitle(provider.syncStatus, hasPending: provider.hasPendingOfflineSync),
                         style: const TextStyle(fontSize: 11, fontFamily: 'Cairo', color: Colors.white),
                       ),
                     ],
@@ -655,7 +667,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Color _getSyncBorderColor(SyncStatus status) {
+  Color _getSyncBorderColor(SyncStatus status, {bool hasPending = false}) {
+    if (hasPending) return Colors.amber;
     switch (status) {
       case SyncStatus.success:
         return AppTheme.accentBright;
@@ -671,7 +684,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  IconData _getSyncIcon(SyncStatus status) {
+  IconData _getSyncIcon(SyncStatus status, {bool hasPending = false}) {
+    if (hasPending) return Icons.cloud_upload_outlined;
     switch (status) {
       case SyncStatus.success:
         return Icons.cloud_done;
@@ -687,7 +701,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  String _getSyncTitle(SyncStatus status) {
+  String _getSyncTitle(SyncStatus status, {bool hasPending = false}) {
+    if (hasPending) return 'محلي (معلق رفع)';
     switch (status) {
       case SyncStatus.success:
         return 'سحابي متصل';
@@ -696,7 +711,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case SyncStatus.error:
         return 'خطأ اتصال';
       case SyncStatus.offline:
-        return 'محلي';
+        return 'محلي (أوفلاين)';
       case SyncStatus.idle:
       default:
         return 'السحابة';

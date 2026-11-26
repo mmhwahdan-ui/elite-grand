@@ -170,6 +170,17 @@ class CloudSyncService {
       List<ClientModel> mergedClients = List.from(clients);
       List<CaregiverModel> mergedCaregivers = List.from(caregivers);
       List<UserModel> mergedUsers = List.from(users);
+      List<PaymentModel> mergedPayments = List.from(payments);
+      List<ExpenseModel> mergedExpenses = List.from(expenses);
+      List<ServiceDayModel> mergedServiceDays = List.from(serviceDays);
+      List<NurseTransactionModel> mergedNurseTransactions = List.from(nurseTransactions);
+      List<PartnerLoanModel> mergedPartnerLoans = List.from(partnerLoans);
+      List<PartnerSettlementModel> mergedPartnerSettlements = List.from(partnerSettlements);
+      List<ChatMessageModel> mergedChatMessages = List.from(chatMessages);
+      List<CaseOfferModel> mergedCaseOffers = List.from(caseOffers);
+      List<AppNotificationModel> mergedNotifications = List.from(notifications);
+      List<ManagementInstructionModel> mergedInstructions = List.from(managementInstructions);
+      List<String> combinedDeletedIds = List.from(deletedIds);
 
       // Fetch remote first to prevent an old device with partial data from wiping cloud records
       try {
@@ -179,7 +190,13 @@ class CloudSyncService {
           final Map<String, dynamic> remote = jsonDecode(checkRes.body);
           final delSet = deletedIds.toSet();
           if (remote['deletedIds'] is List) {
-            delSet.addAll((remote['deletedIds'] as List).map((e) => e.toString()));
+            for (var did in (remote['deletedIds'] as List)) {
+              final didStr = did.toString();
+              delSet.add(didStr);
+              if (!combinedDeletedIds.contains(didStr)) {
+                combinedDeletedIds.add(didStr);
+              }
+            }
           }
 
           if (remote['caregivers'] is List) {
@@ -216,6 +233,115 @@ class CloudSyncService {
             }
             mergedUsers = uMap.values.toList();
           }
+
+          if (!isFinancialReset) {
+            if (remote['payments'] is List) {
+              final remotePays = (remote['payments'] as List)
+                  .map((e) => PaymentModel.fromMap(Map<String, dynamic>.from(e)))
+                  .where((p) => !delSet.contains(p.id) && !delSet.contains(p.clientId))
+                  .toList();
+              final payMap = {for (var p in remotePays) p.id: p};
+              for (var p in payments) {
+                if (!delSet.contains(p.id) && !delSet.contains(p.clientId)) payMap[p.id] = p;
+              }
+              mergedPayments = payMap.values.toList();
+            }
+
+            if (remote['expenses'] is List) {
+              final remoteExps = (remote['expenses'] as List)
+                  .map((e) => ExpenseModel.fromMap(Map<String, dynamic>.from(e)))
+                  .where((e) => !delSet.contains(e.id))
+                  .toList();
+              final expMap = {for (var e in remoteExps) e.id: e};
+              for (var e in expenses) {
+                if (!delSet.contains(e.id)) expMap[e.id] = e;
+              }
+              mergedExpenses = expMap.values.toList();
+            }
+
+            if (!resetServiceDays && remote['serviceDays'] is List) {
+              final remoteDays = (remote['serviceDays'] as List)
+                  .map((e) => ServiceDayModel.fromMap(Map<String, dynamic>.from(e)))
+                  .where((d) => !delSet.contains(d.id) && !delSet.contains(d.clientId))
+                  .toList();
+              final dayMap = {for (var d in remoteDays) d.id: d};
+              for (var d in serviceDays) {
+                if (!delSet.contains(d.id) && !delSet.contains(d.clientId)) dayMap[d.id] = d;
+              }
+              mergedServiceDays = dayMap.values.toList();
+            }
+
+            if (remote['nurseTransactions'] is List) {
+              final remoteTxs = (remote['nurseTransactions'] as List)
+                  .map((e) => NurseTransactionModel.fromMap(Map<String, dynamic>.from(e)))
+                  .where((t) => !delSet.contains(t.id))
+                  .toList();
+              final txMap = {for (var t in remoteTxs) t.id: t};
+              for (var t in nurseTransactions) {
+                if (!delSet.contains(t.id)) txMap[t.id] = t;
+              }
+              mergedNurseTransactions = txMap.values.toList();
+            }
+
+            if (remote['partnerLoans'] is List) {
+              final remoteLoans = (remote['partnerLoans'] as List)
+                  .map((e) => PartnerLoanModel.fromMap(Map<String, dynamic>.from(e)))
+                  .where((l) => !delSet.contains(l.id))
+                  .toList();
+              final lMap = {for (var l in remoteLoans) l.id: l};
+              for (var l in partnerLoans) {
+                if (!delSet.contains(l.id)) lMap[l.id] = l;
+              }
+              mergedPartnerLoans = lMap.values.toList();
+            }
+
+            if (remote['partnerSettlements'] is List) {
+              final remoteSets = (remote['partnerSettlements'] as List)
+                  .map((e) => PartnerSettlementModel.fromMap(Map<String, dynamic>.from(e)))
+                  .where((s) => !delSet.contains(s.id))
+                  .toList();
+              final sMap = {for (var s in remoteSets) s.id: s};
+              for (var s in partnerSettlements) {
+                if (!delSet.contains(s.id)) sMap[s.id] = s;
+              }
+              mergedPartnerSettlements = sMap.values.toList();
+            }
+          }
+
+          if (remote['chatMessages'] is List) {
+            final remoteMsgs = (remote['chatMessages'] as List)
+                .map((e) => ChatMessageModel.fromMap(Map<String, dynamic>.from(e)))
+                .toList();
+            final msgMap = {for (var m in remoteMsgs) m.id: m};
+            for (var m in chatMessages) {
+              msgMap[m.id] = m;
+            }
+            final sorted = msgMap.values.toList()..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+            mergedChatMessages = sorted.take(300).toList();
+          }
+
+          if (remote['caseOffers'] is List) {
+            final remoteOffers = (remote['caseOffers'] as List)
+                .map((e) => CaseOfferModel.fromMap(Map<String, dynamic>.from(e)))
+                .where((o) => !delSet.contains(o.id))
+                .toList();
+            final oMap = {for (var o in remoteOffers) o.id: o};
+            for (var o in caseOffers) {
+              if (!delSet.contains(o.id)) oMap[o.id] = o;
+            }
+            mergedCaseOffers = oMap.values.toList();
+          }
+
+          if (remote['managementInstructions'] is List) {
+            final remoteIns = (remote['managementInstructions'] as List)
+                .map((e) => ManagementInstructionModel.fromMap(Map<String, dynamic>.from(e)))
+                .toList();
+            final insMap = {for (var i in remoteIns) i.id: i};
+            for (var i in managementInstructions) {
+              insMap[i.id] = i;
+            }
+            mergedInstructions = insMap.values.toList();
+          }
         }
       } catch (_) {}
 
@@ -224,22 +350,22 @@ class CloudSyncService {
         'lastUpdated': nowIso,
         'isFinancialReset': isFinancialReset,
         'resetServiceDays': resetServiceDays,
-        'deletedIds': deletedIds,
+        'deletedIds': combinedDeletedIds,
         'openingBalances':
             openingBalances ?? {'bank': 0.0, 'wallet': 0.0, 'cash': 0.0},
         'clients': mergedClients.map((c) => c.toMap()).toList(),
-        'payments': payments.map((p) => p.toMap()).toList(),
-        'expenses': expenses.map((e) => e.toMap()).toList(),
-        'serviceDays': serviceDays.map((d) => d.toMap()).toList(),
-        'nurseTransactions': nurseTransactions.map((t) => t.toMap()).toList(),
-        'partnerLoans': partnerLoans.map((l) => l.toMap()).toList(),
-        'partnerSettlements': partnerSettlements.map((s) => s.toMap()).toList(),
+        'payments': mergedPayments.map((p) => p.toMap()).toList(),
+        'expenses': mergedExpenses.map((e) => e.toMap()).toList(),
+        'serviceDays': mergedServiceDays.map((d) => d.toMap()).toList(),
+        'nurseTransactions': mergedNurseTransactions.map((t) => t.toMap()).toList(),
+        'partnerLoans': mergedPartnerLoans.map((l) => l.toMap()).toList(),
+        'partnerSettlements': mergedPartnerSettlements.map((s) => s.toMap()).toList(),
         'users': mergedUsers.map((u) => u.toMap()).toList(),
         'caregivers': mergedCaregivers.map((c) => c.toMap()).toList(),
-        'chatMessages': chatMessages.take(300).map((m) => m.toMap()).toList(),
-        'caseOffers': caseOffers.map((o) => o.toMap()).toList(),
-        'notifications': notifications.take(150).map((n) => n.toMap()).toList(),
-        'managementInstructions': managementInstructions.map((i) => i.toMap()).toList(),
+        'chatMessages': mergedChatMessages.take(300).map((m) => m.toMap()).toList(),
+        'caseOffers': mergedCaseOffers.map((o) => o.toMap()).toList(),
+        'notifications': mergedNotifications.take(150).map((n) => n.toMap()).toList(),
+        'managementInstructions': mergedInstructions.map((i) => i.toMap()).toList(),
       };
 
       final uri = Uri.parse(endpoint);

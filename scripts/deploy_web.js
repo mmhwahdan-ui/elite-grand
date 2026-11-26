@@ -18,8 +18,15 @@ function copyRecursiveSync(src, dest) {
 }
 
 console.log('Copying build/web to docs/ and public/...');
+if (fs.existsSync('web/sw.js')) {
+  fs.copyFileSync('web/sw.js', 'build/web/sw.js');
+}
 copyRecursiveSync('build/web', 'docs');
 copyRecursiveSync('build/web', 'public');
+if (fs.existsSync('web/sw.js')) {
+  fs.copyFileSync('web/sw.js', 'docs/sw.js');
+  fs.copyFileSync('web/sw.js', 'public/sw.js');
+}
 
 const ts = Date.now();
 ['docs/index.html', 'public/index.html'].forEach(filePath => {
