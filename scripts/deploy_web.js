@@ -20,12 +20,15 @@ function copyRecursiveSync(src, dest) {
 console.log('Copying build/web to docs/ and public/...');
 if (fs.existsSync('web/sw.js')) {
   fs.copyFileSync('web/sw.js', 'build/web/sw.js');
+  fs.copyFileSync('web/sw.js', 'build/web/flutter_service_worker.js');
 }
 copyRecursiveSync('build/web', 'docs');
 copyRecursiveSync('build/web', 'public');
 if (fs.existsSync('web/sw.js')) {
   fs.copyFileSync('web/sw.js', 'docs/sw.js');
   fs.copyFileSync('web/sw.js', 'public/sw.js');
+  fs.copyFileSync('web/sw.js', 'docs/flutter_service_worker.js');
+  fs.copyFileSync('web/sw.js', 'public/flutter_service_worker.js');
 }
 
 const ts = Date.now();

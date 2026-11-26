@@ -31,6 +31,8 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
+    final dailySummary = provider.getDailyNetProfitSummary();
+    final monthlySummary = provider.getMonthlyNetProfitSummary();
 
     // Filter by tab
     List<ClientModel> filtered = provider.clients;
@@ -218,14 +220,14 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                                 style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
                               ),
                               Text(
-                                'اليوم: ${provider.getDailyNetProfitSummary().netProfit.toStringAsFixed(0)} ج  |  دورة 23: ${provider.getMonthlyNetProfitSummary().netProfit.toStringAsFixed(0)} ج',
+                                'اليوم: ${dailySummary.netProfit.toStringAsFixed(0)} ج  |  دورة 23: ${monthlySummary.netProfit.toStringAsFixed(0)} ج',
                                 style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.amberAccent),
                               ),
                             ],
                           ),
                           Text(
-                            provider.getMonthlyNetProfitSummary().daysRemainingUntil23 != null && provider.getMonthlyNetProfitSummary().daysRemainingUntil23! > 0
-                                ? 'دورة نهاية الشهر يوم 23 (متبقي ${provider.getMonthlyNetProfitSummary().daysRemainingUntil23} يوم) • اضغط لفتح التقرير المالي'
+                            monthlySummary.daysRemainingUntil23 != null && monthlySummary.daysRemainingUntil23! > 0
+                                ? 'دورة نهاية الشهر يوم 23 (متبقي ${monthlySummary.daysRemainingUntil23} يوم) • اضغط لفتح التقرير المالي'
                                 : 'دورة نهاية الشهر يوم 23 (اليوم موعد التصفية) • اضغط لفتح التقرير المالي',
                             style: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Color(0xFFC7D2FE)),
                           ),

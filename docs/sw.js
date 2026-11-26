@@ -1,4 +1,4 @@
-const CACHE_NAME = 'elite-grand-v3';
+const CACHE_NAME = 'elite-grand-v5';
 
 // Static core assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -38,8 +38,8 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((name) => {
-          if (name !== CACHE_NAME && name.startsWith('elite-grand-')) {
-            console.log('[SW] Deleting old cache:', name);
+          if (name !== CACHE_NAME) {
+            console.log('[SW] Purging old cache:', name);
             return caches.delete(name);
           }
         })
