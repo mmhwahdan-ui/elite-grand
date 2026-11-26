@@ -15,6 +15,7 @@ import '../widgets/add_service_day_dialog.dart';
 import '../widgets/activate_weekly_service_dialog.dart';
 import 'client_detail_screen.dart';
 import 'financial_reports_screen.dart';
+import '../services/pwa_install_service.dart';
 
 class ClientsListScreen extends StatefulWidget {
   const ClientsListScreen({super.key});
@@ -61,6 +62,64 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
       child: Scaffold(
         body: Column(
           children: [
+            // Prominent Install App Banner
+            InkWell(
+              onTap: () => PwaInstallService.handleInstallClick(context),
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF004D40), Color(0xFF00796B)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.accentBright, width: 1.2),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 4, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.install_mobile_rounded, color: AppTheme.accentBright, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'تثبيت إيليت جراند كبرنامج على هذا الجهاز 📲',
+                            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
+                          ),
+                          Text(
+                            'يعمل كأيقونة مستقلة على الشاشة بدون متصفح وبدون إنترنت',
+                            style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Color(0xFFE0F2F1)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentBright,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'تثبيت الآن',
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF0A2540)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
             // Quick Team Chat Banner Bar
             InkWell(
               onTap: () {

@@ -285,132 +285,135 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 8),
 
-            IconButton(
-              icon: const Icon(Icons.sync, color: Colors.white),
-              tooltip: 'تحديث فوري للبيانات من السحابة',
-              onPressed: () async {
-                await provider.syncWithCloud();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('تم تحديث البيانات من السحابة فوراً', style: TextStyle(fontFamily: 'Cairo')),
-                      duration: Duration(seconds: 1),
-                      backgroundColor: AppTheme.accent,
+            // Only on desktop/tablet: show extra shortcut icons (on mobile these are in bottom bar and menu)
+            if (!isMobile) ...[
+              IconButton(
+                icon: const Icon(Icons.sync, color: Colors.white),
+                tooltip: 'تحديث فوري للبيانات من السحابة',
+                onPressed: () async {
+                  await provider.syncWithCloud();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('تم تحديث البيانات من السحابة فوراً', style: TextStyle(fontFamily: 'Cairo')),
+                        duration: Duration(seconds: 1),
+                        backgroundColor: AppTheme.accent,
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(width: 4),
+
+              // Cases & Opportunities Group Button
+              Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.campaign_outlined, color: Colors.white),
+                    tooltip: 'جروب الحالات والفرص الجديدة 📢',
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const CaseOffersScreen()));
+                    },
+                  ),
+                  if (provider.openCaseOffersCount > 0)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.tealAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          provider.openCaseOffersCount.toString(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Cairo'),
+                        ),
+                      ),
                     ),
+                ],
+              ),
+              const SizedBox(width: 4),
+
+              // Team Chat Button with Unread Badge
+              Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+                    tooltip: 'شات وتواصل أفراد الشركة',
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamChatScreen()));
+                    },
+                  ),
+                  if (provider.unreadChatCount > 0)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          provider.unreadChatCount.toString(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Cairo'),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 4),
+
+              // Management Instructions Board button
+              IconButton(
+                icon: const Icon(Icons.assignment_outlined, color: Colors.white),
+                tooltip: 'لوحة تعليمات وتوجيهات الإدارة لمقدمي الخدمة 📋',
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => const ManagementInstructionsDialog(isCaregiverView: false),
                   );
-                }
-              },
-            ),
-            const SizedBox(width: 4),
+                },
+              ),
+              const SizedBox(width: 4),
 
-            // Cases & Opportunities Group Button
-            Stack(
-              alignment: Alignment.topRight,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.campaign_outlined, color: Colors.white),
-                  tooltip: 'جروب الحالات والفرص الجديدة 📢',
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const CaseOffersScreen()));
-                  },
-                ),
-                if (provider.openCaseOffersCount > 0)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.tealAccent,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                      child: Text(
-                        provider.openCaseOffersCount.toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Cairo'),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 4),
+              // Caregivers Database button
+              IconButton(
+                icon: const Icon(Icons.badge_outlined, color: Colors.white),
+                tooltip: 'قاعدة بيانات وسجل مقدمي الخدمة',
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
+                },
+              ),
+              const SizedBox(width: 4),
 
-            // Team Chat Button with Unread Badge
-            Stack(
-              alignment: Alignment.topRight,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-                  tooltip: 'شات وتواصل أفراد الشركة',
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamChatScreen()));
-                  },
-                ),
-                if (provider.unreadChatCount > 0)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.redAccent,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                      child: Text(
-                        provider.unreadChatCount.toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Cairo'),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 4),
+              // Weekly & Monthly Settlement button
+              IconButton(
+                icon: const Icon(Icons.event_available_rounded, color: Colors.white),
+                tooltip: 'تقفيل الحساب الأسبوعي والشهري (دورة الخميس) 🔔',
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
+                },
+              ),
+              const SizedBox(width: 4),
 
-            // Management Instructions Board button
-            IconButton(
-              icon: const Icon(Icons.assignment_outlined, color: Colors.white),
-              tooltip: 'لوحة تعليمات وتوجيهات الإدارة لمقدمي الخدمة 📋',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => const ManagementInstructionsDialog(isCaregiverView: false),
-                );
-              },
-            ),
-            const SizedBox(width: 4),
-
-            // Caregivers Database button
-            IconButton(
-              icon: const Icon(Icons.badge_outlined, color: Colors.white),
-              tooltip: 'قاعدة بيانات وسجل مقدمي الخدمة',
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
-              },
-            ),
-            const SizedBox(width: 4),
-
-            // Weekly & Monthly Settlement button
-            IconButton(
-              icon: const Icon(Icons.event_available_rounded, color: Colors.white),
-              tooltip: 'تقفيل الحساب الأسبوعي والشهري (دورة الخميس) 🔔',
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
-              },
-            ),
-            const SizedBox(width: 4),
-
-            // Financial Reports & Periodic Net Profit button
-            IconButton(
-              icon: const Icon(Icons.analytics_outlined, color: Colors.white),
-              tooltip: 'التقارير والأرباح (صافي الربح الدوري)',
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
-              },
-            ),
-            const SizedBox(width: 4),
+              // Financial Reports & Periodic Net Profit button
+              IconButton(
+                icon: const Icon(Icons.analytics_outlined, color: Colors.white),
+                tooltip: 'التقارير والأرباح (صافي الربح الدوري)',
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
+                },
+              ),
+              const SizedBox(width: 4),
+            ],
 
             // User Profile / Switch Account
             PopupMenuButton<String>(
