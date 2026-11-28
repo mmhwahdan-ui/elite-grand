@@ -592,24 +592,53 @@ class AppProvider extends ChangeNotifier {
     );
   }
 
-  /// صافي الربح اليومي (ليوم محدد أو اليوم الحالي)
+  PeriodFinancialSummary? _cachedTodayDailySummary;
+  DateTime? _cachedTodayDate;
+  PeriodFinancialSummary? _cachedCurrentMonthlySummary;
+  int? _cachedMonthlyOffset;
+
+  void invalidateFinancialSummaries() {
+    _cachedTodayDailySummary = null;
+    _cachedTodayDate = null;
+    _cachedCurrentMonthlySummary = null;
+    _cachedMonthlyOffset = null;
+  }
+
+  @override
+  void notifyListeners() {
+    invalidateFinancialSummaries();
+    super.notifyListeners();
+  }
+
+  /// صافي الربح اليومي (ليوم محدد أو اليوم الحالي مع دعم التخزين المؤقت الفائق)
   PeriodFinancialSummary getDailyNetProfitSummary([DateTime? targetDate]) {
     final date = targetDate ?? DateTime.now();
+    final now = DateTime.now();
+    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+
+    if (isToday && _cachedTodayDailySummary != null && _cachedTodayDate != null &&
+        _cachedTodayDate!.year == now.year && _cachedTodayDate!.month == now.month && _cachedTodayDate!.day == now.day) {
+      return _cachedTodayDailySummary!;
+    }
+
     final sDate = DateTime(date.year, date.month, date.day);
     final eDate = DateTime(date.year, date.month, date.day);
-    final isToday = date.year == DateTime.now().year &&
-        date.month == DateTime.now().month &&
-        date.day == DateTime.now().day;
     final title = isToday
         ? 'اليوم (${DateFormat('yyyy/MM/dd').format(date)})'
         : 'يوم ${DateFormat('yyyy/MM/dd').format(date)}';
 
-    return getFinancialSummaryForRange(
+    final res = getFinancialSummaryForRange(
       startDate: sDate,
       endDate: eDate,
       periodType: 'daily',
       periodTitle: title,
     );
+
+    if (isToday) {
+      _cachedTodayDailySummary = res;
+      _cachedTodayDate = DateTime(now.year, now.month, now.day);
+    }
+    return res;
   }
 
   /// صافي الربح الأسبوعي (آخر 7 أيام حتى تاريخ محدد أو اليوم)
@@ -627,10 +656,14 @@ class AppProvider extends ChangeNotifier {
     );
   }
 
-  /// صافي الربح الشهري وفق دورة يوم 23 من كل شهر
+  /// صافي الربح الشهري وفق دورة يوم 23 من كل شهر مع دعم التخزين المؤقت الفائق
   /// الدورة تمتد من يوم 24 من الشهر السابق حتى يوم 23 من الشهر الحالي
   /// يمكن تمرير offsetCycles للتنقل للدورات السابقة (-1، -2) أو القادمة (+1)
   PeriodFinancialSummary getMonthlyNetProfitSummary({DateTime? referenceDate, int offsetCycles = 0}) {
+    if (referenceDate == null && offsetCycles == 0 && _cachedCurrentMonthlySummary != null && _cachedMonthlyOffset == 0) {
+      return _cachedCurrentMonthlySummary!;
+    }
+
     final ref = referenceDate ?? DateTime.now();
 
     // تحديد شهر وسنة نهاية الدورة
@@ -672,13 +705,20 @@ class AppProvider extends ChangeNotifier {
 
     final cycleTitle = 'دورة 23 ${_getMonthName(targetMonth)} $targetYear (${DateFormat('MM/dd').format(cycleStart)} - ${DateFormat('MM/dd').format(cycleEnd)})';
 
-    return getFinancialSummaryForRange(
+    final res = getFinancialSummaryForRange(
       startDate: cycleStart,
       endDate: cycleEnd,
       periodType: 'monthly_23',
       periodTitle: cycleTitle,
       daysRemaining: daysRemaining,
     );
+
+    if (referenceDate == null && offsetCycles == 0) {
+      _cachedCurrentMonthlySummary = res;
+      _cachedMonthlyOffset = 0;
+    }
+
+    return res;
   }
 
   // Initialization
@@ -2265,6 +2305,20 @@ class AppProvider extends ChangeNotifier {
     }
     _knownNotificationIds.add(notif.id);
     await storageService.saveNotifications(_notifications);
+  }
+
+  Future<void> logSystemAction({
+    required String title,
+    required String description,
+    required String actionType,
+    Map<String, dynamic>? metadata,
+  }) async {
+    await _logAction(
+      title: title,
+      description: description,
+      actionType: actionType,
+      metadata: metadata,
+    );
   }
 
   String _getChannelArabic(String channel) {

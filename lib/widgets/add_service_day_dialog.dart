@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../models/client_model.dart';
 import '../providers/app_provider.dart';
@@ -1102,6 +1102,61 @@ class _AddServiceDayDialogState extends State<AddServiceDayDialog> {
       final clientPrice = _currentClientPrice;
       final nursePrice = _currentNursePrice;
       final notes = _notesController.text.trim();
+
+      // فحص تعارض الورديات: هل الممرض مسجل بالفعل في وردية لحالة أخرى في نفس اليوم؟
+      final targetDates = _selectedMode == 0 ? [_singleDate] : _customDates;
+      for (final tDate in targetDates) {
+        final conflict = provider.serviceDays.where((d) {
+          final dl = d.date.toLocal();
+          return dl.year == tDate.year &&
+              dl.month == tDate.month &&
+              dl.day == tDate.day &&
+              d.clientId != widget.client.id &&
+              provider.isNurseNameMatch(d.nurseName, nurseName);
+        }).toList();
+
+        if (conflict.isNotEmpty) {
+          final conflictDay = conflict.first;
+          final proceed = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: Row(
+                  children: const [
+                    Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text('تنبيه: تعارض في وردية الممرض', style: TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  'الممرض ($nurseName) مسجل له بالفعل وردية عمل بتاريخ (${DateFormat('yyyy/MM/dd').format(tDate)}) مع عميل آخر (${conflictDay.clientName}).\n\nهل أنت متأكد من رغبتك في تسجيل هذه الوردية للممرض مع الحالة الحالية أيضاً؟',
+                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, height: 1.5),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('إلغاء وتعديل الممرض', style: TextStyle(fontFamily: 'Cairo')),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                    child: const Text('متابعة التسجيل رغم التعارض', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+          );
+          if (proceed != true) {
+            setState(() => _isSubmitting = false);
+            return;
+          }
+          break;
+        }
+      }
 
       if (_selectedMode == 0) {
         // Single Day

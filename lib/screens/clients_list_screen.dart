@@ -3,6 +3,7 @@ import 'team_chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/client_model.dart';
+import '../models/caregiver_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/add_edit_client_dialog.dart';
@@ -13,6 +14,8 @@ import '../widgets/stop_service_dialog.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/add_service_day_dialog.dart';
 import '../widgets/activate_weekly_service_dialog.dart';
+import '../widgets/morning_cockpit_widget.dart';
+import '../services/whatsapp_service.dart';
 import 'client_detail_screen.dart';
 import 'financial_reports_screen.dart';
 import '../services/pwa_install_service.dart';
@@ -121,6 +124,9 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                 ),
               ),
             ),
+
+            // Morning Operational Cockpit & Daily Reconciliation (الموقف الصباحي والتشغيلي اليومي)
+            const MorningCockpitWidget(),
 
             // Quick Team Chat Banner Bar
             InkWell(
@@ -399,6 +405,37 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                               client.phone,
                               style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontFamily: 'Cairo'),
                             ),
+                            if (client.phone.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              InkWell(
+                                onTap: () => _showClientWhatsAppSheet(context, provider, client),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF25D366).withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFF25D366), width: 0.8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.chat_bubble_rounded, size: 11, color: Color(0xFF16A34A)),
+                                      const SizedBox(width: 3),
+                                      const Text(
+                                        'واتساب',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Cairo',
+                                          color: Color(0xFF15803D),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                         // Existing client badge with opening balance
@@ -762,5 +799,121 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
         ),
       );
     }
+  }
+
+  void _showClientWhatsAppSheet(BuildContext context, AppProvider provider, ClientModel client) {
+    final balance = provider.getClientBalance(client);
+    final daysCount = provider.serviceDays.where((d) => d.clientId == client.id).length;
+    final totalDue = client.dailyPrice * daysCount;
+    final totalPaid = provider.payments.where((p) => p.clientId == client.id).fold(0.0, (s, p) => s + p.amount);
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF25D366).withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.chat_rounded, color: Color(0xFF16A34A), size: 22),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('مراسلة العميل: ${client.name}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.bold)),
+                        Text(client.phone, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.grey.shade600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              ListTile(
+                leading: const Icon(Icons.receipt_long_rounded, color: Color(0xFF0F766E)),
+                title: const Text('إرسال كشف حساب ومطالبة مالية رسمية', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: Text(
+                  balance < 0
+                      ? 'مديونية مستحقة: ${(-balance).toStringAsFixed(0)} ج.م (إجمالي الأيام: $daysCount)'
+                      : balance > 0
+                          ? 'رصيد دائن للعميل: +${balance.toStringAsFixed(0)} ج.م'
+                          : 'الحساب خالص بالكامل (0 ج.م)',
+                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 11),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  WhatsAppService.shareAccountStatement(
+                    context: context,
+                    phone: client.phone,
+                    clientName: client.name,
+                    serviceType: client.serviceType,
+                    dailyPrice: client.dailyPrice,
+                    daysCount: daysCount,
+                    totalDue: totalDue,
+                    totalPaid: totalPaid,
+                    remainingBalance: balance,
+                  );
+                },
+              ),
+              if (client.nurseAssigned?.isNotEmpty == true) ...[
+                ListTile(
+                  leading: const Icon(Icons.assignment_ind_rounded, color: Color(0xFF2563EB)),
+                  title: const Text('إرسال بيانات الحالة والتكليف للممرض عبر واتساب', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13)),
+                  subtitle: Text('التمريض المسند: ${client.nurseAssigned}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    final nurseName = client.nurseAssigned ?? '';
+                    final matches = provider.caregivers.where(
+                      (c) => provider.isNurseNameMatch(c.name, nurseName),
+                    ).toList();
+                    final caregiverPhone = matches.isNotEmpty ? matches.first.phone : '';
+                    if (caregiverPhone.isNotEmpty) {
+                      WhatsAppService.shareShiftAssignment(
+                        context: context,
+                        phone: caregiverPhone,
+                        nurseName: nurseName,
+                        clientName: client.name,
+                        address: client.address,
+                        serviceType: client.serviceType,
+                        nursePrice: client.nurseDailyPrice,
+                        startDate: client.startDate ?? DateTime.now(),
+                        healthCondition: client.healthCondition,
+                        notes: client.notes,
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('رقم هاتف الممرض غير مسجل في قاعدة البيانات', style: TextStyle(fontFamily: 'Cairo'))),
+                      );
+                    }
+                  },
+                ),
+              ],
+              ListTile(
+                leading: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF16A34A)),
+                title: const Text('فتح محادثة واتساب عادية مع العميل', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: const Text('مراسلة فورية مباشرة بدون قالب جاهز', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  WhatsAppService.openChat(context: context, phone: client.phone, message: 'مرحباً أ/ ${client.name}، بخصوص خدمة إيليت جراند للتمريض المنزلي:');
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

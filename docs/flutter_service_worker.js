@@ -1,4 +1,4 @@
-const CACHE_NAME = 'elite-grand-v7';
+const CACHE_NAME = 'elite-grand-v8';
 
 // Core assets to pre-cache on install for 100% offline standalone operation
 const PRECACHE_ASSETS = [

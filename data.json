@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-26T08:47:49.698Z",
+  "lastUpdated": "2026-11-28T08:27:22.824Z",
   "deletedIds": [
     "client_101",
     "client_102",
@@ -298,10 +298,21 @@
   },
   "clients": [
     {
+      "activeWeekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
       "address": "اكتوبر",
       "createdAt": "2026-11-10T09:42:58.671",
       "createdBy": "wahdan",
       "dailyPrice": 500,
+      "daysPerWeek": 7,
+      "endDate": "2026-11-29T00:00:00.000",
       "healthCondition": "مسن",
       "id": "cli_2e10d0fd",
       "isExistingClient": false,
@@ -311,10 +322,14 @@
       "nurseDailyPrice": 400,
       "openingBalance": 0,
       "phone": "01000880131",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours12",
-      "status": "active",
-      "updatedAt": "2026-11-22T15:40:30.235",
+      "settlementFrequency": "weekly",
       "startDate": "2026-11-22T00:00:00.000",
+      "status": "active",
+      "updatedAt": "2026-11-22T15:40:30.235"
+    },
+    {
       "activeWeekdays": [
         1,
         2,
@@ -324,16 +339,11 @@
         6,
         7
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly",
-      "endDate": "2026-11-29T00:00:00.000"
-    },
-    {
       "address": "المنيل",
       "createdAt": "2026-11-10T12:32:45.701",
       "createdBy": "wahdan",
       "dailyPrice": 500,
+      "daysPerWeek": 7,
       "healthCondition": "زهايمر",
       "id": "cli_76e68670",
       "isExistingClient": false,
@@ -343,10 +353,14 @@
       "nurseDailyPrice": 350,
       "openingBalance": 0,
       "phone": "01001440101",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours24",
+      "settlementFrequency": "weekly",
       "startDate": "2026-11-22T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-22T16:03:34.378",
+      "updatedAt": "2026-11-22T16:03:34.378"
+    },
+    {
       "activeWeekdays": [
         1,
         2,
@@ -356,16 +370,11 @@
         6,
         7
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly",
-      "endDate": null
-    },
-    {
       "address": "مدينه نصر",
       "createdAt": "2026-11-10T11:21:41.969",
       "createdBy": "wahdan",
       "dailyPrice": 400,
+      "daysPerWeek": 7,
       "healthCondition": "زهايمر",
       "id": "cli_2a197e89",
       "isExistingClient": true,
@@ -375,10 +384,14 @@
       "nurseDailyPrice": 307,
       "openingBalance": 400,
       "phone": "01203225572",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours24",
+      "settlementFrequency": "weekly",
       "startDate": "2026-11-07T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-23T05:40:35.566",
+      "updatedAt": "2026-11-23T05:40:35.566"
+    },
+    {
       "activeWeekdays": [
         1,
         2,
@@ -388,16 +401,11 @@
         6,
         7
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly",
-      "endDate": null
-    },
-    {
       "address": "مدينتي",
       "createdAt": "2026-11-10T11:10:47.208",
       "createdBy": "wahdan",
       "dailyPrice": 500,
+      "daysPerWeek": 7,
       "healthCondition": "زهايمر",
       "id": "cli_c5474aeb",
       "isExistingClient": true,
@@ -407,10 +415,14 @@
       "nurseDailyPrice": 350,
       "openingBalance": 5000,
       "phone": "01000600815",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours24",
+      "settlementFrequency": "weekly",
       "startDate": "2026-11-22T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-22T15:51:01.660",
+      "updatedAt": "2026-11-22T15:51:01.660"
+    },
+    {
       "activeWeekdays": [
         1,
         2,
@@ -420,16 +432,11 @@
         6,
         7
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly",
-      "endDate": null
-    },
-    {
       "address": "اكتوبر",
       "createdAt": "2026-11-10T11:05:55.918",
       "createdBy": "wahdan",
       "dailyPrice": 500,
+      "daysPerWeek": 7,
       "healthCondition": "زهايمر",
       "id": "cli_7d42bdc9",
       "isExistingClient": true,
@@ -439,10 +446,14 @@
       "nurseDailyPrice": 350,
       "openingBalance": 2500,
       "phone": "01097933316",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours24",
+      "settlementFrequency": "weekly",
       "startDate": "2026-11-22T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-22T15:49:59.688",
+      "updatedAt": "2026-11-22T15:49:59.688"
+    },
+    {
       "activeWeekdays": [
         1,
         2,
@@ -452,17 +463,11 @@
         6,
         7
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly",
-      "endDate": null
-    },
-    {
       "address": "الف مسكن",
       "createdAt": "2026-11-10T16:07:19.748",
       "createdBy": "wahdan",
       "dailyPrice": 500,
-      "endDate": null,
+      "daysPerWeek": 7,
       "healthCondition": "زهايمر",
       "id": "cli_ed651c21",
       "isExistingClient": false,
@@ -472,11 +477,14 @@
       "nurseDailyPrice": 400,
       "openingBalance": 0,
       "phone": "01062749569",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours24",
-      "startDate": null,
+      "settlementFrequency": "weekly",
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T15:40:30.235",
       "terminationReason": "طلب العميل إيقاف الخدمة مؤقتاً",
+      "updatedAt": "2026-11-22T15:40:30.235"
+    },
+    {
       "activeWeekdays": [
         1,
         2,
@@ -486,15 +494,11 @@
         6,
         7
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly"
-    },
-    {
       "address": "الزيتون",
       "createdAt": "2026-11-10T16:03:10.059",
       "createdBy": "wahdan",
       "dailyPrice": 550,
+      "daysPerWeek": 7,
       "endDate": "2026-11-29T00:00:00.000",
       "healthCondition": "زهيمر",
       "id": "cli_84191f94",
@@ -505,10 +509,14 @@
       "nurseDailyPrice": 450,
       "openingBalance": 2750,
       "phone": "01001434236",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours12",
+      "settlementFrequency": "weekly",
       "startDate": "2026-11-22T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-22T16:53:56.909",
+      "updatedAt": "2026-11-22T16:53:56.909"
+    },
+    {
       "activeWeekdays": [
         1,
         2,
@@ -518,15 +526,11 @@
         6,
         7
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly"
-    },
-    {
       "address": "عماره 18 شارع النزهه مصر الجديده",
       "createdAt": "2026-11-10T15:50:49.543",
       "createdBy": "wahdan",
       "dailyPrice": 450,
+      "daysPerWeek": 7,
       "healthCondition": "مسنه",
       "id": "cli_678010eb",
       "isExistingClient": true,
@@ -536,10 +540,14 @@
       "nurseDailyPrice": 400,
       "openingBalance": -900,
       "phone": "01092153466",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours24",
+      "settlementFrequency": "weekly",
       "startDate": "2026-11-22T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-22T18:39:27.556",
+      "updatedAt": "2026-11-22T18:39:27.556"
+    },
+    {
       "activeWeekdays": [
         1,
         2,
@@ -549,17 +557,11 @@
         6,
         7
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly",
-      "endDate": null
-    },
-    {
       "address": "عمار ابن ياسر",
       "createdAt": "2026-11-10T15:42:25.967",
       "createdBy": "wahdan",
       "dailyPrice": 450,
-      "endDate": null,
+      "daysPerWeek": 7,
       "healthCondition": "مسن",
       "id": "cli_c025fb5c",
       "isExistingClient": false,
@@ -569,10 +571,13 @@
       "nurseDailyPrice": 350,
       "openingBalance": 0,
       "phone": "01009591938",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours12",
-      "startDate": null,
+      "settlementFrequency": "weekly",
       "status": "ready_to_start",
-      "updatedAt": "2026-11-22T15:40:30.235",
+      "updatedAt": "2026-11-22T15:40:30.235"
+    },
+    {
       "activeWeekdays": [
         1,
         2,
@@ -582,15 +587,11 @@
         6,
         7
       ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly"
-    },
-    {
       "address": "النزهه الجديد",
       "createdAt": "2026-11-10T14:50:01.220",
       "createdBy": "wahdan",
       "dailyPrice": 321.42,
+      "daysPerWeek": 7,
       "healthCondition": "مسن",
       "id": "cli_3ba3dbe3",
       "isExistingClient": true,
@@ -600,23 +601,12 @@
       "nurseDailyPrice": 250,
       "openingBalance": 8550,
       "phone": "01066643278",
+      "serviceScheduleType": "all_week",
       "serviceType": "hours12",
+      "settlementFrequency": "weekly",
       "startDate": "2026-11-22T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-22T16:09:34.776",
-      "activeWeekdays": [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7
-      ],
-      "daysPerWeek": 7,
-      "serviceScheduleType": "all_week",
-      "settlementFrequency": "weekly",
-      "endDate": null
+      "updatedAt": "2026-11-22T16:09:34.776"
     },
     {
       "activeWeekdays": [
@@ -631,6 +621,7 @@
       "createdBy": "wahdan",
       "dailyPrice": 900,
       "daysPerWeek": 5,
+      "endDate": "2026-11-26T00:00:00.000",
       "healthCondition": "مسن",
       "id": "cli_7b2153f1",
       "isExistingClient": false,
@@ -643,10 +634,9 @@
       "serviceScheduleType": "custom_days",
       "serviceType": "hours24",
       "settlementFrequency": "weekly",
+      "startDate": "2026-11-22T00:00:00.000",
       "status": "active",
-      "updatedAt": "2026-11-22T17:26:07.505",
-      "endDate": "2026-11-26T00:00:00.000",
-      "startDate": "2026-11-22T00:00:00.000"
+      "updatedAt": "2026-11-22T17:26:07.505"
     }
   ],
   "payments": [
@@ -1155,434 +1145,434 @@
   "partnerSettlements": [],
   "users": [
     {
-      "id": "usr_wahdan",
-      "username": "wahdan",
-      "password": "123",
       "displayName": "أ/ وهدان",
+      "id": "usr_wahdan",
+      "password": "123",
+      "permissions": {
+        "canAddClient": true,
+        "canEditAnyData": true,
+        "canEditClient": true,
+        "canEndService": true,
+        "canManagePermissions": true,
+        "canRecordExpense": true,
+        "canRecordPayment": true,
+        "canSetPrice": true,
+        "canStartService": true,
+        "canViewFinancialReports": true
+      },
       "roleTitle": "مدير الشركة (المدير العام)",
       "roleType": "manager",
-      "permissions": {
-        "canAddClient": true,
-        "canEditClient": true,
-        "canSetPrice": true,
-        "canStartService": true,
-        "canEndService": true,
-        "canRecordPayment": true,
-        "canRecordExpense": true,
-        "canViewFinancialReports": true,
-        "canManagePermissions": true,
-        "canEditAnyData": true
-      }
+      "username": "wahdan"
     },
     {
-      "id": "usr_zezo",
-      "username": "zezo",
-      "password": "123",
       "displayName": "أ/ زيزو",
+      "id": "usr_zezo",
+      "password": "123",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": true,
+        "canManagePermissions": false,
+        "canRecordExpense": true,
+        "canRecordPayment": true,
+        "canSetPrice": true,
+        "canStartService": false,
+        "canViewFinancialReports": true
+      },
       "roleTitle": "مدير الحسابات والمالية",
       "roleType": "accountant",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canSetPrice": true,
-        "canStartService": false,
-        "canEndService": true,
-        "canRecordPayment": true,
-        "canRecordExpense": true,
-        "canViewFinancialReports": true,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "zezo"
     },
     {
-      "id": "usr_shimaa",
-      "username": "shimaa",
-      "password": "123",
       "displayName": "أ/ شيماء",
+      "id": "usr_shimaa",
+      "password": "123",
+      "permissions": {
+        "canAddClient": true,
+        "canEditAnyData": false,
+        "canEditClient": true,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": true,
+        "canViewFinancialReports": false
+      },
       "roleTitle": "مديرة المتابعة والتشغيل",
       "roleType": "followup",
-      "permissions": {
-        "canAddClient": true,
-        "canEditClient": true,
-        "canSetPrice": false,
-        "canStartService": true,
-        "canEndService": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "shimaa"
     },
     {
-      "id": "usr_user4",
-      "username": "user4",
-      "password": "123",
       "displayName": "حساب إضافي (1)",
-      "roleTitle": "مشرف تمريض / منسق ميداني",
-      "roleType": "custom",
+      "id": "usr_user4",
+      "password": "123",
       "permissions": {
         "canAddClient": false,
+        "canEditAnyData": false,
         "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
         "canSetPrice": false,
         "canStartService": true,
-        "canEndService": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+        "canViewFinancialReports": false
+      },
+      "roleTitle": "مشرف تمريض / منسق ميداني",
+      "roleType": "custom",
+      "username": "user4"
     },
     {
-      "id": "usr_user5",
-      "username": "user5",
-      "password": "123",
       "displayName": "حساب إضافي (2)",
-      "roleTitle": "خدمة عملاء / متابعة",
-      "roleType": "custom",
+      "id": "usr_user5",
+      "password": "123",
       "permissions": {
         "canAddClient": true,
+        "canEditAnyData": false,
         "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
         "canSetPrice": false,
         "canStartService": false,
-        "canEndService": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+        "canViewFinancialReports": false
+      },
+      "roleTitle": "خدمة عملاء / متابعة",
+      "roleType": "custom",
+      "username": "user5"
     },
     {
-      "id": "usr_cg_cg_1794991670881",
-      "username": "CG-001",
-      "password": "123456",
+      "caregiverId": "cg_1794991670881",
       "displayName": "شيماء حسن الحاكم",
+      "id": "usr_cg_cg_1794991670881",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01033408925",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1794991670881",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-001"
     },
     {
-      "id": "usr_cg_cg_1795011214381",
-      "username": "CG-002",
-      "password": "123456",
+      "caregiverId": "cg_1795011214381",
       "displayName": "زينب محمد عبد الحميد احمد خير الله",
+      "id": "usr_cg_cg_1795011214381",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01014703959",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795011214381",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-002"
     },
     {
-      "id": "usr_cg_cg_1795020786803",
-      "username": "CG-003",
-      "password": "123456",
+      "caregiverId": "cg_1795020786803",
       "displayName": "هايدي عبد الهادي محمد بكري",
+      "id": "usr_cg_cg_1795020786803",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01019399875",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795020786803",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-003"
     },
     {
-      "id": "usr_cg_cg_1795021381593",
-      "username": "CG-011",
-      "password": "654321",
+      "caregiverId": "cg_1795021381593",
       "displayName": "شيماء ايمن محمد سعيد الامير",
+      "id": "usr_cg_cg_1795021381593",
+      "password": "654321",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01068561497",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795021381593",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-011"
     },
     {
-      "id": "usr_cg_cg_1795029639463",
-      "username": "CG-005",
-      "password": "123456",
+      "caregiverId": "cg_1795029639463",
       "displayName": "رشا سيد سيد محمد",
+      "id": "usr_cg_cg_1795029639463",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01007794327",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795029639463",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-005"
     },
     {
-      "id": "usr_cg_cg_1795030078696",
-      "username": "CG-006",
-      "password": "123456",
+      "caregiverId": "cg_1795030078696",
       "displayName": "امال علي فتحي",
+      "id": "usr_cg_cg_1795030078696",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01040103657",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795030078696",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-006"
     },
     {
-      "id": "usr_cg_cg_amira_haifa",
-      "username": "CG-007",
-      "password": "123456",
+      "caregiverId": "cg_amira_haifa",
       "displayName": "اميره محمد موسى السنوسي",
+      "id": "usr_cg_cg_amira_haifa",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01102539520",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_amira_haifa",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-007"
     },
     {
-      "id": "usr_cg_cg_1795350613716",
-      "username": "CG-014",
-      "password": "506472",
+      "caregiverId": "cg_1795350613716",
       "displayName": "سميه جمال عبد الحليم سعد ابراهيم",
+      "id": "usr_cg_cg_1795350613716",
+      "password": "506472",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01044142641",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795350613716",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-014"
     },
     {
-      "id": "usr_cg_cg_1795353804644",
-      "username": "CG-004",
-      "password": "123456",
+      "caregiverId": "cg_1795353804644",
       "displayName": "محمود احمد عبد القادر شمس الدين",
+      "id": "usr_cg_cg_1795353804644",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01008747542",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795353804644",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-004"
     },
     {
-      "id": "usr_cg_cg_1795354115693",
-      "username": "CG-008",
-      "password": "123456",
+      "caregiverId": "cg_1795354115693",
       "displayName": "فاطمه الزهراء علي علي علي محمد",
+      "id": "usr_cg_cg_1795354115693",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01029894341",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795354115693",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-008"
     },
     {
-      "id": "usr_cg_cg_1795354569582",
-      "username": "CG-009",
-      "password": "123456",
+      "caregiverId": "cg_1795354569582",
       "displayName": "سحر حمدي ابراهيم اسماعيل",
+      "id": "usr_cg_cg_1795354569582",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01556423624",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795354569582",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-009"
     },
     {
-      "id": "usr_cg_cg_1795355314367",
-      "username": "CG-010",
-      "password": "123456",
+      "caregiverId": "cg_1795355314367",
       "displayName": "صابرين شعبان علي محمد",
+      "id": "usr_cg_cg_1795355314367",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01127128968",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795355314367",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-010"
     },
     {
-      "id": "usr_cg_cg_1795356509845",
-      "username": "CG-012",
-      "password": "123456",
+      "caregiverId": "cg_1795356509845",
       "displayName": "مديحه محمد داود رفاعي",
+      "id": "usr_cg_cg_1795356509845",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01154466528",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795356509845",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-012"
     },
     {
-      "id": "usr_cg_cg_1795359157114",
-      "username": "CG-015",
-      "password": "123456",
+      "caregiverId": "cg_1795359157114",
       "displayName": "نهى احمد شوقي محمود مرسي",
+      "id": "usr_cg_cg_1795359157114",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01117116203",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795359157114",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-015"
     },
     {
-      "id": "usr_cg_cg_1795031375004",
-      "username": "CG-013",
-      "password": "123456",
+      "caregiverId": "cg_1795031375004",
       "displayName": "مني",
+      "id": "usr_cg_cg_1795031375004",
+      "password": "123456",
+      "permissions": {
+        "canAddClient": false,
+        "canEditAnyData": false,
+        "canEditClient": false,
+        "canEndService": false,
+        "canManagePermissions": false,
+        "canRecordExpense": false,
+        "canRecordPayment": false,
+        "canSetPrice": false,
+        "canStartService": false,
+        "canViewFinancialReports": false
+      },
       "phone": "01096551478",
       "roleTitle": "طاقم تمريض / مقدم خدمة",
       "roleType": "nurse",
-      "caregiverId": "cg_1795031375004",
-      "permissions": {
-        "canAddClient": false,
-        "canEditClient": false,
-        "canStartService": false,
-        "canEndService": false,
-        "canSetPrice": false,
-        "canRecordPayment": false,
-        "canRecordExpense": false,
-        "canViewFinancialReports": false,
-        "canManagePermissions": false,
-        "canEditAnyData": false
-      }
+      "username": "CG-013"
     }
   ],
   "caregivers": [
@@ -1602,13 +1592,13 @@
       "loginUsername": "CG-001",
       "name": "شيماء حسن الحاكم",
       "nationalId": "",
+      "openingBalance": 0,
       "phone": "01033408925",
       "qualification": "بكالوريوس تمريض",
       "rating": 5,
       "residenceArea": "",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T15:40:30.235",
-      "openingBalance": 0
+      "updatedAt": "2026-11-22T15:40:30.235"
     },
     {
       "address": "عشما مركز الشهداء المنوفيه",
@@ -1627,20 +1617,19 @@
       "loginUsername": "CG-002",
       "name": "زينب محمد عبد الحميد احمد خير الله",
       "nationalId": "30507271701987",
+      "openingBalance": 0,
       "phone": "01014703959",
       "qualification": "طالبه",
       "rating": 5,
       "residenceArea": "المنوفيه",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T17:26:54.024",
-      "openingBalance": 0
+      "updatedAt": "2026-11-22T17:26:54.024"
     },
     {
       "address": "قريه الحراجيه مركز قوص",
       "code": "CG-003",
       "createdAt": "2026-11-18T18:53:06.803",
       "createdBy": "wahdan",
-      "currentClientName": null,
       "dailyPrice": 350,
       "hasLoginAccount": true,
       "hasWorkedWithUs": false,
@@ -1652,13 +1641,13 @@
       "loginUsername": "CG-003",
       "name": "هايدي عبد الهادي محمد بكري",
       "nationalId": "30202192700767",
+      "openingBalance": 0,
       "phone": "01019399875",
       "qualification": "بكالوريوس تمريض",
       "rating": 5,
       "residenceArea": "قنا",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T15:40:30.235",
-      "openingBalance": 0
+      "updatedAt": "2026-11-22T15:40:30.235"
     },
     {
       "address": "ميت غزل مركز السنطه",
@@ -1677,13 +1666,13 @@
       "loginUsername": "01068561497",
       "name": "شيماء ايمن محمد سعيد الامير",
       "nationalId": "28908211601628",
+      "openingBalance": 1535,
       "phone": "01068561497",
       "qualification": "حاصله على دبلوم تجاره",
       "rating": 5,
       "residenceArea": "الغربيه",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-23T05:40:35.587",
-      "openingBalance": 1535
+      "updatedAt": "2026-11-23T05:40:35.587"
     },
     {
       "address": "23 ش حافظ احمد العقاد المطريه القاهره",
@@ -1702,13 +1691,13 @@
       "name": "رشا سيد سيد محمد",
       "nationalId": "28209010107425",
       "notes": "مدخنه",
+      "openingBalance": 0,
       "phone": "01007794327",
       "qualification": "دبلوم صنايع",
       "rating": 5,
       "residenceArea": "المطريه القاهره",
       "shiftPreference": "hours12",
-      "updatedAt": "2026-11-22T15:40:30.235",
-      "openingBalance": 0
+      "updatedAt": "2026-11-22T15:40:30.235"
     },
     {
       "address": "شارع عبد المنعم رياض البر الشرقي مركز بركه السبع المنوفيه",
@@ -1727,49 +1716,55 @@
       "name": "امال علي فتحي",
       "nationalId": "30010161702064",
       "notes": "السن 26 سنه جليسه",
+      "openingBalance": 0,
       "phone": "01040103657",
       "qualification": "دبلوم",
       "rating": 5,
       "residenceArea": "عزبه النخل القاهره",
       "shiftPreference": "hours12",
-      "updatedAt": "2026-11-22T15:40:30.235",
-      "openingBalance": 0
+      "updatedAt": "2026-11-22T15:40:30.235"
     },
     {
-      "id": "cg_amira_haifa",
-      "code": "CG-007",
-      "name": "اميره محمد موسى السنوسي",
-      "phone": "01102539520",
       "address": "المنيل",
-      "qualification": "تمريض منزلي",
-      "residenceArea": "القاهرة",
-      "rating": 5,
-      "dailyPrice": 350,
-      "shiftPreference": "both",
-      "isBlocked": false,
-      "hasWorkedWithUs": true,
-      "hasLoginAccount": true,
-      "isCurrentlyWorking": true,
-      "currentClientName": "هيفاء",
-      "openingBalance": 5350,
+      "code": "CG-007",
       "createdAt": "2026-11-22T13:20:23.858",
-      "updatedAt": "2026-11-22T11:33:01.483Z",
       "createdBy": "wahdan",
-      "loginUsername": "CG-007",
+      "currentClientName": "هيفاء",
+      "dailyPrice": 350,
+      "hasLoginAccount": true,
+      "hasWorkedWithUs": true,
+      "id": "cg_amira_haifa",
+      "isBlocked": false,
+      "isCurrentlyWorking": true,
       "loginPassword": "123456",
-      "nationalId": ""
+      "loginUsername": "CG-007",
+      "name": "اميره محمد موسى السنوسي",
+      "nationalId": "",
+      "openingBalance": 5350,
+      "phone": "01102539520",
+      "qualification": "تمريض منزلي",
+      "rating": 5,
+      "residenceArea": "القاهرة",
+      "shiftPreference": "both",
+      "updatedAt": "2026-11-22T11:33:01.483Z"
     },
     {
       "address": "مركز اشمون - المنوفيه",
       "code": "CG-014",
       "createdAt": "2026-11-22T14:30:13.716",
       "createdBy": "wahdan",
+      "currentClientName": "ناديه",
       "dailyPrice": 400,
       "hasLoginAccount": true,
       "hasWorkedWithUs": false,
       "id": "cg_1795350613716",
       "isBlocked": false,
       "isCurrentlyWorking": true,
+      "lastLatitude": 30.07955425975768,
+      "lastLocationAccuracy": 105,
+      "lastLocationSource": "nurse_phone",
+      "lastLocationUpdate": "2026-11-23T05:25:36.980",
+      "lastLongitude": 31.376645532002097,
       "lastSmsSentAt": "2026-11-22T14:30:13.734",
       "loginPassword": "506472",
       "loginUsername": "CG-014",
@@ -1781,13 +1776,7 @@
       "rating": 5,
       "residenceArea": "المنوفيه",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-23T05:25:36.980",
-      "currentClientName": "ناديه",
-      "lastLatitude": 30.07955425975768,
-      "lastLocationAccuracy": 105,
-      "lastLocationSource": "nurse_phone",
-      "lastLocationUpdate": "2026-11-23T05:25:36.980",
-      "lastLongitude": 31.376645532002097
+      "updatedAt": "2026-11-23T05:25:36.980"
     },
     {
       "address": "6 اكتوبر ثاني",
@@ -1900,6 +1889,7 @@
       "id": "cg_1795356509845",
       "isBlocked": false,
       "isCurrentlyWorking": true,
+      "lastSmsSentAt": "2026-11-22T16:08:29.874",
       "loginPassword": "123456",
       "loginUsername": "CG-012",
       "name": "مديحه محمد داود رفاعي",
@@ -1910,8 +1900,7 @@
       "rating": 5,
       "residenceArea": "القاهره",
       "shiftPreference": "both",
-      "updatedAt": "2026-11-22T16:09:34.778",
-      "lastSmsSentAt": "2026-11-22T16:08:29.874"
+      "updatedAt": "2026-11-22T16:09:34.778"
     },
     {
       "address": "شارع احمد حلمي - الحلافي اول الفيوم",

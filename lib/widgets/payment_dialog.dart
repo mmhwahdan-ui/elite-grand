@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/client_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../services/whatsapp_service.dart';
 
 class PaymentDialog extends StatefulWidget {
   final ClientModel? preSelectedClient;
@@ -409,6 +410,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
                                 notes: _notesController.text.trim(),
                               );
                               if (context.mounted) {
+                                final clientSnapshot = _selectedClient!;
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
@@ -417,6 +419,30 @@ class _PaymentDialogState extends State<PaymentDialog> {
                                       style: const TextStyle(fontFamily: 'Cairo'),
                                     ),
                                     backgroundColor: AppTheme.accent,
+                                    duration: const Duration(seconds: 8),
+                                    action: clientSnapshot.phone.isNotEmpty
+                                        ? SnackBarAction(
+                                            label: '📲 إرسال إيصال واتساب',
+                                            textColor: Colors.amberAccent,
+                                            onPressed: () {
+                                              final updatedClient = provider.clients.firstWhere(
+                                                (c) => c.id == clientSnapshot.id,
+                                                orElse: () => clientSnapshot,
+                                              );
+                                              final remaining = provider.getClientBalance(updatedClient);
+                                              WhatsAppService.sharePaymentReceipt(
+                                                context: context,
+                                                phone: clientSnapshot.phone,
+                                                clientName: clientSnapshot.name,
+                                                amount: amount,
+                                                channel: _paymentChannel,
+                                                remainingBalance: remaining,
+                                                date: _paymentDate,
+                                                receiverName: provider.currentUser?.displayName,
+                                              );
+                                            },
+                                          )
+                                        : null,
                                   ),
                                 );
                               }

@@ -8,6 +8,7 @@ import '../widgets/caregiver_detail_dialog.dart';
 import '../widgets/nurse_account_dialog.dart';
 import '../widgets/management_instructions_dialog.dart';
 import '../services/location_service.dart';
+import '../services/whatsapp_service.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'nurse_portal_screen.dart';
 
@@ -744,12 +745,23 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
                                          },
                                        ),
                                        // Phone
-                                      if (caregiver.phone.isNotEmpty)
+                                      if (caregiver.phone.isNotEmpty) ...[
                                         _buildTag(
                                           icon: Icons.phone,
                                           label: caregiver.phone,
                                           color: Colors.teal,
                                         ),
+                                        InkWell(
+                                          onTap: () => _showCaregiverWhatsAppSheet(context, provider, caregiver),
+                                          borderRadius: BorderRadius.circular(20),
+                                          child: _buildTag(
+                                            icon: Icons.chat_bubble_rounded,
+                                            label: 'واتساب',
+                                            color: const Color(0xFF16A34A),
+                                            bold: true,
+                                          ),
+                                        ),
+                                      ],
                                       // Shift Preference
                                       _buildTag(
                                         icon: Icons.schedule,
@@ -1395,6 +1407,94 @@ class _CaregiversScreenState extends State<CaregiversScreen> {
             child: const Text('إغلاق', style: TextStyle(fontFamily: 'Cairo')),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showCaregiverWhatsAppSheet(BuildContext context, AppProvider provider, CaregiverModel caregiver) {
+    final daysCount = provider.serviceDays.where((d) => provider.isNurseNameMatch(d.nurseName, caregiver.name)).length;
+    final totalEarned = provider.serviceDays
+        .where((d) => provider.isNurseNameMatch(d.nurseName, caregiver.name))
+        .fold(0.0, (s, d) => s + d.nursePrice);
+
+    final totalAdvances = provider.nurseTransactions
+        .where((t) => provider.isNurseNameMatch(t.nurseName, caregiver.name) && t.type == 'advance')
+        .fold(0.0, (s, t) => s + t.amount);
+
+    final totalPayouts = provider.nurseTransactions
+        .where((t) => provider.isNurseNameMatch(t.nurseName, caregiver.name) && t.type == 'payout')
+        .fold(0.0, (s, t) => s + t.amount);
+
+    final netDue = caregiver.openingBalance + totalEarned - totalAdvances - totalPayouts;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF25D366).withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.chat_rounded, color: Color(0xFF16A34A), size: 22),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('مراسلة مقدم الخدمة: ${caregiver.name}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.bold)),
+                        Text('كود: ${caregiver.code} • ${caregiver.phone}', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.grey.shade600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              ListTile(
+                leading: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF0F766E)),
+                title: const Text('إرسال كشف حساب ومستحقات رسمية عبر واتساب', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: Text('صافي المستحق للصرف: ${netDue.toStringAsFixed(0)} ج.م (منفذ: $daysCount يوم)', style: const TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  WhatsAppService.shareCaregiverStatement(
+                    context: context,
+                    phone: caregiver.phone,
+                    nurseName: caregiver.name,
+                    daysCount: daysCount,
+                    totalEarned: totalEarned,
+                    totalAdvances: totalAdvances + totalPayouts,
+                    netDue: netDue,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF16A34A)),
+                title: const Text('فتح محادثة واتساب عادية', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: const Text('مراسلة فورية مباشرة بدون قالب جاهز', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  WhatsAppService.openChat(
+                    context: context,
+                    phone: caregiver.phone,
+                    message: 'مرحباً زميلنا/تنا ${caregiver.name}، بخصوص جدول العمل بإيليت جراند:',
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -22,6 +22,7 @@ import 'nurse_portal_screen.dart';
 import 'case_offers_screen.dart';
 import '../widgets/management_instructions_dialog.dart';
 import '../widgets/all_users_passwords_dialog.dart';
+import '../widgets/daily_reconciliation_dialog.dart';
 import '../services/pwa_install_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -458,6 +459,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
                 } else if (val == 'reports') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
+                } else if (val == 'reconciliation') {
+                  showDialog(
+                    context: context,
+                    builder: (_) => const DailyReconciliationDialog(),
+                  );
                 }
               },
               tooltip: 'الحساب والإعدادات',
@@ -538,6 +544,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+                if (provider.isManager || provider.canViewFinancialReports)
+                  PopupMenuItem(
+                    value: 'reconciliation',
+                    child: Row(
+                      children: const [
+                        Icon(Icons.balance_rounded, color: Color(0xFF0F766E), size: 20),
+                        SizedBox(width: 8),
+                        Text('مطابقة وتقفيل الخزينة اليومي 🔒', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F766E))),
+                      ],
+                    ),
+                  ),
                 const PopupMenuItem(
                   value: 'case_offers',
                   child: Row(
