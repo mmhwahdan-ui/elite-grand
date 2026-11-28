@@ -56,6 +56,9 @@ class AppProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   String? _statusMessage;
+  String _companyName = 'إيليت هوم كير';
+  String _companySubtitle = 'تمريض منزلي ورعاية صحية متكاملة';
+  String? _companyLogoUrl;
 
   AppProvider({required this.storageService}) {
     cloudSyncService = CloudSyncService(
@@ -68,6 +71,9 @@ class AppProvider extends ChangeNotifier {
   UserModel? get currentUser => _currentUser;
   UserModel? get impersonatorAdminUser => _impersonatorAdminUser;
   bool get isImpersonating => _impersonatorAdminUser != null;
+  String get companyName => _companyName;
+  String get companySubtitle => _companySubtitle;
+  String? get companyLogoUrl => _companyLogoUrl;
   List<UserModel> get users => List.unmodifiable(_users);
   List<ClientModel> get clients => List.unmodifiable(_clients);
   List<PaymentModel> get payments => List.unmodifiable(_payments);
@@ -727,6 +733,9 @@ class AppProvider extends ChangeNotifier {
     _deletedIds = storageService.loadDeletedIds();
     _openingBalances = storageService.loadOpeningBalances();
     _hasPendingOfflineSync = storageService.loadPendingOfflineSync();
+    _companyName = storageService.loadCompanyName();
+    _companySubtitle = storageService.loadCompanySubtitle();
+    _companyLogoUrl = storageService.loadCompanyLogoUrl();
     final deletedSet = _deletedIds.toSet();
 
     _clients = storageService.loadClients().where((c) => !deletedSet.contains(c.id)).toList();
@@ -814,6 +823,18 @@ class AppProvider extends ChangeNotifier {
       checkThursdayWeeklySettlementAlert();
     }
 
+    notifyListeners();
+  }
+
+  Future<void> updateCompanyInfo({
+    required String name,
+    required String subtitle,
+    String? logoUrl,
+  }) async {
+    _companyName = name.trim().isEmpty ? 'إيليت هوم كير' : name.trim();
+    _companySubtitle = subtitle.trim().isEmpty ? 'تمريض منزلي ورعاية صحية متكاملة' : subtitle.trim();
+    _companyLogoUrl = (logoUrl != null && logoUrl.trim().isNotEmpty) ? logoUrl.trim() : null;
+    await storageService.saveCompanyInfo(_companyName, _companySubtitle, _companyLogoUrl);
     notifyListeners();
   }
 

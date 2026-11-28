@@ -7,6 +7,7 @@ import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/cloud_settings_dialog.dart';
 import '../widgets/notifications_dialog.dart';
+import 'dashboard_screen.dart';
 import 'clients_list_screen.dart';
 import 'revenues_screen.dart';
 import 'expenses_screen.dart';
@@ -23,6 +24,7 @@ import 'case_offers_screen.dart';
 import '../widgets/management_instructions_dialog.dart';
 import '../widgets/all_users_passwords_dialog.dart';
 import '../widgets/daily_reconciliation_dialog.dart';
+import '../widgets/edit_company_dialog.dart';
 import '../services/pwa_install_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -34,6 +36,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -43,135 +46,47 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     final currentUser = provider.currentUser;
 
-    // Determine available navigation tabs based on user permissions
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 850;
 
-    // Determine available navigation tabs based on user permissions
-    final List<NavigationDestination> destinations = [
-      const NavigationDestination(
-        icon: Icon(Icons.people_outline),
-        selectedIcon: Icon(Icons.people),
-        label: 'الحالات',
-      ),
-      NavigationDestination(
-        icon: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            const Icon(Icons.campaign_outlined),
-            if (provider.openCaseOffersCount > 0)
-              Positioned(
-                top: -3,
-                right: -4,
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
-                    color: Colors.teal,
-                    shape: BoxShape.circle,
-                  ),
-                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                  child: Text(
-                    provider.openCaseOffersCount.toString(),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        selectedIcon: const Icon(Icons.campaign),
-        label: 'جروب الفرص',
-      ),
-      NavigationDestination(
-        icon: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            const Icon(Icons.chat_bubble_outline),
-            if (provider.unreadChatCount > 0)
-              Positioned(
-                top: -3,
-                right: -4,
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
-                    color: Colors.redAccent,
-                    shape: BoxShape.circle,
-                  ),
-                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                  child: Text(
-                    provider.unreadChatCount.toString(),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        selectedIcon: const Icon(Icons.chat_bubble),
-        label: 'شات الشركة',
-      ),
-      const NavigationDestination(
-        icon: Icon(Icons.badge_outlined),
-        selectedIcon: Icon(Icons.badge),
-        label: 'سجل الكوادر',
-      ),
-    ];
-
+    // Ordered list of screens:
+    // 0: لوحة القيادة والتحكم (Dashboard)
+    // 1: الحالات والعملاء (Clients)
+    // 2: سجل الكوادر والتمريض (Caregivers)
+    // 3: جروب الفرص (Case Offers)
+    // 4: شات الشركة (Team Chat)
+    // 5: الإيرادات والتحصيلات (Revenues)
+    // 6: المصروفات والسلفيات (Expenses)
+    // 7: التقارير والأرباح (Financial Reports)
+    // 8: إدارة الصلاحيات (Users Permissions)
     final List<Widget> screens = [
+      DashboardScreen(onNavigateTab: (idx) => setState(() => _currentIndex = idx)),
       const ClientsListScreen(),
+      const CaregiversScreen(),
       const CaseOffersScreen(),
       const TeamChatScreen(),
-      const CaregiversScreen(),
+      _buildAuthorizedScreen(
+        isAuthorized: provider.canRecordPayment || provider.canViewFinancialReports || provider.isManager,
+        screen: const RevenuesScreen(),
+        title: 'الإيرادات والتحصيلات',
+      ),
+      _buildAuthorizedScreen(
+        isAuthorized: provider.canRecordExpense || provider.isManager,
+        screen: const ExpensesScreen(),
+        title: 'المصروفات والسلفيات',
+      ),
+      _buildAuthorizedScreen(
+        isAuthorized: provider.canViewFinancialReports || provider.isManager,
+        screen: const FinancialReportsScreen(),
+        title: 'التقارير والأرباح',
+      ),
+      _buildAuthorizedScreen(
+        isAuthorized: provider.canManagePermissions || provider.isManager,
+        screen: const UsersPermissionsScreen(),
+        title: 'إدارة الصلاحيات',
+      ),
     ];
 
-    // Revenues tab (الإيرادات ومتابعة الحسابات)
-    if (provider.canRecordPayment || provider.canViewFinancialReports || provider.isManager) {
-      destinations.add(
-        const NavigationDestination(
-          icon: Icon(Icons.account_balance_wallet_outlined),
-          selectedIcon: Icon(Icons.account_balance_wallet),
-          label: 'الإيرادات',
-        ),
-      );
-      screens.add(const RevenuesScreen());
-    }
-
-    // Expenses tab (for Accountant or Manager or if has permission)
-    if (provider.canRecordExpense || provider.isManager) {
-      destinations.add(
-        const NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long),
-          label: 'المصروفات',
-        ),
-      );
-      screens.add(const ExpensesScreen());
-    }
-
-    // Financial Reports tab (for Accountant or Manager or if has permission)
-    if (provider.canViewFinancialReports || provider.isManager) {
-      destinations.add(
-        const NavigationDestination(
-          icon: Icon(Icons.analytics_outlined),
-          selectedIcon: Icon(Icons.analytics),
-          label: 'التقارير والأرباح',
-        ),
-      );
-      screens.add(const FinancialReportsScreen());
-    }
-
-    // Permissions & User Management (Exclusively for Wahdan / Manager)
-    if (provider.canManagePermissions || provider.isManager) {
-      destinations.add(
-        const NavigationDestination(
-          icon: Icon(Icons.admin_panel_settings_outlined),
-          selectedIcon: Icon(Icons.admin_panel_settings),
-          label: 'إدارة الصلاحيات',
-        ),
-      );
-      screens.add(const UsersPermissionsScreen());
-    }
-
-    // Ensure _currentIndex is within bounds
     if (_currentIndex >= screens.length) {
       _currentIndex = 0;
     }
@@ -179,38 +94,75 @@ class _HomeScreenState extends State<HomeScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        key: _scaffoldKey,
+        drawer: isMobile ? Drawer(backgroundColor: const Color(0xFF0F1E36), child: _buildSidebarContent(context, provider, isDrawer: true)) : null,
         appBar: AppBar(
-          titleSpacing: 16,
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.local_hospital_rounded, color: AppTheme.accentBright, size: 20),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+          titleSpacing: isMobile ? 8 : 16,
+          leading: isMobile
+              ? IconButton(
+                  icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
+                  tooltip: 'القائمة الرئيسية',
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                )
+              : null,
+          title: InkWell(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (_) => const EditCompanyDialog(),
+              );
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+              child: Row(
                 children: [
-                  const Text(
-                    'إيليت جراند',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
-                  ),
-                  if (!isMobile)
-                    const Text(
-                      'تمريض منزلي ورعاية صحية',
-                      style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontFamily: 'Cairo'),
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFC59B6D), width: 1.2),
                     ),
+                    clipBehavior: Clip.antiAlias,
+                    child: provider.companyLogoUrl != null && provider.companyLogoUrl!.isNotEmpty
+                        ? Image.network(
+                            provider.companyLogoUrl!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                          )
+                        : Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            provider.companyName,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: Colors.white),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.edit_outlined, size: 12, color: Color(0xFFC59B6D)),
+                        ],
+                      ),
+                      if (!isMobile)
+                        Text(
+                          provider.companySubtitle,
+                          style: const TextStyle(fontSize: 10, color: Color(0xFFC59B6D), fontFamily: 'Cairo'),
+                        ),
+                    ],
+                  ),
                 ],
               ),
-            ],
+            ),
           ),
           actions: [
-            // Install App Button (دائم الظهور بجانب سحابي متصل)
+            // Install App Button
             InkWell(
               onTap: () => PwaInstallService.handleInstallClick(context),
               borderRadius: BorderRadius.circular(20),
@@ -286,7 +238,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 8),
 
-            // Only on desktop/tablet: show extra shortcut icons (on mobile these are in bottom bar and menu)
             if (!isMobile) ...[
               IconButton(
                 icon: const Icon(Icons.sync, color: Colors.white),
@@ -304,122 +255,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   }
                 },
               ),
-              const SizedBox(width: 4),
-
-              // Cases & Opportunities Group Button
-              Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.campaign_outlined, color: Colors.white),
-                    tooltip: 'جروب الحالات والفرص الجديدة 📢',
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const CaseOffersScreen()));
-                    },
-                  ),
-                  if (provider.openCaseOffersCount > 0)
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.tealAccent,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                        child: Text(
-                          provider.openCaseOffersCount.toString(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Cairo'),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 4),
-
-              // Team Chat Button with Unread Badge
-              Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-                    tooltip: 'شات وتواصل أفراد الشركة',
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamChatScreen()));
-                    },
-                  ),
-                  if (provider.unreadChatCount > 0)
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                        child: Text(
-                          provider.unreadChatCount.toString(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Cairo'),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 4),
-
-              // Management Instructions Board button
-              IconButton(
-                icon: const Icon(Icons.assignment_outlined, color: Colors.white),
-                tooltip: 'لوحة تعليمات وتوجيهات الإدارة لمقدمي الخدمة 📋',
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => const ManagementInstructionsDialog(isCaregiverView: false),
-                  );
-                },
-              ),
-              const SizedBox(width: 4),
-
-              // Caregivers Database button
-              IconButton(
-                icon: const Icon(Icons.badge_outlined, color: Colors.white),
-                tooltip: 'قاعدة بيانات وسجل مقدمي الخدمة',
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
-                },
-              ),
-              const SizedBox(width: 4),
-
-              // Weekly & Monthly Settlement button
-              IconButton(
-                icon: const Icon(Icons.event_available_rounded, color: Colors.white),
-                tooltip: 'تقفيل الحساب الأسبوعي والشهري (دورة الخميس) 🔔',
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
-                },
-              ),
-              const SizedBox(width: 4),
-
-              // Financial Reports & Periodic Net Profit button
-              IconButton(
-                icon: const Icon(Icons.analytics_outlined, color: Colors.white),
-                tooltip: 'التقارير والأرباح (صافي الربح الدوري)',
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
-                },
-              ),
-              const SizedBox(width: 4),
             ],
 
-            // User Profile / Switch Account
+            // User Profile / Settings Menu
             PopupMenuButton<String>(
               onSelected: (val) async {
-                if (val == 'password') {
+                if (val == 'company') {
+                  showDialog(
+                    context: context,
+                    builder: (_) => const EditCompanyDialog(),
+                  );
+                } else if (val == 'password') {
                   _showChangePasswordDialog(context, provider, currentUser);
                 } else if (val == 'switch') {
                   await provider.logout();
@@ -439,31 +285,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     context: context,
                     builder: (_) => const CloudSettingsDialog(),
                   );
-                } else if (val == 'nurses') {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NurseAccountsScreen()));
-                } else if (val == 'notifications') {
-                  provider.markNotificationsAsRead();
-                  showDialog(
-                    context: context,
-                    builder: (_) => const NotificationsDialog(),
-                  );
-                } else if (val == 'case_offers') {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CaseOffersScreen()));
-                } else if (val == 'chat') {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamChatScreen()));
-                } else if (val == 'caregivers') {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CaregiversScreen()));
-                } else if (val == 'settlement') {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnerSettlementScreen()));
-                } else if (val == 'weekly_settlement') {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
-                } else if (val == 'reports') {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const FinancialReportsScreen()));
                 } else if (val == 'reconciliation') {
                   showDialog(
                     context: context,
                     builder: (_) => const DailyReconciliationDialog(),
                   );
+                } else if (val == 'weekly_settlement') {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
                 }
               },
               tooltip: 'الحساب والإعدادات',
@@ -504,12 +332,42 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const PopupMenuDivider(),
                 const PopupMenuItem(
+                  value: 'company',
+                  child: Row(
+                    children: [
+                      Icon(Icons.business_rounded, color: Color(0xFF9A7444), size: 20),
+                      SizedBox(width: 8),
+                      Text('تخصيص اللوجو واسم الشركة ✏️', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF9A7444))),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'reconciliation',
+                  child: Row(
+                    children: [
+                      Icon(Icons.balance_rounded, color: Color(0xFF0F766E), size: 20),
+                      SizedBox(width: 8),
+                      Text('مطابقة وتقفيل الخزينة اليومي 🔒', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F766E))),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'weekly_settlement',
+                  child: Row(
+                    children: [
+                      Icon(Icons.event_available_rounded, color: Colors.amber, size: 20),
+                      SizedBox(width: 8),
+                      Text('تقفيل الحساب الأسبوعي (دورة الخميس)', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
                   value: 'password',
                   child: Row(
                     children: [
                       Icon(Icons.lock_reset, color: AppTheme.primary, size: 20),
                       SizedBox(width: 8),
-                      Text('تغيير كلمة المرور', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                      Text('تغيير كلمة المرور', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
                     ],
                   ),
                 ),
@@ -519,21 +377,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       children: [
                         Icon(Icons.vpn_key_rounded, color: Colors.amber.shade800, size: 20),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text('كشف كلمات مرور المستخدمين 🔑', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
                       ],
                     ),
                   ),
-                const PopupMenuItem(
-                  value: 'switch',
-                  child: Row(
-                    children: [
-                      Icon(Icons.swap_horiz, color: AppTheme.primary, size: 20),
-                      SizedBox(width: 8),
-                      Text('تبديل الحساب / تسجيل خروج', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
-                    ],
-                  ),
-                ),
                 const PopupMenuItem(
                   value: 'cloud',
                   child: Row(
@@ -544,74 +392,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                if (provider.isManager || provider.canViewFinancialReports)
-                  PopupMenuItem(
-                    value: 'reconciliation',
-                    child: Row(
-                      children: const [
-                        Icon(Icons.balance_rounded, color: Color(0xFF0F766E), size: 20),
-                        SizedBox(width: 8),
-                        Text('مطابقة وتقفيل الخزينة اليومي 🔒', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F766E))),
-                      ],
-                    ),
-                  ),
                 const PopupMenuItem(
-                  value: 'case_offers',
+                  value: 'switch',
                   child: Row(
                     children: [
-                      Icon(Icons.campaign, color: Colors.teal, size: 20),
+                      Icon(Icons.swap_horiz, color: AppTheme.primary, size: 20),
                       SizedBox(width: 8),
-                      Text('جروب الحالات والفرص الجديدة 📢', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.teal)),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'nurses',
-                  child: Row(
-                    children: [
-                      Icon(Icons.badge_outlined, color: Colors.teal, size: 20),
-                      SizedBox(width: 8),
-                      Text('حسابات وسلف أطقم التمريض', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'caregivers',
-                  child: Row(
-                    children: [
-                      Icon(Icons.badge, color: AppTheme.primary, size: 20),
-                      SizedBox(width: 8),
-                      Text('قاعدة بيانات وسجل مقدمي الخدمة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'settlement',
-                  child: Row(
-                    children: [
-                      Icon(Icons.pie_chart_outline, color: Colors.indigo, size: 20),
-                      SizedBox(width: 8),
-                      Text('تصفية أرباح الشركاء (يوم 23)', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'weekly_settlement',
-                  child: Row(
-                    children: [
-                      Icon(Icons.event_available_rounded, color: Colors.amber, size: 20),
-                      SizedBox(width: 8),
-                      Text('تقفيل الحساب الأسبوعي والشهري (دورة الخميس) 🔔', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'reports',
-                  child: Row(
-                    children: [
-                      Icon(Icons.analytics_rounded, color: Colors.blue, size: 20),
-                      SizedBox(width: 8),
-                      Text('التقارير والأرباح (صافي الربح الدوري)', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold)),
+                      Text('تسجيل خروج / تبديل الحساب', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
                     ],
                   ),
                 ),
@@ -619,30 +406,575 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        body: Column(
+        body: Row(
           children: [
-            if (provider.showThursdayBanner)
-              _buildThursdaySettlementBanner(context, provider),
+            // 1. Right Sidebar on Desktop (appears on the RIGHT in RTL)
+            if (!isMobile)
+              Container(
+                width: 250,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0F1E36),
+                  border: Border(left: BorderSide(color: Color(0xFF1E3A5F), width: 1)),
+                ),
+                child: _buildSidebarContent(context, provider, isDrawer: false),
+              ),
+
+            // 2. Main Active Screen
             Expanded(
-              child: IndexedStack(
-                index: _currentIndex,
-                children: screens,
+              child: Column(
+                children: [
+                  if (provider.showThursdayBanner)
+                    _buildThursdaySettlementBanner(context, provider),
+                  Expanded(
+                    child: IndexedStack(
+                      index: _currentIndex,
+                      children: screens,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        bottomNavigationBar: destinations.length > 1
-            ? NavigationBar(
-                selectedIndex: _currentIndex,
-                onDestinationSelected: (idx) {
-                  setState(() => _currentIndex = idx);
+
+        // Clean Mobile Bottom Navigation (only 4 primary comfortable targets)
+        bottomNavigationBar: isMobile ? _buildMobileBottomBar(context, provider) : null,
+      ),
+    );
+  }
+
+  // Sidebar content (shared by Desktop permanent Sidebar and Mobile slide-out Drawer)
+  Widget _buildSidebarContent(BuildContext context, AppProvider provider, {required bool isDrawer}) {
+    final currentUser = provider.currentUser;
+
+    return Column(
+      children: [
+        // Top Brand Header
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0B192C),
+            border: Border(bottom: BorderSide(color: Color(0xFF1E3A5F), width: 1)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFC59B6D), width: 1.5),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: provider.companyLogoUrl != null && provider.companyLogoUrl!.isNotEmpty
+                        ? Image.network(
+                            provider.companyLogoUrl!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                          )
+                        : Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          provider.companyName,
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          provider.companySubtitle,
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 10,
+                            color: Color(0xFFC59B6D),
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 16, color: Color(0xFFC59B6D)),
+                    tooltip: 'تعديل اسم وشعار الشركة',
+                    onPressed: () {
+                      if (isDrawer) Navigator.pop(context);
+                      showDialog(
+                        context: context,
+                        builder: (_) => const EditCompanyDialog(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // User Info Pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white.withOpacity(0.08)),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundColor: const Color(0xFF0D9488),
+                      child: Text(
+                        (currentUser?.displayName.isNotEmpty ?? false) ? currentUser!.displayName.substring(0, 1) : 'م',
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Cairo'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            currentUser?.displayName ?? 'المستخدم',
+                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          Text(
+                            currentUser?.roleTitle ?? '',
+                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 9, color: Colors.white60),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(color: Color(0xFF00D09C), shape: BoxShape.circle),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Scrollable Navigation Items
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            children: [
+              // Group 1: الرئيسية والتشغيل
+              _buildCategoryHeader('الرئيسية والتشغيل'),
+              _buildNavTile(
+                index: 0,
+                icon: Icons.dashboard_rounded,
+                title: 'لوحة القيادة والتحكم',
+                badgeText: 'الرئيسية',
+                badgeColor: const Color(0xFF0D9488),
+                isDrawer: isDrawer,
+              ),
+              _buildNavTile(
+                index: 1,
+                icon: Icons.people_alt_rounded,
+                title: 'الحالات والعملاء',
+                badgeText: '${provider.clients.where((c) => c.status == "active").length} نشطة',
+                badgeColor: const Color(0xFF2563EB),
+                isDrawer: isDrawer,
+              ),
+              _buildNavTile(
+                index: 2,
+                icon: Icons.badge_rounded,
+                title: 'سجل الكوادر والتمريض',
+                badgeText: '${provider.caregivers.length} كادر',
+                badgeColor: const Color(0xFF7C3AED),
+                isDrawer: isDrawer,
+              ),
+              _buildNavTile(
+                index: 3,
+                icon: Icons.campaign_rounded,
+                title: 'جروب الفرص الجديدة',
+                badgeText: provider.openCaseOffersCount > 0 ? '${provider.openCaseOffersCount}' : null,
+                badgeColor: const Color(0xFFF59E0B),
+                isDrawer: isDrawer,
+              ),
+
+              const SizedBox(height: 8),
+
+              // Group 2: القطاع المالي والحسابات
+              _buildCategoryHeader('القطاع المالي والحسابات'),
+              if (provider.canRecordPayment || provider.canViewFinancialReports || provider.isManager)
+                _buildNavTile(
+                  index: 5,
+                  icon: Icons.account_balance_wallet_rounded,
+                  title: 'الإيرادات والتحصيلات',
+                  isDrawer: isDrawer,
+                ),
+              if (provider.canRecordExpense || provider.isManager)
+                _buildNavTile(
+                  index: 6,
+                  icon: Icons.receipt_long_rounded,
+                  title: 'المصروفات والسلفيات',
+                  isDrawer: isDrawer,
+                ),
+              _buildActionTile(
+                icon: Icons.lock_clock_rounded,
+                title: 'تقفيل الخزينة والدرج 🔒',
+                color: const Color(0xFF0F766E),
+                onTap: () {
+                  if (isDrawer) Navigator.pop(context);
+                  showDialog(context: context, builder: (_) => const DailyReconciliationDialog());
                 },
-                backgroundColor: Colors.white,
-                elevation: 4,
-                indicatorColor: AppTheme.primary.withOpacity(0.12),
-                destinations: destinations,
-              )
-            : null,
+              ),
+              _buildActionTile(
+                icon: Icons.event_available_rounded,
+                title: 'دورة الخميس (الشركاء) 🔔',
+                color: const Color(0xFFC59B6D),
+                onTap: () {
+                  if (isDrawer) Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const WeeklyMonthlySettlementScreen(initialTab: 'weekly')));
+                },
+              ),
+              if (provider.canViewFinancialReports || provider.isManager)
+                _buildNavTile(
+                  index: 7,
+                  icon: Icons.analytics_rounded,
+                  title: 'التقارير وصافي الأرباح',
+                  isDrawer: isDrawer,
+                ),
+
+              const SizedBox(height: 8),
+
+              // Group 3: التواصل والإدارة
+              _buildCategoryHeader('التواصل والإدارة'),
+              _buildNavTile(
+                index: 4,
+                icon: Icons.chat_bubble_rounded,
+                title: 'شات أفراد الشركة',
+                badgeText: provider.unreadChatCount > 0 ? '${provider.unreadChatCount}' : null,
+                badgeColor: Colors.redAccent,
+                isDrawer: isDrawer,
+              ),
+              _buildActionTile(
+                icon: Icons.assignment_outlined,
+                title: 'لوحة توجيهات الإدارة 📋',
+                color: const Color(0xFF38BDF8),
+                onTap: () {
+                  if (isDrawer) Navigator.pop(context);
+                  showDialog(context: context, builder: (_) => const ManagementInstructionsDialog(isCaregiverView: false));
+                },
+              ),
+              if (provider.canManagePermissions || provider.isManager) ...[
+                _buildNavTile(
+                  index: 8,
+                  icon: Icons.admin_panel_settings_rounded,
+                  title: 'إدارة الصلاحيات',
+                  isDrawer: isDrawer,
+                ),
+                _buildActionTile(
+                  icon: Icons.vpn_key_rounded,
+                  title: 'كشف كلمات المرور 🔑',
+                  color: Colors.amber.shade700,
+                  onTap: () {
+                    if (isDrawer) Navigator.pop(context);
+                    showDialog(context: context, builder: (_) => const AllUsersPasswordsDialog());
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        // Bottom Footer
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0B192C),
+            border: Border(top: BorderSide(color: Color(0xFF1E3A5F), width: 1)),
+          ),
+          child: Column(
+            children: [
+              InkWell(
+                onTap: () {
+                  if (isDrawer) Navigator.pop(context);
+                  showDialog(context: context, builder: (_) => const CloudSettingsDialog());
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            _getSyncIcon(provider.syncStatus, hasPending: provider.hasPendingOfflineSync),
+                            size: 14,
+                            color: _getSyncBorderColor(provider.syncStatus, hasPending: provider.hasPendingOfflineSync),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _getSyncTitle(provider.syncStatus, hasPending: provider.hasPendingOfflineSync),
+                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                      const Text('v8.2', style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: Colors.white38)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              InkWell(
+                onTap: () => PwaInstallService.handleInstallClick(context),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentBright.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.accentBright.withOpacity(0.4)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.install_mobile_rounded, size: 13, color: AppTheme.accentBright),
+                      SizedBox(width: 6),
+                      Text('مثبت كبرنامج مستقل', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF64748B),
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavTile({
+    required int index,
+    required IconData icon,
+    required String title,
+    String? badgeText,
+    Color? badgeColor,
+    required bool isDrawer,
+  }) {
+    final isSelected = _currentIndex == index;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1.5),
+      child: InkWell(
+        onTap: () {
+          setState(() => _currentIndex = index);
+          if (isDrawer) Navigator.pop(context);
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF0D9488) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 17,
+                color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
+                  ),
+                ),
+              ),
+              if (badgeText != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: (badgeColor ?? const Color(0xFF0D9488)).withOpacity(isSelected ? 0.35 : 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    badgeText,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : (badgeColor ?? const Color(0xFF0D9488)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionTile({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1.5),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            children: [
+              Icon(icon, size: 17, color: color),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color.withOpacity(0.95),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Clean Mobile Bottom Navigation (only 4 buttons)
+  Widget _buildMobileBottomBar(BuildContext context, AppProvider provider) {
+    // Map current index to 0, 1, 2 or highlight none
+    int selectedBarIndex = _currentIndex == 0 ? 0 : (_currentIndex == 1 ? 1 : (_currentIndex == 2 ? 2 : 0));
+
+    return NavigationBar(
+      selectedIndex: selectedBarIndex,
+      onDestinationSelected: (idx) {
+        if (idx == 0) {
+          setState(() => _currentIndex = 0);
+        } else if (idx == 1) {
+          setState(() => _currentIndex = 1);
+        } else if (idx == 2) {
+          setState(() => _currentIndex = 2);
+        } else if (idx == 3) {
+          _scaffoldKey.currentState?.openDrawer();
+        }
+      },
+      backgroundColor: Colors.white,
+      elevation: 6,
+      indicatorColor: const Color(0xFF0D9488).withOpacity(0.15),
+      destinations: [
+        const NavigationDestination(
+          icon: Icon(Icons.dashboard_outlined),
+          selectedIcon: Icon(Icons.dashboard_rounded, color: Color(0xFF0D9488)),
+          label: 'لوحة التحكم',
+        ),
+        const NavigationDestination(
+          icon: Icon(Icons.people_outline),
+          selectedIcon: Icon(Icons.people_rounded, color: Color(0xFF0D9488)),
+          label: 'الحالات',
+        ),
+        const NavigationDestination(
+          icon: Icon(Icons.badge_outlined),
+          selectedIcon: Icon(Icons.badge_rounded, color: Color(0xFF0D9488)),
+          label: 'الكوادر',
+        ),
+        NavigationDestination(
+          icon: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(Icons.menu_rounded),
+              if (provider.unreadChatCount > 0 || provider.openCaseOffersCount > 0)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
+                  ),
+                ),
+            ],
+          ),
+          selectedIcon: const Icon(Icons.menu_open_rounded),
+          label: 'المزيد ☰',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAuthorizedScreen({
+    required bool isAuthorized,
+    required Widget screen,
+    required String title,
+  }) {
+    if (isAuthorized) return screen;
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.lock_outline_rounded, size: 48, color: Colors.grey),
+            const SizedBox(height: 12),
+            Text('قسم $title', style: const TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            const Text(
+              'عفواً، لا تملك الصلاحية الكافية للوصول إلى هذا القسم.\nيرجى مراجعة إدارة النظام لتعديل صلاحياتك.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -750,19 +1082,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getSyncTitle(SyncStatus status, {bool hasPending = false}) {
-    if (hasPending) return 'محلي (معلق رفع)';
+    if (hasPending) return 'معلق للمزامنة';
     switch (status) {
       case SyncStatus.success:
         return 'سحابي متصل';
       case SyncStatus.syncing:
-        return 'مزامنة...';
+        return 'جاري المزامنة...';
       case SyncStatus.error:
         return 'خطأ اتصال';
       case SyncStatus.offline:
-        return 'محلي (أوفلاين)';
+        return 'غير متصل (أوفلاين)';
       case SyncStatus.idle:
       default:
-        return 'السحابة';
+        return 'سحابي متصل';
     }
   }
 
@@ -788,12 +1120,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withValues(alpha: 0.1),
+                    color: AppTheme.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.lock_reset, color: AppTheme.primary, size: 24),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -803,8 +1135,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        'للحساب: ${user.displayName} (@${user.username})',
-                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey),
+                        user.displayName,
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -814,65 +1146,61 @@ class _HomeScreenState extends State<HomeScreen> {
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Current Password
                   TextField(
                     controller: currentPassCtrl,
                     obscureText: obscureCurrent,
                     decoration: InputDecoration(
                       labelText: 'كلمة المرور الحالية',
-                      hintText: 'أدخل كلمة المرور الحالية',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      labelStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                      prefixIcon: const Icon(Icons.lock_outline, size: 20),
                       suffixIcon: IconButton(
-                        icon: Icon(obscureCurrent ? Icons.visibility_off : Icons.visibility),
+                        icon: Icon(obscureCurrent ? Icons.visibility_off : Icons.visibility, size: 20),
                         onPressed: () => setDlgState(() => obscureCurrent = !obscureCurrent),
                       ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // New Password
                   TextField(
                     controller: newPassCtrl,
                     obscureText: obscureNew,
                     decoration: InputDecoration(
-                      labelText: 'كلمة المرور الجديدة *',
-                      hintText: '••••••••',
-                      prefixIcon: const Icon(Icons.vpn_key_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      labelText: 'كلمة المرور الجديدة',
+                      labelStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                      prefixIcon: const Icon(Icons.key, size: 20),
                       suffixIcon: IconButton(
-                        icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility),
+                        icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility, size: 20),
                         onPressed: () => setDlgState(() => obscureNew = !obscureNew),
                       ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Confirm New Password
                   TextField(
                     controller: confirmPassCtrl,
                     obscureText: obscureConfirm,
                     decoration: InputDecoration(
-                      labelText: 'تأكيد كلمة المرور الجديدة *',
-                      hintText: '••••••••',
-                      prefixIcon: const Icon(Icons.check_circle_outline),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      labelText: 'تأكيد كلمة المرور الجديدة',
+                      labelStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                      prefixIcon: const Icon(Icons.key_outlined, size: 20),
                       suffixIcon: IconButton(
-                        icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility),
+                        icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility, size: 20),
                         onPressed: () => setDlgState(() => obscureConfirm = !obscureConfirm),
                       ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
-                  const SizedBox(height: 10),
-
+                  const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.blue.shade200),
+                      color: Colors.blue.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withOpacity(0.2)),
                     ),
                     child: const Row(
                       children: [
@@ -910,7 +1238,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           return;
                         }
 
-                        // Validate current password (accept actual password, or 123 if default)
                         final isCurrentValid = currentInput == user.password ||
                             (user.password == '123' && (currentInput == '123' || currentInput == '123456'));
                         if (!isCurrentValid) {

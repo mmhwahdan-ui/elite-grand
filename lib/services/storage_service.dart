@@ -36,6 +36,9 @@ class StorageService {
   static const String _keyManagementInstructions = 'eg_management_instructions_data';
   static const String _keyLastThursdayAlertDate = 'eg_last_thursday_alert_date';
   static const String _keyPendingOfflineSync = 'eg_pending_offline_sync';
+  static const String _keyCompanyName = 'eg_company_name';
+  static const String _keyCompanySubtitle = 'eg_company_subtitle';
+  static const String _keyCompanyLogoUrl = 'eg_company_logo_url';
 
   final SharedPreferences prefs;
 
@@ -66,6 +69,29 @@ class StorageService {
 
   Future<void> saveOpeningBalances(Map<String, double> balances) async {
     await prefs.setString(_keyOpeningBalances, jsonEncode(balances));
+  }
+
+  // Company Branding & Customization
+  String loadCompanyName() {
+    return prefs.getString(_keyCompanyName) ?? 'إيليت هوم كير';
+  }
+
+  String loadCompanySubtitle() {
+    return prefs.getString(_keyCompanySubtitle) ?? 'تمريض منزلي ورعاية صحية متكاملة';
+  }
+
+  String? loadCompanyLogoUrl() {
+    return prefs.getString(_keyCompanyLogoUrl);
+  }
+
+  Future<void> saveCompanyInfo(String name, String subtitle, String? logoUrl) async {
+    await prefs.setString(_keyCompanyName, name);
+    await prefs.setString(_keyCompanySubtitle, subtitle);
+    if (logoUrl != null && logoUrl.isNotEmpty) {
+      await prefs.setString(_keyCompanyLogoUrl, logoUrl);
+    } else {
+      await prefs.remove(_keyCompanyLogoUrl);
+    }
   }
 
   // Deleted IDs for distributed sync tombstones
